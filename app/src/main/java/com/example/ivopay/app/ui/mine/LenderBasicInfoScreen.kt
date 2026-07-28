@@ -1,0 +1,465 @@
+package com.example.ivopay.app.ui.mine
+
+import android.graphics.Bitmap
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.example.ivopay.R
+
+// Data model untuk item foto/dokumen
+data class LenderPhotoItem(
+    val title: String,
+    val desc: String,
+    val imgName: String,
+    var bitmap: Bitmap? = null
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LenderBasicInfoScreen(
+    onBackClick: () -> Unit = {},
+    onSubmitSuccess: () -> Unit = {},
+    onSelectPhoto: (index: Int, onCaptured: (Bitmap) -> Unit) -> Unit = { _, _ -> }
+) {
+    // State Formulir
+    var bankName by remember { mutableStateOf("") }
+    var accountNumber by remember { mutableStateOf("") }
+    var accountName by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
+    var docType by remember { mutableStateOf(1) } // 1 = KTP, 2 = Passport
+    var ktpNumber by remember { mutableStateOf("") }
+    var passportNumber by remember { mutableStateOf("") }
+    var birthPlace by remember { mutableStateOf("") }
+    var birthDate by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var npwpNumber by remember { mutableStateOf("") }
+    var rtRw by remember { mutableStateOf("") }
+    var province by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var district by remember { mutableStateOf("") }
+    var subDistrict by remember { mutableStateOf("") }
+    var postalCode by remember { mutableStateOf("") }
+    var addressDetail by remember { mutableStateOf("") }
+    var jobPosition by remember { mutableStateOf("") }
+    var annualIncome by remember { mutableStateOf("") }
+    var companyName by remember { mutableStateOf("") }
+    var companyAddress by remember { mutableStateOf("") }
+
+    // Dialog & Picker States
+    var showSignatureDialog by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    // List Dokumen
+    val photoList = remember {
+        mutableStateListOf(
+            LenderPhotoItem("Foto tanda pengenal", "KTP or passport", "idfie"),
+            LenderPhotoItem("Foto Selfie", "Upload foto selfie", "idhie"),
+            LenderPhotoItem("Foto NPWP", "Foto NPWP", "npim"),
+            LenderPhotoItem("Foto NIB", "Nomor Induk Berusaha", "pbli"),
+            LenderPhotoItem("Bukti bank", "Mutasi rekening / koran", "pbst"),
+            LenderPhotoItem("Tanda Tangan", "Belum Tanda tangan", "tgim")
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Data Pribadi", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color(0xFFF8F8F8))
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            // Section: Bank Card Account
+            SectionTitle("Bank Card Account")
+
+            OutlinedTextField(
+                value = bankName,
+                onValueChange = { bankName = it },
+                label = { Text("Nama Bank") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+            OutlinedTextField(
+                value = accountNumber,
+                onValueChange = { accountNumber = it.filter { char -> char.isDigit() } },
+                label = { Text("Account Number") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+            OutlinedTextField(
+                value = accountName,
+                onValueChange = { accountName = it },
+                label = { Text("Account Owner Name") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            // Section: Document Photo
+            SectionTitle("Document photo")
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(210.dp)
+            ) {
+                itemsIndexed(photoList) { index, item ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
+                            .border(1.dp, Color(0xFFCCCCCC), RoundedCornerShape(4.dp))
+                            .clickable {
+                                if (index == 5) {
+                                    showSignatureDialog = true
+                                } else {
+                                    onSelectPhoto(index) { bitmap ->
+                                        photoList[index] = photoList[index].copy(bitmap = bitmap)
+                                    }
+                                }
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (item.bitmap != null) {
+                                Image(
+                                    bitmap = item.bitmap!!.asImageBitmap(),
+                                    contentDescription = item.title,
+                                    modifier = Modifier.size(40.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Image(
+                                    painter = painterResource(
+                                        id = if (index == 5) R.drawable.iv_data_ic_sign else R.drawable.iv_data_ic_upload_lender
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column {
+                                Text(item.title, fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+                                Text(item.desc, fontSize = 10.sp, color = Color(0x8C000000), maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section: Other Information
+            SectionTitle("Other information")
+
+            OutlinedTextField(
+                value = fullName,
+                onValueChange = { fullName = it },
+                label = { Text("Full name") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            // Document Type Selector
+            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                FilterChip(
+                    selected = docType == 1,
+                    onClick = { docType = 1 },
+                    label = { Text("KTP") },
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                FilterChip(
+                    selected = docType == 2,
+                    onClick = { docType = 2 },
+                    label = { Text("Passport") }
+                )
+            }
+
+            if (docType == 1) {
+                OutlinedTextField(
+                    value = ktpNumber,
+                    onValueChange = { if (it.length <= 16) ktpNumber = it.filter { c -> c.isDigit() } },
+                    label = { Text("KTP Number (16 Digit)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+            } else {
+                OutlinedTextField(
+                    value = passportNumber,
+                    onValueChange = { if (it.length <= 9) passportNumber = it },
+                    label = { Text("Passport (9 Karakter)") },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+            }
+
+            OutlinedTextField(
+                value = birthPlace,
+                onValueChange = { birthPlace = it },
+                label = { Text("Place of Birth") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = birthDate,
+                onValueChange = { birthDate = it },
+                label = { Text("Date of birth (DD/MM/YYYY)") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Gmail mailbox") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = npwpNumber,
+                onValueChange = { if (it.length <= 15) npwpNumber = it.filter { c -> c.isDigit() } },
+                label = { Text("NPWP number (15 Digit)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = rtRw,
+                onValueChange = { rtRw = it },
+                label = { Text("RT / RW") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = province,
+                onValueChange = { province = it },
+                label = { Text("Province") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = city,
+                onValueChange = { city = it },
+                label = { Text("City") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = postalCode,
+                onValueChange = { postalCode = it },
+                label = { Text("Zip Code") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = addressDetail,
+                onValueChange = { addressDetail = it },
+                label = { Text("Detailed Address") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = jobPosition,
+                onValueChange = { jobPosition = it },
+                label = { Text("Job Position") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = annualIncome,
+                onValueChange = { annualIncome = it },
+                label = { Text("Annual income") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            // Section: Company Information
+            SectionTitle("Company information")
+
+            OutlinedTextField(
+                value = companyName,
+                onValueChange = { companyName = it },
+                label = { Text("Company Name") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = companyAddress,
+                onValueChange = { companyAddress = it },
+                label = { Text("Company registered address") },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Submit Button
+            Button(
+                onClick = onSubmitSuccess,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455)),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text("Selanjutnya", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+    // Modal Signature Pad Dialog
+    if (showSignatureDialog) {
+        SignaturePadDialog(
+            onDismiss = { showSignatureDialog = false },
+            onConfirm = { signatureBitmap ->
+                photoList[5] = photoList[5].copy(bitmap = signatureBitmap)
+                showSignatureDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    Text(
+        text = title,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFF262626),
+        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+    )
+}
+
+// Dialog Canvas Tanda Tangan
+@Composable
+fun SignaturePadDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (Bitmap) -> Unit
+) {
+    val path = remember { Path() }
+    var drawTrigger by remember { mutableStateOf(0) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Tanda Tangan Digital", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Tutup")
+                    }
+                }
+
+                Text(
+                    text = "Harap tanda tangan di bawah ini, lalu klik OK.",
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                // Box Canvas tempat coretan Tanda Tangan
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(Color(0xFFF0F0F0), RoundedCornerShape(8.dp))
+                        .pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    path.moveTo(offset.x, offset.y)
+                                },
+                                onDrag = { change, _ ->
+                                    path.lineTo(change.position.x, change.position.y)
+                                    drawTrigger++
+                                }
+                            )
+                        }
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        drawTrigger.let {
+                            drawPath(
+                                path = path,
+                                color = Color.Black,
+                                style = Stroke(width = 4.dp.toPx())
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = {
+                        path.reset()
+                        drawTrigger++
+                    }) {
+                        Text("Clear", color = Color.Gray)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val bitmap = Bitmap.createBitmap(500, 300, Bitmap.Config.ARGB_8888)
+                            onConfirm(bitmap)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
+                    ) {
+                        Text("OK", color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+}
