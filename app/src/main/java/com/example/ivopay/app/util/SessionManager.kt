@@ -59,6 +59,10 @@ class SessionManager(context: Context) {
         return sharedPreferences.getBoolean(KEY_PGSH, false)
     }
 
+    fun getApiService(): String? {
+        return sharedPreferences.getString(KEY_API_SERVICE, "")
+    }
+
     // ==========================================
     // SETTER METHODS
     // ==========================================
@@ -104,5 +108,6 @@ class SessionManager(context: Context) {
         private const val KEY_PGSH = "pgsh"
         private const val KEY_MOBILE_NUMBER = "mobile_number"
         private const val KEY_FULL_NAME = "full_name"
+        private const val KEY_API_SERVICE = "api_service"
     }
 }
