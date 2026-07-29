@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.navigation.compose.rememberNavController
+import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.Utils
 import com.example.ivopay.app.ui.navigation.AppNavigation
 import com.example.ivopay.app.ui.navigation.Screen
@@ -15,6 +16,7 @@ class MainActivity : ComponentActivity() {
 
         // Menangkap data rute yang dikirim oleh SplashActivity (Default: Screen.SelectRole)
         val targetRoute = intent.getStringExtra("TARGET_ROUTE") ?: Screen.SelectRole
+        LogUtils.d("Target Route -> $targetRoute")
 
         setContent {
             val navController = rememberNavController()

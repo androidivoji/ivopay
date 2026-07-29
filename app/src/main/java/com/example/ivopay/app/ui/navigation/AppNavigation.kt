@@ -75,9 +75,10 @@ fun AppNavigation(
                         popUpTo(Screen.SelectRole) { inclusive = true }
                     }
                 },
-                onNavigateToLenderLogin = {
-//                    navController.navigate("${Screen.Login}?role=1")
-                    navController.navigate(Screen.LenderBasicInfo)
+                onNavigateToLenderLogin = { isLender ->
+                    // Membawa parameter role=1 jika isLender == true
+                    val roleParam = if (isLender) "1" else "0"
+                    navController.navigate("${Screen.Login}?role=$roleParam")
                 },
                 onNavigateToLenderBasicInfo = {
                     navController.navigate(Screen.LenderBasicInfo)
@@ -105,6 +106,8 @@ fun AppNavigation(
         composable(Screen.Main) {
             MainDashboardScreen(
                 isLogin = sessionManager.isUserLoggedIn(),
+                userName = sessionManager.getUserFullName(),
+                userPhone = sessionManager.getMobileNumber(),
                 onNavigateToDetail = { route -> navController.navigate(route) },
                 onNavigateToLogin = { navController.navigate(Screen.Login) },
                 onUploadTrackingEvent = { /* Tracking event */ }
@@ -119,13 +122,33 @@ fun AppNavigation(
             )
         }
 
-        // 3. Screen Login
-        composable(Screen.Login) {
-            val loginViewModel = remember { LoginViewModel(context) }
+        // 3. Screen Login (Mendukung query parameter ?role=1)
+        composable(
+            route = "${Screen.Login}?role={role}",
+            arguments = listOf(
+                navArgument("role") {
+                    type = NavType.StringType
+                    defaultValue = "0"
+                }
+            )
+        ) { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role") ?: "0"
+            val isLender = role == "1"
+
+            val loginViewModel = remember {
+                LoginViewModel(context).apply {
+                    setRole(isLender)
+                }
+            }
+
             LoginScreen(
                 viewModel = loginViewModel,
                 onBackClick = { navController.popBackStack() },
-                onNavigate = { route -> navController.navigate(route) }
+                onNavigate = { targetRoute ->
+                    navController.navigate(targetRoute) {
+                        popUpTo(Screen.SelectRole) { inclusive = true }
+                    }
+                }
             )
         }
 

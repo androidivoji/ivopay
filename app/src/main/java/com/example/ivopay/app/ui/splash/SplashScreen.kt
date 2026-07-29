@@ -40,13 +40,11 @@ fun SplashScreen(viewModel: SplashViewModel, onNavigate: (SplashNavigationState)
 
     // Triger pencarian rute saat pertama kali layar dimuat (mounted)
     LaunchedEffect(Unit) {
-        Log.d("XBZ", "SplashScreen Composable: LaunchedEffect Unit dipanggil")
         viewModel.judgeAndJump()
     }
 
     // Mengamati perubahan state untuk pindah halaman
     LaunchedEffect(navState) {
-        Log.d("XBZ", "SplashScreen Composable: navState berubah menjadi -> $navState")
         when (navState) {
             is SplashNavigationState.GoToLMain,
             is SplashNavigationState.GoToMain,

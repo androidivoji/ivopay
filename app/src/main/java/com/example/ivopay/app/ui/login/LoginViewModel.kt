@@ -1,11 +1,13 @@
 package com.example.ivopay.app.ui.login
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ivopay.app.ui.navigation.Screen
 import com.example.ivopay.app.util.SessionManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,7 +17,11 @@ class LoginViewModel(private val context: Context) : ViewModel() {
 
     private val sessionManager = SessionManager(context)
 
-    // State untuk form login (menggantikan ref/data di Vue)
+    // Flag Role (1 = Lender, 0 = Borrower/Default)
+    var isLenderRole by mutableStateOf(false)
+    var userRole by mutableStateOf(0) // 1: Lender, 0: Borrower
+
+    // State untuk form login
     var userPhone by mutableStateOf("")
     var verCode by mutableStateOf("")
     var checkAgree by mutableStateOf(true)
@@ -33,7 +39,13 @@ class LoginViewModel(private val context: Context) : ViewModel() {
     var showLoginTipPop by mutableStateOf(false)
     var inmText by mutableStateOf("")
 
-    // Computed: Validasi Nomor Telepon (computed: phoneInputValid)
+    // Setter untuk menentukan role saat pengguna datang dari SelectRoleScreen
+    fun setRole(isLender: Boolean) {
+        this.isLenderRole = isLender
+        this.userRole = if (isLender) 1 else 0
+    }
+
+    // Computed: Validasi Nomor Telepon
     val isPhoneValid: Boolean
         get() {
             return if (userPhone.startsWith("08")) {
@@ -45,13 +57,13 @@ class LoginViewModel(private val context: Context) : ViewModel() {
             }
         }
 
-    // Computed: Validasi Form OTP (computed: inputValid)
+    // Computed: Validasi Form OTP (Memastikan verCode 4 digit di kedua kondisi)
     val isFormValid: Boolean
         get() {
             return if (userPhone.startsWith("08")) {
                 userPhone.length in 10..13 && verCode.length == 4 && checkAgree
             } else if (userPhone.startsWith("8")) {
-                userPhone.length in 9..12 && checkAgree
+                userPhone.length in 9..12 && verCode.length == 4 && checkAgree
             } else {
                 false
             }
@@ -71,7 +83,7 @@ class LoginViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    // Simulasi aksi saat "Selanjutnya" diklik (onNextClick)
+    // Simulasi aksi saat "Selanjutnya" diklik
     fun handleNextClick(
         onGestureLogin: () -> Unit,
         onFaceLogin: () -> Unit,
@@ -83,7 +95,7 @@ class LoginViewModel(private val context: Context) : ViewModel() {
             delay(1000) // Simulasi Hit API _getLoginWay
             isLoading = false
 
-            // Contoh simulasi respon dari backend (resData)
+            // Simulasi respon dari backend
             val resDataGesture = false
             val resDataAig = false
             val resDataVLtr = false
@@ -105,22 +117,39 @@ class LoginViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    // Simulasi Login / Registrasi (loginClick)
+    // Handling Login / Registrasi
     fun handleLoginClick(onSuccess: (targetRoute: String) -> Unit) {
         isLoading = true
         viewModelScope.launch {
-            delay(1000) // Simulasi Hit API L_V_C
+            delay(1000) // Simulasi Hit API Login
             isLoading = false
 
-            // Simpan Session ke EncryptedSharedPreferences
+            // Tentukan rute dinamis berdasarkan role yang diset
+            val activeRole = if (isLenderRole || userRole == 1) 1 else 0
+            val targetRoute = if (activeRole == 1) {
+                Screen.LenderMain // "l_main"
+            } else {
+                Screen.Main       // "main"
+            }
+
+            Log.d("LoginViewModel", "Login Success. Role: $activeRole -> Route: $targetRoute")
+            val formattedPhone = when {
+                userPhone.startsWith("08") -> userPhone
+                userPhone.startsWith("8") -> "0$userPhone"
+                else -> userPhone
+            }
+
+            // Simpan Session ke EncryptedSharedPreferences dengan role yang sesuai
             sessionManager.saveLoginSession(
                 token = "sample_jwt_token",
-                role = 0,
-                hasPgsh = false
+                role = activeRole,
+                hasPgsh = false,
+                mobile = formattedPhone,
+                fullName = ""
             )
 
-            // Menentukan arah rute berikutnya
-            onSuccess("main")
+            // Kirimkan targetRoute hasil evaluasi (bukan hardcoded)
+            onSuccess(targetRoute)
         }
     }
 

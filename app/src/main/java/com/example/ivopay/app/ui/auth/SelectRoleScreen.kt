@@ -18,7 +18,7 @@ fun SelectRoleScreen(
     isLoggedIn: Boolean = false,
     onUploadTrackingEvent: (String) -> Unit = {},
     onNavigateToBorrowerMain: () -> Unit = {},
-    onNavigateToLenderLogin: () -> Unit = {},
+    onNavigateToLenderLogin: (isLender: Boolean) -> Unit = {},
     onNavigateToLenderBasicInfo: () -> Unit = {},
     onNavigateToLenderMain: () -> Unit = {},
     onFetchLenderUserInfo: (onSuccess: (hasInm: Boolean) -> Unit) -> Unit = {}
@@ -37,14 +37,19 @@ fun SelectRoleScreen(
             }
         } else {
             // Pindah ke PhoneLogin dengan role = '1'
-            onNavigateToLenderLogin()
+            onNavigateToLenderLogin(true)
         }
     }
 
     // Fungsi handler untuk klik Borrower (onJumpBorrower)
     val handleJumpBorrower = {
         onUploadTrackingEvent("N1")
-        onNavigateToBorrowerMain()
+        if (isLoggedIn) {
+            onNavigateToBorrowerMain()
+        } else {
+            // Jika Borrower belum login dan ingin login dulu
+            onNavigateToLenderLogin(false)
+        }
     }
 
     Column(

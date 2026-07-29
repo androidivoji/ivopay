@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.ivopay.R
+import com.example.ivopay.app.ui.navigation.Screen
 
 val BrandRed = Color(0xFFBD0100)
 val ActiveRed = Color(0xFFFE5455)
@@ -262,7 +263,7 @@ fun LoginScreen(
                             viewModel.handleNextClick(
                                 onGestureLogin = { onNavigate("GestureLogin") },
                                 onFaceLogin = { onNavigate("FaceCheckWaitingPage") },
-                                onBaseInfo = { onNavigate("BaseInfo") },
+                                onBaseInfo = { onNavigate(Screen.BaseInfo) },
                                 onShowOtpInput = { viewModel.startCountDown() }
                             )
                         }
@@ -371,7 +372,7 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             viewModel.showLoginTipPop = false
-                            onNavigate("main")
+                            onNavigate(Screen.Main)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = ActiveRed),
                         modifier = Modifier.fillMaxWidth()

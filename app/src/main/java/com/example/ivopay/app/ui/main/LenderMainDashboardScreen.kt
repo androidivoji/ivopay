@@ -229,11 +229,3 @@ fun LenderMainDashboardScreen(
         }
     }
 }
-
-// Layar Sementara untuk Representasi Halaman Internal Tab
-@Composable
-fun DummyScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = title, fontSize = 18.sp, color = Color.Gray)
-    }
-}

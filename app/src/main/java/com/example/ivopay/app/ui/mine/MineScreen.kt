@@ -124,20 +124,20 @@ fun MineScreen(
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
-                    text = if (isLoggedIn) (userName ?: "") else "Selamat Datang",
+                    text = if (isLoggedIn) (userName?.ifEmpty { null } ?: "Pengguna") else "Selamat Datang",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
-                if (isLoggedIn && !userPhone.isNull_or_Empty()) {
+
+                // Tampilkan nomor phone jika user login dan userPhone tidak kosong
+                if (isLoggedIn && !userPhone.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    userPhone?.let {
-                        Text(
-                            text = it,
-                            fontSize = 16.sp,
-                            color = Color.White
-                        )
-                    }
+                    Text(
+                        text = userPhone,
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
                 }
             }
         }

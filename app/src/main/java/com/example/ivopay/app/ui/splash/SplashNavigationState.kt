@@ -27,26 +27,21 @@ class SplashViewModel(context: Context) : ViewModel() {
 
     fun judgeAndJump() {
         viewModelScope.launch {
-            Log.d("XBZ", "judgeAndJump() dipanggil") // Log 1: Cek apakah fungsi dipanggil
             _navigationState.value = SplashNavigationState.Loading
             try {
                 val isLoggedIn = sessionManager.isUserLoggedIn()
-                Log.d("XBZ", "Status Login: $isLoggedIn") // Log 2: Cek status login
 
                 if (isLoggedIn) {
                     val role = sessionManager.getUserRole()
-                    Log.d("XBZ", "User Logged In - Role: $role")
                     if (role == 1) {
                         _navigationState.value = SplashNavigationState.GoToLMain
                     } else {
                         _navigationState.value = SplashNavigationState.GoToMain
                     }
                 } else {
-                    Log.d("XBZ", "User Belum Login -> Menjalankan fetchRoleConfig()")
                     fetchRoleConfig()
                 }
             } catch (e: Exception) {
-                Log.e("XBZ", "Error pada judgeAndJump: ${e.message}", e)
                 _navigationState.value = SplashNavigationState.Error
             }
         }
