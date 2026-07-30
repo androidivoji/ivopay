@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.utilcodex)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    implementation(libs.okhttp.logging)
     implementation(libs.coil.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
