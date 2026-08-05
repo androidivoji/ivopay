@@ -68,6 +68,31 @@ class SessionManager(context: Context) {
         sharedPreferences.edit().putBoolean(KEY_PGSH, hasPgsh).apply()
     }
 
+    // Mendapatkan Old Token (token pemulihan)
+    fun getOldToken(): String? {
+        return sharedPreferences.getString(KEY_OLD_TOKEN, null)
+    }
+
+    // Menyimpan Old Token
+    fun saveOldToken(token: String) {
+        sharedPreferences.edit().putString(KEY_OLD_TOKEN, token).apply()
+    }
+
+    // Menghapus Old Token
+    fun removeOldToken() {
+        sharedPreferences.edit().remove(KEY_OLD_TOKEN).apply()
+    }
+
+    // Mendapatkan nomor telepon yang tersimpan (untuk gesture login check)
+    fun getSavedPhoneNumber(): String? {
+        return sharedPreferences.getString(KEY_SAVED_PHONE_NUMBER, null)
+    }
+
+    // Menyimpan nomor telepon untuk pengecekan selanjutnya
+    fun saveSavedPhoneNumber(phone: String) {
+        sharedPreferences.edit().putString(KEY_SAVED_PHONE_NUMBER, phone).apply()
+    }
+
     // ==========================================
     // SETTER METHODS
     // ==========================================
@@ -114,5 +139,7 @@ class SessionManager(context: Context) {
         private const val KEY_MOBILE_NUMBER = "mobile_number"
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_API_SERVICE = "api_service"
+        private const val KEY_OLD_TOKEN = "oldTkn"
+        private const val KEY_SAVED_PHONE_NUMBER = "savePhoneNumber"
     }
 }

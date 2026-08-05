@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.ivopay.app.ui.auth.SelectRoleScreen
+import com.example.ivopay.app.ui.auth.SelectRoleViewModel
 import com.example.ivopay.app.ui.lender.borrower.BorrowerDetailScreen
 import com.example.ivopay.app.ui.lender.detail.AlreadyPaidBillDetailScreen
 import com.example.ivopay.app.ui.lender.detail.ChooseContractsScreen
@@ -51,6 +52,7 @@ object Screen {
     const val ApplyLoan = "ApplyLoan"
     const val AccountLogout = "AccountLogoutPage"
     const val LenderBasicInfo = "lender_basic_info"
+    const val GestureLogin = "GestureLogin"
 }
 
 @Composable
@@ -67,6 +69,8 @@ fun AppNavigation(
     ) {
         // 0. Screen Select Role (Pilih Borrower / Lender)
         composable(Screen.SelectRole) {
+            val roleViewModel: SelectRoleViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+            
             SelectRoleScreen(
                 isLoggedIn = sessionManager.isUserLoggedIn(),
                 onUploadTrackingEvent = { /* Logika tracking */ },
@@ -89,15 +93,15 @@ fun AppNavigation(
                     }
                 },
                 onFetchLenderUserInfo = { onFinished ->
-                    val hasInm = false // Sesuaikan dengan response API / data session
-                    onFinished(hasInm)
-                    if (!hasInm) {
-                        navController.navigate(Screen.LenderBasicInfo)
-                    } else {
-                        navController.navigate(Screen.LenderMain) {
-                            popUpTo(Screen.SelectRole) { inclusive = true }
+                    roleViewModel.fetchLenderUserInfo(
+                        onSuccess = { hasInm ->
+                            onFinished(hasInm)
+                        },
+                        onError = { error ->
+                            // Handle error, misal tampilkan toast
+                            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_SHORT).show()
                         }
-                    }
+                    )
                 }
             )
         }
@@ -150,6 +154,14 @@ fun AppNavigation(
                     }
                 }
             )
+        }
+
+        composable(
+            route = "${Screen.GestureLogin}?phone={phone}",
+            arguments = listOf(navArgument("phone") { defaultValue = "" })
+        ) { backStackEntry ->
+            val phone = backStackEntry.arguments?.getString("phone") ?: ""
+            // GestureLoginScreen(phone = phone, onNavigate = { ... })
         }
 
         // 4. Screen Logout dan Profile

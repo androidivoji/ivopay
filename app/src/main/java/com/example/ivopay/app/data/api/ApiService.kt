@@ -1,5 +1,7 @@
 package com.example.ivopay.app.data.api
 
+import com.example.ivopay.app.data.model.LenderUserInfoResponse
+import com.example.ivopay.app.data.model.LoginWayResponse
 import com.example.ivopay.app.data.model.MgeaResponse
 import com.example.ivopay.app.data.network.CryptoInterceptor
 import com.google.gson.JsonObject
@@ -16,6 +18,16 @@ interface ApiService {
     suspend fun postMgea(
         @Body requestBody: JsonObject = JsonObject()
     ): Response<MgeaResponse>
+
+    @POST("v2/api/cugo")
+    suspend fun getLenderUserInfo(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<LenderUserInfoResponse>
+
+    @POST("v2/api/lg/m")
+    suspend fun getLoginWay(
+        @Body requestBody: JsonObject
+    ): Response<LoginWayResponse>
 }
 
 object NetworkClient {

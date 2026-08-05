@@ -7,8 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ivopay.app.data.api.NetworkClient
 import com.example.ivopay.app.ui.navigation.Screen
 import com.example.ivopay.app.util.SessionManager
+import com.google.gson.JsonObject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -83,36 +85,73 @@ class LoginViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    // Simulasi aksi saat "Selanjutnya" diklik
+    // Simulasi aksi saat "Selanjutnya" diklik (Sudah disesuaikan dengan logika Vue)
     fun handleNextClick(
-        onGestureLogin: () -> Unit,
+        onSuccessAutoLogin: (targetRoute: String) -> Unit,
+        onGestureLogin: (phone: String) -> Unit,
         onFaceLogin: () -> Unit,
         onBaseInfo: () -> Unit,
-        onShowOtpInput: () -> Unit
+        onShowOtpInput: () -> Unit,
+        onError: (String) -> Unit
     ) {
         isLoading = true
         viewModelScope.launch {
-            delay(1000) // Simulasi Hit API _getLoginWay
-            isLoading = false
+            try {
+                // 1. Cek pemulihan token (Token Recovery)
+                val oldTkn = sessionManager.getOldToken()
+                val savedPhone = sessionManager.getSavedPhoneNumber()
 
-            // Simulasi respon dari backend
-            val resDataGesture = false
-            val resDataAig = false
-            val resDataVLtr = false
-            val resDataWa = true
-
-            when {
-                resDataGesture -> onGestureLogin()
-                resDataAig -> onFaceLogin()
-                resDataVLtr -> onBaseInfo()
-                else -> {
-                    // Masuk ke tahap OTP
-                    showLoginWay = true
-                    showWaLogin = resDataWa
-                    codeWayChecked = if (resDataWa) "1" else "2"
-                    haveInputNumber = true
-                    onShowOtpInput()
+                if (!oldTkn.isNullOrEmpty() && savedPhone == userPhone) {
+                    // Pulihkan session dan langsung masuk ke main
+                    sessionManager.saveLoginSession(
+                        token = oldTkn,
+                        role = userRole,
+                        hasPgsh = sessionManager.getHasPgsh(),
+                        mobile = userPhone
+                    )
+                    sessionManager.removeOldToken()
+                    isLoading = false
+                    val targetRoute = if (userRole == 1) Screen.LenderMain else Screen.Main
+                    onSuccessAutoLogin(targetRoute)
+                    return@launch
                 }
+
+                // 2. Hit API getLoginWay (/api/lg/m)
+                val requestBody = JsonObject().apply {
+                    addProperty("mob", userPhone)
+                }
+                
+                val response = NetworkClient.apiService.getLoginWay(requestBody)
+                isLoading = false
+
+                if (response.isSuccessful) {
+                    val resData = response.body()?.data
+                    if (resData != null) {
+                        // 3. Logika Navigasi berdasarkan response
+                        if (resData.hasGesture && !sessionManager.getSavedPhoneNumber().isNullOrEmpty()) {
+                            // Pindah ke Gesture Login jika data gesture ada dan nomor HP terdaftar
+                            onGestureLogin(userPhone)
+                        } else if (resData.hasFaceLogin) {
+                            onFaceLogin()
+                        } else if (resData.vLtr) {
+                            onBaseInfo()
+                        } else {
+                            // Scenario 4: Masuk ke tahap pilihan OTP (WA / SMS)
+                            showLoginWay = true
+                            showWaLogin = resData.hasWaLogin
+                            codeWayChecked = if (resData.hasWaLogin) "1" else "2"
+                            haveInputNumber = true
+                            onShowOtpInput()
+                        }
+                    } else {
+                        onError("Data tidak ditemukan")
+                    }
+                } else {
+                    onError("Error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                isLoading = false
+                onError(e.message ?: "Koneksi bermasalah")
             }
         }
     }

@@ -51,6 +51,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import com.example.ivopay.R
 import com.example.ivopay.app.ui.navigation.Screen
 
@@ -65,6 +67,7 @@ fun LoginScreen(
     onNavigate: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -261,10 +264,18 @@ fun LoginScreen(
                             }
                         } else {
                             viewModel.handleNextClick(
-                                onGestureLogin = { onNavigate("GestureLogin") },
+                                onSuccessAutoLogin = { targetRoute ->
+                                    onNavigate(targetRoute)
+                                },
+                                onGestureLogin = { phone -> 
+                                    onNavigate("GestureLogin?phone=$phone") 
+                                },
                                 onFaceLogin = { onNavigate("FaceCheckWaitingPage") },
                                 onBaseInfo = { onNavigate(Screen.BaseInfo) },
-                                onShowOtpInput = { viewModel.startCountDown() }
+                                onShowOtpInput = { viewModel.startCountDown() },
+                                onError = { error ->
+                                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                                }
                             )
                         }
                     },
