@@ -30,7 +30,9 @@ object MyEncryptUtil {
             sSrc // Jika bukan JSON valid, gunakan string asli
         }
         Log.d("XBZ", "encryptStr\n$formattedJson")
-        val str = Sha256.getSHA256(JniFuncs.getSalt("ivoji",ChannelUtils.appChannel))
+        // Menggunakan salt statis sesuai permintaan user untuk menggantikan JNI
+        val staticSalt = "bA7R7324zJy@loVL"
+        val str = Sha256.getSHA256(staticSalt)
         val vi = str!!.substring(str.length - 16, str.length)
         val key = str.substring(0, 32)
         val raw = key.toByteArray(charset("utf-8"))
@@ -65,7 +67,8 @@ object MyEncryptUtil {
             Log.d("XBZ", "║ Decoded data length: ${data.size} bytes")
 
             val cipher = Cipher.getInstance(CIPHER_ALGORITHM)
-            val str = Sha256.getSHA256(JniFuncs.getSalt("ivoji", ChannelUtils.appChannel))
+            val staticSalt = "bA7R7324zJy@loVL"
+            val str = Sha256.getSHA256(staticSalt)
             val vi = str!!.substring(str.length - 16, str.length)
             val key = str.substring(0, 32)
 

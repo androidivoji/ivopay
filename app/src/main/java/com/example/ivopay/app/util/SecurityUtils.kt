@@ -2,11 +2,55 @@ package com.example.ivopay.app.util
 
 object SecurityUtils {
 
+    /**
+     * Meniru logika addSign dari project Vue:
+     * 1. srcString = METHOD + URL
+     * 2. Sort keys
+     * 3. Append key + trimmedValue ke srcString
+     * 4. Append salt
+     * 5. SHA1(srcString).toUpperCase()
+     */
+    fun generateSign(method: String, url: String, data: MutableMap<String, Any>): String? {
+        val salt = "bA7R7324zJy@loVL"
+        
+        // Pastikan URL tidak berakhir dengan slash untuk konsistensi dengan verifyStr server
+        val cleanUrl = if (url.endsWith("/")) url.substring(0, url.length - 1) else url
+        
+        val keys = data.keys.toMutableList().sorted()
+        
+        val sb = StringBuilder()
+        sb.append(method.uppercase())
+        sb.append(cleanUrl)
+        
+        for (key in keys) {
+            val value = data[key]
+            if (key == "sign") continue // Jangan masukkan diri sendiri
+            
+            if (value == null || value.toString().isEmpty()) {
+                data.remove(key) // Hapus dari data agar tidak dikirim ke server (sesuai Vue)
+            } else {
+                val trimmedValue = value.toString().trim()
+                data[key] = trimmedValue
+                sb.append(key).append(trimmedValue)
+            }
+        }
+        
+        sb.append(salt)
+        val verifyStr = sb.toString()
+        android.util.Log.d("SIGN_TEST", "verifyStr: $verifyStr")
+        
+        val sign = Sha1.getSHA1(verifyStr)?.uppercase()
+        android.util.Log.d("SIGN_TEST", "generated sign: $sign")
+        return sign
+    }
+
     // Ganti dari: signBySalty(params)
     // Berfungsi melakukan hashing/signing parameter request menggunakan key di C++ (JNI)
     fun signBySalty(params: String, channel: String): String? {
         return try {
-            JniFuncs.getSaltySign(params, channel)
+            // Logika signing manual: SHA256(params + salt)
+            val salt = "bA7R7324zJy@loVL"
+            Sha256.getSHA256(params + salt)
         } catch (e: Exception) {
             null
         }

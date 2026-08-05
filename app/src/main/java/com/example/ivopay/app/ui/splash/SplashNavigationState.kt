@@ -71,37 +71,50 @@ class SplashViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             _navigationState.value = SplashNavigationState.Loading
 
-            // 1. Hit API POST /v2/api/mgea
-            hitMgeaApi()
+            // 1. Hit API POST /v2/api/mgea dan dapatkan status pgsh
+            val hasPgsh = hitMgeaApi()
 
-            // 2. Tahan splash minimal 2 detik agar logo/branding tetap terlihat
+            // 2. Tahan splash minimal 2 detik
             delay(2000)
 
-            // 3. Tentukan arah navigasi berdasarkan status login
+            // 3. Tentukan arah navigasi berdasarkan status login dan pgsh
             val isLoggedIn = sessionManager.isUserLoggedIn()
             val role = sessionManager.getUserRole()
 
-            if (isLoggedIn && role == 1) {
-                _navigationState.value = SplashNavigationState.GoToLMain
+            if (isLoggedIn) {
+                if (role == 1) {
+                    _navigationState.value = SplashNavigationState.GoToLMain
+                } else {
+                    _navigationState.value = SplashNavigationState.GoToMain
+                }
             } else {
-                _navigationState.value = SplashNavigationState.GoToMain
+                if (hasPgsh) {
+                    _navigationState.value = SplashNavigationState.GoToSelectRole
+                } else {
+                    _navigationState.value = SplashNavigationState.GoToMain
+                }
             }
         }
     }
 
-    private suspend fun hitMgeaApi() {
+    private suspend fun hitMgeaApi(): Boolean {
+        var pgshResult = false
         try {
             Log.d("MGEA_TEST", "Memulai Hit API POST ke https://devapi.ivoji.id/v2/api/mgea ...")
 
             val requestBody = JsonObject().apply {
-                // addProperty("key", "value") // Isi jika API membutuhkan parameter
+                addProperty("a", "ivoji") // Parameter wajib sesuai server log
             }
 
-            val response = NetworkClient.apiService.postMgea()
+            val response = NetworkClient.apiService.postMgea(requestBody)
 
             if (response.isSuccessful) {
                 val body = response.body()
                 Log.d("MGEA_TEST", "SUCCESS (${response.code()}): $body")
+                
+                // Ambil pgsh dari data response asli
+                pgshResult = body?.data?.cme?.pgsh ?: false
+                sessionManager.savePgshStatus(pgshResult)
             } else {
                 val errorBody = response.errorBody()?.string()
                 Log.e("MGEA_TEST", "FAILED (${response.code()}): $errorBody")
@@ -109,5 +122,6 @@ class SplashViewModel(context: Context) : ViewModel() {
         } catch (e: Exception) {
             Log.e("MGEA_TEST", "ERROR/EXCEPTION: ${e.message}", e)
         }
+        return pgshResult
     }
 }

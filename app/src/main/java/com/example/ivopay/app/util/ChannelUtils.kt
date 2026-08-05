@@ -5,6 +5,12 @@ import com.blankj.utilcode.util.MetaDataUtils
 object ChannelUtils {
     val isTestEnv: Boolean
         get() = appChannel.equals("TestEnv", ignoreCase = true)
+    
     val appChannel: String
-        get() = MetaDataUtils.getMetaDataInApp("APP_CHANNEL")
+        get() = try {
+            val channel = MetaDataUtils.getMetaDataInApp("APP_CHANNEL")
+            if (channel.isNullOrEmpty()) "official" else channel
+        } catch (e: Exception) {
+            "official"
+        }
 }

@@ -1,6 +1,7 @@
 package com.example.ivopay.app.data.api
 
 import com.example.ivopay.app.data.model.MgeaResponse
+import com.example.ivopay.app.data.network.CryptoInterceptor
 import com.google.gson.JsonObject
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -21,10 +22,13 @@ object NetworkClient {
     private const val BASE_URL = "https://devapi.ivoji.id/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY // Menampilkan seluruh detail request & response body
+        level = HttpLoggingInterceptor.Level.BODY
     }
 
+    private val cryptoInterceptor = CryptoInterceptor()
+
     private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(cryptoInterceptor) // Enkripsi/Dekripsi dilakukan sebelum logging agar data asli terlihat di log (atau sesuaikan urutan)
         .addInterceptor(loggingInterceptor)
         .build()
 

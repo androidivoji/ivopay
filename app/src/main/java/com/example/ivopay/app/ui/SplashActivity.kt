@@ -5,7 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent // Sesuaikan nama activity utama kamu
+import androidx.activity.compose.setContent
+import com.blankj.utilcode.util.Utils
 import com.example.ivopay.MainActivity
 import com.example.ivopay.app.ui.navigation.Screen
 import com.example.ivopay.app.ui.splash.SplashNavigationState
@@ -17,6 +18,7 @@ class SplashActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Utils.init(application)
 
         val viewModel = SplashViewModel(applicationContext)
 

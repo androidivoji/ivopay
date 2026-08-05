@@ -26,6 +26,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity" />
+
+        <meta-data
+            android:name="APP_CHANNEL"
+            android:value="official" />
     </application>
 
 </manifest>

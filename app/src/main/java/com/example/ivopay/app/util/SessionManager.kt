@@ -63,6 +63,11 @@ class SessionManager(context: Context) {
         return sharedPreferences.getString(KEY_API_SERVICE, "")
     }
 
+    // Update status pgsh secara terpisah
+    fun savePgshStatus(hasPgsh: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_PGSH, hasPgsh).apply()
+    }
+
     // ==========================================
     // SETTER METHODS
     // ==========================================

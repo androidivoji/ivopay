@@ -42,6 +42,7 @@ class SystemBridge(private val context: Context) {
     fun getCommonParams(): Map<String, String> {
         val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
         return mapOf(
+            "a" to "ivoji", // Sesuai dengan request di project Vue
             "app_version" to getAppVersion(),
             "device_id" to deviceId,
             "platform" to "android",
