@@ -50,7 +50,7 @@ object SecurityUtils {
         return try {
             // Logika signing manual: SHA256(params + salt)
             val salt = "bA7R7324zJy@loVL"
-            Sha256.getSHA256(params + salt)
+            Sha256.getSHA256(params + salt)?.uppercase()
         } catch (e: Exception) {
             null
         }
@@ -64,5 +64,19 @@ object SecurityUtils {
     // Ganti dari: decryptOutputParams(params)
     fun decryptParams(params: String): String? {
         return MyEncryptUtil.decryptStr(params)
+    }
+
+    /**
+     * Meniru logika encodeGesture dari project Vue
+     */
+    fun encodeGesture(data: String): String {
+        return if (ChannelUtils.isTestEnv) {
+            // Test Mode: sha1(data + salt).toUpperCase()
+            val salt = "bA7R7324zJy@loVL"
+            Sha1.getSHA1(data + salt)?.uppercase() ?: ""
+        } else {
+            // Production Mode: signBySalty(data)
+            signBySalty(data, ChannelUtils.appChannel) ?: ""
+        }
     }
 }

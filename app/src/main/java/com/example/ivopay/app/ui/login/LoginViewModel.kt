@@ -128,8 +128,8 @@ class LoginViewModel(private val context: Context) : ViewModel() {
                     val resData = response.body()?.data
                     if (resData != null) {
                         // 3. Logika Navigasi berdasarkan response
-                        if (resData.hasGesture && !sessionManager.getSavedPhoneNumber().isNullOrEmpty()) {
-                            // Pindah ke Gesture Login jika data gesture ada dan nomor HP terdaftar
+                        if (resData.hasGesture) {
+                            // Jika g=true, langsung masuk ke Gesture Login sesuai permintaan Anda
                             onGestureLogin(userPhone)
                         } else if (resData.hasFaceLogin) {
                             onFaceLogin()
@@ -177,6 +177,9 @@ class LoginViewModel(private val context: Context) : ViewModel() {
                 userPhone.startsWith("8") -> "0$userPhone"
                 else -> userPhone
             }
+
+            // Simpan nomor HP untuk pengecekan Token Recovery & Gesture di masa depan
+            sessionManager.saveSavedPhoneNumber(formattedPhone)
 
             // Simpan Session ke EncryptedSharedPreferences dengan role yang sesuai
             sessionManager.saveLoginSession(

@@ -1,6 +1,7 @@
 package com.example.ivopay.app.data.api
 
 import com.example.ivopay.app.data.model.LenderUserInfoResponse
+import com.example.ivopay.app.data.model.LoginResponse
 import com.example.ivopay.app.data.model.LoginWayResponse
 import com.example.ivopay.app.data.model.MgeaResponse
 import com.example.ivopay.app.data.network.CryptoInterceptor
@@ -28,6 +29,11 @@ interface ApiService {
     suspend fun getLoginWay(
         @Body requestBody: JsonObject
     ): Response<LoginWayResponse>
+
+    @POST("v1/api/lg/gen")
+    suspend fun gestureLogin(
+        @Body requestBody: JsonObject
+    ): Response<LoginResponse>
 }
 
 object NetworkClient {

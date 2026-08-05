@@ -23,6 +23,8 @@ import com.example.ivopay.app.ui.lender.portofolio.waitsign.PlatformSignContract
 import com.example.ivopay.app.ui.lender.portofolio.waitsign.WaitSignContractsScreen
 import com.example.ivopay.app.ui.loan.ApplyLoanScreen
 import com.example.ivopay.app.ui.loan.ApplySucceedScreen
+import com.example.ivopay.app.ui.login.GestureLoginScreen
+import com.example.ivopay.app.ui.login.GestureLoginViewModel
 import com.example.ivopay.app.ui.login.LoginScreen
 import com.example.ivopay.app.ui.login.LoginViewModel
 import com.example.ivopay.app.ui.main.LenderMainDashboardScreen
@@ -161,7 +163,27 @@ fun AppNavigation(
             arguments = listOf(navArgument("phone") { defaultValue = "" })
         ) { backStackEntry ->
             val phone = backStackEntry.arguments?.getString("phone") ?: ""
-            // GestureLoginScreen(phone = phone, onNavigate = { ... })
+            val gestureViewModel = remember { GestureLoginViewModel(context).apply { init(phone) } }
+            
+            GestureLoginScreen(
+                viewModel = gestureViewModel,
+                onNavigate = { targetRoute ->
+                    navController.navigate(targetRoute) {
+                        popUpTo(Screen.SelectRole) { inclusive = true }
+                    }
+                },
+                onNavigateBackToLogin = { reset ->
+                    if (reset) {
+                        sessionManager.saveSavedPhoneNumber("") // Clear saved phone
+                        navController.navigate(Screen.Login) {
+                            popUpTo(Screen.SelectRole) { inclusive = false }
+                        }
+                    } else {
+                        // Phone Login with send_code=1 logic can be added here
+                        navController.navigate("${Screen.Login}?role=${if(sessionManager.getUserRole()==1) "1" else "0"}")
+                    }
+                }
+            )
         }
 
         // 4. Screen Logout dan Profile
