@@ -1,6 +1,8 @@
 package com.example.ivopay.app.ui.mine
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -86,5 +88,92 @@ class LenderBasicInfoViewModel(context: Context) : ViewModel() {
             // Error parsing or key not found
         }
         return list
+    }
+
+    fun updateLenderUserInfo(
+        bankName: String,
+        accountNumber: String,
+        accountOwner: String,
+        fullName: String,
+        docType: Int,
+        idNumber: String,
+        birthPlace: String,
+        birthDate: String,
+        email: String,
+        npwpNumber: String,
+        rtKey: String,
+        rwKey: String,
+        province: String,
+        city: String,
+        postalCode: String,
+        addressDetail: String,
+        jobKey: String,
+        incomeKey: String,
+        companyName: String,
+        companyAddress: String,
+        photoList: List<LenderPhotoItem>,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            isLoading = true
+            try {
+                val requestBody = JsonObject().apply {
+                    // Bank Info
+                    addProperty("ban", bankName)
+                    addProperty("bant", accountNumber)
+                    addProperty("bante", accountOwner)
+
+                    // Personal Info
+                    addProperty("fun", fullName)
+                    addProperty("inmt", docType)
+                    addProperty("inm", idNumber)
+                    addProperty("bire", birthDate)
+                    addProperty("npnm", npwpNumber)
+                    addProperty("eil", email)
+
+                    // Location
+                    addProperty("lpidn", province)
+                    addProperty("lcidn", city)
+                    addProperty("rtid", rtKey)
+                    addProperty("rwid", rwKey)
+                    addProperty("del", addressDetail)
+                    addProperty("bipl", birthPlace)
+                    addProperty("poco", postalCode)
+
+                    // Work Info
+                    addProperty("posi", jobKey)
+                    addProperty("anin", incomeKey)
+                    addProperty("con", companyName)
+                    addProperty("caddr", companyAddress)
+
+                    // Images (if new ones are selected)
+                    photoList.forEach { item ->
+                        item.bitmap?.let { bitmap ->
+                            addProperty(item.imgName, convertBitmapToBase64(bitmap))
+                        }
+                    }
+                }
+
+                val response = NetworkClient.apiService.updateLenderUserInfo(requestBody)
+                val body = response.body()
+                if (response.isSuccessful && body?.get("code")?.asInt == 1) {
+                    onSuccess()
+                } else {
+                    onError(body?.get("msg")?.asString ?: "Gagal update data")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Terjadi kesalahan")
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    private fun convertBitmapToBase64(bitmap: Bitmap): String {
+        val byteArrayOutputStream = java.io.ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+        return "data:image/png;base64," + Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 }

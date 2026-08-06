@@ -52,6 +52,11 @@ interface ApiService {
     suspend fun getBankList(
         @Body requestBody: JsonObject
     ): Response<BankListResponse>
+
+    @POST("v1/api/cubd")
+    suspend fun updateLenderUserInfo(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

@@ -37,6 +37,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import com.example.ivopay.R
 
@@ -454,9 +456,48 @@ fun LenderBasicInfoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            val context = LocalContext.current
+
             // Submit Button
             Button(
-                onClick = onSubmitSuccess,
+                onClick = {
+                    val currentIdNumber = if (docType == 1) ktpNumber else passportNumber
+                    
+                    // Validasi Foto (seperti di Vue)
+                    val missingPhoto = photoList.any { it.bitmap == null && it.url.isNullOrEmpty() }
+                    if (missingPhoto) {
+                        Toast.makeText(context, "Harap Pilih Foto Terlebih Dahulu!", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    viewModel.updateLenderUserInfo(
+                        bankName = bankName,
+                        accountNumber = accountNumber,
+                        accountOwner = accountName,
+                        fullName = fullName,
+                        docType = docType,
+                        idNumber = currentIdNumber,
+                        birthPlace = birthPlace,
+                        birthDate = birthDate,
+                        email = email,
+                        npwpNumber = npwpNumber,
+                        rtKey = rtKey,
+                        rwKey = rwKey,
+                        province = province,
+                        city = city,
+                        postalCode = postalCode,
+                        addressDetail = addressDetail,
+                        jobKey = jobKey,
+                        incomeKey = incomeKey,
+                        companyName = companyName,
+                        companyAddress = companyAddress,
+                        photoList = photoList,
+                        onSuccess = onSubmitSuccess,
+                        onError = { msg ->
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
