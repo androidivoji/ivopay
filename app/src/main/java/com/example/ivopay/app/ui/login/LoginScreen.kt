@@ -267,8 +267,8 @@ fun LoginScreen(
                                 onSuccessAutoLogin = { targetRoute ->
                                     onNavigate(targetRoute)
                                 },
-                                onGestureLogin = { phone -> 
-                                    onNavigate("GestureLogin?phone=$phone") 
+                                onGestureLogin = { phone, role -> 
+                                    onNavigate("GestureLogin?phone=$phone&role=$role") 
                                 },
                                 onFaceLogin = { onNavigate("FaceCheckWaitingPage") },
                                 onBaseInfo = { onNavigate(Screen.BaseInfo) },

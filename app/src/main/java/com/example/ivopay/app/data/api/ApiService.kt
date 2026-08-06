@@ -4,6 +4,7 @@ import com.example.ivopay.app.data.model.LenderUserInfoResponse
 import com.example.ivopay.app.data.model.LoginResponse
 import com.example.ivopay.app.data.model.LoginWayResponse
 import com.example.ivopay.app.data.model.MgeaResponse
+import com.example.ivopay.app.data.model.RoleResponse
 import com.example.ivopay.app.data.network.CryptoInterceptor
 import com.google.gson.JsonObject
 import okhttp3.OkHttpClient
@@ -34,6 +35,11 @@ interface ApiService {
     suspend fun gestureLogin(
         @Body requestBody: JsonObject
     ): Response<LoginResponse>
+
+    @POST("v2/api/gast")
+    suspend fun getRole(
+        @Body requestBody: JsonObject
+    ): Response<RoleResponse>
 }
 
 object NetworkClient {

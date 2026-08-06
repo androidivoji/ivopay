@@ -159,11 +159,19 @@ fun AppNavigation(
         }
 
         composable(
-            route = "${Screen.GestureLogin}?phone={phone}",
-            arguments = listOf(navArgument("phone") { defaultValue = "" })
+            route = "${Screen.GestureLogin}?phone={phone}&role={role}",
+            arguments = listOf(
+                navArgument("phone") { defaultValue = "" },
+                navArgument("role") { defaultValue = "0" }
+            )
         ) { backStackEntry ->
             val phone = backStackEntry.arguments?.getString("phone") ?: ""
-            val gestureViewModel = remember { GestureLoginViewModel(context).apply { init(phone) } }
+            val role = backStackEntry.arguments?.getString("role") ?: "0"
+            val gestureViewModel = remember { 
+                GestureLoginViewModel(context).apply { 
+                    init(phone, role.toInt()) 
+                } 
+            } 
             
             GestureLoginScreen(
                 viewModel = gestureViewModel,
@@ -179,8 +187,9 @@ fun AppNavigation(
                             popUpTo(Screen.SelectRole) { inclusive = false }
                         }
                     } else {
-                        // Phone Login with send_code=1 logic can be added here
-                        navController.navigate("${Screen.Login}?role=${if(sessionManager.getUserRole()==1) "1" else "0"}")
+                        // Phone Login with send_code=1 logic
+                        val currentRole = gestureViewModel.userRole
+                        navController.navigate("${Screen.Login}?role=$currentRole")
                     }
                 }
             )

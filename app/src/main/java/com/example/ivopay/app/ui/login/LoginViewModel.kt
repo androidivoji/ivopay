@@ -88,7 +88,7 @@ class LoginViewModel(private val context: Context) : ViewModel() {
     // Simulasi aksi saat "Selanjutnya" diklik (Sudah disesuaikan dengan logika Vue)
     fun handleNextClick(
         onSuccessAutoLogin: (targetRoute: String) -> Unit,
-        onGestureLogin: (phone: String) -> Unit,
+        onGestureLogin: (phone: String, role: Int) -> Unit,
         onFaceLogin: () -> Unit,
         onBaseInfo: () -> Unit,
         onShowOtpInput: () -> Unit,
@@ -130,7 +130,7 @@ class LoginViewModel(private val context: Context) : ViewModel() {
                         // 3. Logika Navigasi berdasarkan response
                         if (resData.hasGesture) {
                             // Jika g=true, langsung masuk ke Gesture Login sesuai permintaan Anda
-                            onGestureLogin(userPhone)
+                            onGestureLogin(userPhone, userRole)
                         } else if (resData.hasFaceLogin) {
                             onFaceLogin()
                         } else if (resData.vLtr) {

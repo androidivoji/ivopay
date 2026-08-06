@@ -1,5 +1,7 @@
 package com.example.ivopay.app.util
 
+import android.util.Log
+
 object SecurityUtils {
 
     /**
@@ -13,9 +15,7 @@ object SecurityUtils {
     fun generateSign(method: String, url: String, data: MutableMap<String, Any>): String? {
         val salt = "bA7R7324zJy@loVL"
         
-        // Pastikan URL tidak berakhir dengan slash untuk konsistensi dengan verifyStr server
         val cleanUrl = if (url.endsWith("/")) url.substring(0, url.length - 1) else url
-        
         val keys = data.keys.toMutableList().sorted()
         
         val sb = StringBuilder()
@@ -24,10 +24,10 @@ object SecurityUtils {
         
         for (key in keys) {
             val value = data[key]
-            if (key == "sign") continue // Jangan masukkan diri sendiri
+            if (key == "sign") continue
             
             if (value == null || value.toString().isEmpty()) {
-                data.remove(key) // Hapus dari data agar tidak dikirim ke server (sesuai Vue)
+                data.remove(key)
             } else {
                 val trimmedValue = value.toString().trim()
                 data[key] = trimmedValue
@@ -37,33 +37,31 @@ object SecurityUtils {
         
         sb.append(salt)
         val verifyStr = sb.toString()
-        android.util.Log.d("SIGN_TEST", "verifyStr: $verifyStr")
         
-        val sign = Sha1.getSHA1(verifyStr)?.uppercase()
-        android.util.Log.d("SIGN_TEST", "generated sign: $sign")
-        return sign
+        return Sha1.getSHA1(verifyStr)?.uppercase()
     }
 
-    // Ganti dari: signBySalty(params)
-    // Berfungsi melakukan hashing/signing parameter request menggunakan key di C++ (JNI)
-    // Diupdate agar menggunakan SHA1 sesuai dengan logika project Vue
+    /**
+     * Berfungsi melakukan hashing/signing parameter request menggunakan key di C++ (JNI)
+     * Diupdate agar menggunakan SHA1 sesuai dengan logika project Vue
+     */
     fun signBySalty(params: String, channel: String): String? {
         return try {
-            // Logika signing manual: SHA1(params + salt)
-            // Sesuai dengan Vue: sha1(data + mock.TEST_st).toUpperCase()
             val salt = "bA7R7324zJy@loVL"
-            Sha1.getSHA1(params + salt)?.uppercase()
+            val input = params + salt
+            val result = Sha1.getSHA1(input)?.uppercase()
+            Log.d("SECURITY_DEBUG", "signBySalty input: $input")
+            Log.d("SECURITY_DEBUG", "signBySalty result: $result")
+            result
         } catch (e: Exception) {
             null
         }
     }
 
-    // Ganti dari: encryptInputParams(params)
     fun encryptParams(params: String): String? {
         return MyEncryptUtil.encryptStr(params)
     }
 
-    // Ganti dari: decryptOutputParams(params)
     fun decryptParams(params: String): String? {
         return MyEncryptUtil.decryptStr(params)
     }
@@ -72,9 +70,8 @@ object SecurityUtils {
      * Meniru logika encodeGesture dari project Vue
      */
     fun encodeGesture(data: String): String {
+        val salt = "bA7R7324zJy@loVL"
         return if (ChannelUtils.isTestEnv) {
-            // Test Mode: sha1(data + salt).toUpperCase()
-            val salt = "bA7R7324zJy@loVL"
             Sha1.getSHA1(data + salt)?.uppercase() ?: ""
         } else {
             // Production Mode: signBySalty(data)

@@ -1,5 +1,6 @@
 package com.example.ivopay.app.data.network
 
+import android.util.Log
 import com.blankj.utilcode.util.Utils
 import com.example.ivopay.app.util.SecurityUtils
 import com.example.ivopay.app.util.SessionManager
@@ -117,6 +118,7 @@ class CryptoInterceptor : Interceptor {
         }
 
         // 2. Kirim Request
+        Log.d("XBZ", "--> ${request.method} ${request.url}")
         val response = chain.proceed(request)
 
         // 3. Response Interceptor Logic (Decryption rf)
