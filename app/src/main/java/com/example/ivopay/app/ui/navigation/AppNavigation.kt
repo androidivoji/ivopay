@@ -34,6 +34,7 @@ import com.example.ivopay.app.ui.mine.ContactInfoScreen
 import com.example.ivopay.app.ui.mine.ContactInfoV2Screen
 import com.example.ivopay.app.ui.mine.JobInfoV2Screen
 import com.example.ivopay.app.ui.mine.LenderBasicInfoScreen
+import com.example.ivopay.app.ui.mine.LenderBasicInfoViewModel
 import com.example.ivopay.app.ui.mine.LogoutAndExitScreen
 import com.example.ivopay.app.ui.mine.MyProfileScreen
 import com.example.ivopay.app.ui.mine.PersonalInfoScreen
@@ -327,7 +328,9 @@ fun AppNavigation(
         }
 
         composable(Screen.LenderBasicInfo) {
+            val lenderInfoViewModel = remember { LenderBasicInfoViewModel(context) }
             LenderBasicInfoScreen(
+                viewModel = lenderInfoViewModel,
                 onBackClick = { navController.popBackStack() },
                 onSubmitSuccess = {
                     navController.navigate(Screen.LenderMain) {

@@ -3,10 +3,13 @@ package com.example.ivopay.app.ui.lender.settings
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ivopay.app.data.api.NetworkClient
 import com.example.ivopay.app.util.SessionManager
+import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class SettingMenuItem(
@@ -22,7 +25,7 @@ data class LenderSettingsUiState(
     val menuItems: List<SettingMenuItem> = emptyList()
 )
 
-class LenderSettingsViewModel(context: Context) : ViewModel() {
+class LenderSettingsViewModel(private val context: Context) : ViewModel() {
 
     private val sessionManager = SessionManager(context)
 
@@ -63,20 +66,26 @@ class LenderSettingsViewModel(context: Context) : ViewModel() {
     private fun fetchLenderUserInfo() {
         viewModelScope.launch {
             try {
-                // Simulasi/Pemanggilan API _getLenderUserInfo
-                // val response = repository.getLenderUserInfo()
-                // val fullName = response.pi?.fun ?: ""
-                val fullName = sessionManager.getUserFullName() ?: "Lender User"
-
-                _uiState.value = _uiState.value.copy(name = fullName)
+                // Hit API _getLenderUserInfo (M_U_I: v1/api/cugo)
+                val response = NetworkClient.apiService.getLenderUserInfo(JsonObject())
+                
+                if (response.isSuccessful) {
+                    val resData = response.body()?.data
+                    val fullName = resData?.personalInfo?.fullName
+                    
+                    if (!fullName.isNullOrEmpty()) {
+                        _uiState.update { it.copy(name = fullName) }
+                        // Opsional: Simpan ke session jika diperlukan
+                        sessionManager.saveUserFullName(fullName)
+                    }
+                }
             } catch (e: Exception) {
-                // Handle error silent jika fetching gagal
+                // Handle error silent
             }
         }
     }
 
     private fun getAppVersion(): String {
-        // Logika mengambil versi aplikasi native
-        return "1.0.0"
+        return com.example.ivopay.app.util.SystemBridge(context).getAppVersion()
     }
 }

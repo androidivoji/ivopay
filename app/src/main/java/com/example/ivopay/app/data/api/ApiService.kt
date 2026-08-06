@@ -1,5 +1,7 @@
 package com.example.ivopay.app.data.api
 
+import com.example.ivopay.app.data.model.BankListResponse
+import com.example.ivopay.app.data.model.CommonConfigResponse
 import com.example.ivopay.app.data.model.LenderUserInfoResponse
 import com.example.ivopay.app.data.model.LoginResponse
 import com.example.ivopay.app.data.model.LoginWayResponse
@@ -21,7 +23,7 @@ interface ApiService {
         @Body requestBody: JsonObject = JsonObject()
     ): Response<MgeaResponse>
 
-    @POST("v2/api/cugo")
+    @POST("v1/api/cugo")
     suspend fun getLenderUserInfo(
         @Body requestBody: JsonObject = JsonObject()
     ): Response<LenderUserInfoResponse>
@@ -40,6 +42,16 @@ interface ApiService {
     suspend fun getRole(
         @Body requestBody: JsonObject
     ): Response<RoleResponse>
+
+    @POST("v1/api/c/pa")
+    suspend fun getCommonConfig(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<CommonConfigResponse>
+
+    @POST("v1/api/c/b")
+    suspend fun getBankList(
+        @Body requestBody: JsonObject
+    ): Response<BankListResponse>
 }
 
 object NetworkClient {

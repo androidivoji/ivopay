@@ -16,8 +16,8 @@ class SelectRoleViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.code == 1) {
-                        // Jika su.pi ada dan su.pi.inm bernilai true, berarti info sudah lengkap
-                        val hasInm = body.data?.pi?.inm ?: false
+                        // Jika su.pi ada dan su.pi.inm ada, berarti info sudah lengkap
+                        val hasInm = body.data?.personalInfo?.idNumber != null
                         onSuccess(hasInm)
                     } else {
                         onError(body?.msg ?: "Unknown error")
