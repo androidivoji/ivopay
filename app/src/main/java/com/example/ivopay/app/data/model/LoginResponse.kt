@@ -12,8 +12,11 @@ data class LoginData(
     @SerializedName("tkn") val token: String? = null,
     @SerializedName("mie") val mobile: String? = null,
     @SerializedName("act") val isActive: Boolean = false,
+    @SerializedName("ina") val isIna: Boolean = false,
+    @SerializedName("ngup") val isNgup: Boolean = false,
+    @SerializedName("tome") val tome: String? = null,
     @SerializedName("uico") val isUserInfoCompleted: Boolean = false,
     @SerializedName("lost") val lostStatus: String? = null, // "3" for recovery popup
-    @SerializedName("inm") val inm: String? = null, // KTP for popup
+    @SerializedName("tinm") val inm: String? = null, // KTP/Name for popup, maps from tinm
     @SerializedName("role") val role: Int? = null
 )

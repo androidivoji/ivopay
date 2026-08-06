@@ -68,6 +68,16 @@ class SessionManager(context: Context) {
         sharedPreferences.edit().putBoolean(KEY_PGSH, hasPgsh).apply()
     }
 
+    // Menggantikan localStorage.getItem('act')
+    fun getActStatus(): String {
+        return sharedPreferences.getString(KEY_ACT, "") ?: ""
+    }
+
+    // Menggantikan localStorage.setItem('act', data.act ? "1" : "")
+    fun saveActStatus(isActive: Boolean) {
+        sharedPreferences.edit().putString(KEY_ACT, if (isActive) "1" else "").apply()
+    }
+
     // Mendapatkan Old Token (token pemulihan)
     fun getOldToken(): String? {
         return sharedPreferences.getString(KEY_OLD_TOKEN, null)
@@ -102,6 +112,7 @@ class SessionManager(context: Context) {
         token: String,
         role: Int,
         hasPgsh: Boolean,
+        isActive: Boolean = false,
         mobile: String = "",
         fullName: String = ""
     ) {
@@ -110,6 +121,7 @@ class SessionManager(context: Context) {
             putString(KEY_AUTH_TOKEN, token)
             putInt(KEY_USER_ROLE, role)
             putBoolean(KEY_PGSH, hasPgsh)
+            putString(KEY_ACT, if (isActive) "1" else "")
             putString(KEY_MOBILE_NUMBER, mobile)
             putString(KEY_FULL_NAME, fullName)
             apply()
@@ -139,6 +151,7 @@ class SessionManager(context: Context) {
         private const val KEY_MOBILE_NUMBER = "mobile_number"
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_API_SERVICE = "api_service"
+        private const val KEY_ACT = "act"
         private const val KEY_OLD_TOKEN = "oldTkn"
         private const val KEY_SAVED_PHONE_NUMBER = "savePhoneNumber"
     }

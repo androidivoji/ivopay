@@ -46,11 +46,13 @@ object SecurityUtils {
 
     // Ganti dari: signBySalty(params)
     // Berfungsi melakukan hashing/signing parameter request menggunakan key di C++ (JNI)
+    // Diupdate agar menggunakan SHA1 sesuai dengan logika project Vue
     fun signBySalty(params: String, channel: String): String? {
         return try {
-            // Logika signing manual: SHA256(params + salt)
+            // Logika signing manual: SHA1(params + salt)
+            // Sesuai dengan Vue: sha1(data + mock.TEST_st).toUpperCase()
             val salt = "bA7R7324zJy@loVL"
-            Sha256.getSHA256(params + salt)?.uppercase()
+            Sha1.getSHA1(params + salt)?.uppercase()
         } catch (e: Exception) {
             null
         }

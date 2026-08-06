@@ -63,16 +63,20 @@ class GestureLoginViewModel(private val context: Context) : ViewModel() {
                         val data = body.data
                         loginData = data
                         
-                        // Store session
+                        // Store session sesuai logika Vue
                         sessionManager.saveLoginSession(
                             token = data.token ?: "",
                             role = data.role ?: 0,
-                            hasPgsh = data.isActive, // assuming act maps to something relevant
+                            hasPgsh = data.isActive, // Sesuaikan jika act memiliki kaitan dengan pgsh
+                            isActive = data.isActive,
                             mobile = data.mobile ?: phoneNumber
                         )
+                        // localStorage.setItem('mob', data.mie) & localStorage.setItem('savePhoneNumber', data.mie)
+                        sessionManager.saveMobileNumber(data.mobile ?: phoneNumber)
                         sessionManager.saveSavedPhoneNumber(data.mobile ?: phoneNumber)
                         
                         if (data.lostStatus == "3") {
+                            // this.inm = data.tinm (inm di LoginData sudah di-map ke tinm)
                             inmText = data.inm ?: ""
                             showLoginTipPop = true
                         } else {
