@@ -1,40 +1,42 @@
 package com.example.ivopay.app.ui.lender.home
 
+import com.google.gson.annotations.SerializedName
+
 data class BorrowerItem(
-    val ati: String,
-    val oen: String,        // Nama/Kode Borrower
-    val tma: Double,        // Loan Amount
-    val ife: Double,        // Income
-    val npeo: String,       // Nilai Pinjaman / Rating
-    val bcy: String,        // City
-    val bpo: String,        // Purpose
-    val aut: String,        // Approved Time
+    @SerializedName("ati") val ati: String,
+    @SerializedName("oen") val oen: String,        // Nama/Kode Borrower
+    @SerializedName("tma") val tma: Double,        // Loan Amount
+    @SerializedName("ife") val ife: Double,        // Income
+    @SerializedName("npeo") val npeo: String,       // Nilai Pinjaman / Rating
+    @SerializedName("bcy") val bcy: String,        // City
+    @SerializedName("bpo") val bpo: String,        // Purpose
+    @SerializedName("aut") val aut: String,        // Approved Time
     var isSelect: Boolean = false
 )
 
 data class InsuranceItem(
-    val ian: String,        // Insurance Name
-    val ity: Int,          // Insurance Type
-    val ire: Double,       // Insurance Rate
-    val ima: Double        // Insurance Amount
+    @SerializedName("ian") val ian: String,        // Insurance Name
+    @SerializedName("ity") val ity: Int,          // Insurance Type
+    @SerializedName("ire") val ire: Double,       // Insurance Rate
+    @SerializedName("ima") val ima: Double        // Insurance Amount
 )
 
 data class FinanceDetail(
-    val toa: Int = 0,       // Total Loan Count
-    val atma: Double = 0.0, // Total Amount
-    val trv: Double = 0.0,  // Income Assessment
-    val iet: String = "",   // Repayment Time
-    val iat: Double = 0.0,  // Total Base Payment
-    val isnc: List<InsuranceItem> = emptyList()
+    @SerializedName("toa") val toa: Int = 0,       // Total Loan Count
+    @SerializedName("atma") val atma: Double = 0.0, // Total Amount
+    @SerializedName("trv") val trv: Double = 0.0,  // Income Assessment
+    @SerializedName("iet") val iet: String = "",   // Repayment Time
+    @SerializedName("iat") val iat: Double = 0.0,  // Total Base Payment
+    @SerializedName("isnc") val isnc: List<InsuranceItem> = emptyList()
 )
 
 data class FinanceBill(
-    val bnm: String = "",   // Bank Name
-    val bkn: String = "",   // Bank Code/Branch
-    val pcd: String = "",   // VA Account Number
-    val toa: Int = 0,       // Total Loan
-    val ima: Double = 0.0,  // Insurance Amount
-    val tpa: Double = 0.0   // Total Payment Amount
+    @SerializedName("bnm") val bnm: String = "",   // Bank Name
+    @SerializedName("bkn") val bkn: String = "",   // Bank Code/Branch
+    @SerializedName("pcd") val pcd: String = "",   // VA Account Number
+    @SerializedName("toa") val toa: Int = 0,       // Total Loan
+    @SerializedName("ima") val ima: Double = 0.0,  // Insurance Amount
+    @SerializedName("tpa") val tpa: Double = 0.0   // Total Payment Amount
 )
 
 data class LenderHomeUiState(

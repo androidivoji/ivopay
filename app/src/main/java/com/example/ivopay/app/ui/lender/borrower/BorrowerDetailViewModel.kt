@@ -3,7 +3,8 @@ package com.example.ivopay.app.ui.lender.borrower
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ivopay.R
-import kotlinx.coroutines.delay
+import com.example.ivopay.app.data.api.NetworkClient
+import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,68 +24,96 @@ class BorrowerDetailViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            // TODO: Ganti dengan pemanggilan API real _getBorrowerDetail(ati)
-            delay(600)
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("ati", ati)
+                }
+                val response = NetworkClient.apiService.getBorrowerDetail(requestBody)
+                
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.get("code")?.asInt == 1) {
+                        val su = body.getAsJsonObject("data")
+                        
+                        // Mapping Sections
+                        val sections = mutableListOf<SectionInfo>()
+                        
+                        // Data Pribadi
+                        sections.add(SectionInfo(
+                            iconRes = R.drawable.iv_borrower_ic_name,
+                            title = "Data Pribadi",
+                            contentList = listOf(
+                                InfoItem("Borrower Nama:", su.get("oen")?.asString ?: "-"),
+                                InfoItem("Jenis Kelamin:", su.get("gen")?.asString ?: "-"),
+                                InfoItem("Usia:", su.get("bag")?.asString ?: "-"),
+                                InfoItem("Tempat Lahir:", su.get("bipl")?.asString ?: "-")
+                            )
+                        ))
+                        
+                        // Rincian Tagihan
+                        sections.add(SectionInfo(
+                            iconRes = R.drawable.iv_borrower_ic_details,
+                            title = "Rincian tagihan",
+                            contentList = listOf(
+                                InfoItem("Nilai Pinjaman:", formatRupiah(su.get("tma")?.asDouble ?: 0.0)),
+                                InfoItem("Jatuh Tempo:", su.get("dud")?.asString ?: "-"),
+                                InfoItem("Estimasi pendapatan:", formatRupiah(su.get("trv")?.asDouble ?: 0.0)),
+                                InfoItem("Besaran Komisi:", su.get("bek")?.asString ?: "-"),
+                                InfoItem("PPN Komisi:", su.get("pnk")?.asString ?: "-")
+                            )
+                        ))
+                        
+                        // Data Pekerjaan
+                        sections.add(SectionInfo(
+                            iconRes = R.drawable.iv_borrower_ic_work,
+                            title = "Data Pekerjaan",
+                            contentList = listOf(
+                                InfoItem("Nama Perusahaan:", su.get("con")?.asString ?: "-"),
+                                InfoItem("Jenis Usaha:", su.get("joiun")?.asString ?: "-"),
+                                InfoItem("Jenis Industri:", su.get("iniun")?.asString ?: "-"),
+                                InfoItem("Alamat kantor:", su.get("cad")?.asString ?: "-"),
+                                InfoItem("Lama Bekerja:", su.get("wkdnn")?.asString ?: "-"),
+                                InfoItem("Penghasilan Per Bulan:", su.get("syidn")?.asString ?: "-")
+                            )
+                        ))
+                        
+                        // Nilai Kredit
+                        sections.add(SectionInfo(
+                            iconRes = R.drawable.iv_borrower_ic_score,
+                            title = "Nilai Kredit",
+                            contentList = listOf(
+                                InfoItem("Nilai Kredit(Total 100):", su.get("nk")?.asString ?: "-")
+                            )
+                        ))
 
-            // Simulasi parsing data response (su)
-            val mockSections = listOf(
-                SectionInfo(
-                    iconRes = R.drawable.iv_borrower_ic_name,
-                    title = "Data Pribadi",
-                    contentList = listOf(
-                        InfoItem("Borrower Nama:", "Budi Santoso"),
-                        InfoItem("Jenis Kelamin:", "Laki-laki"),
-                        InfoItem("Usia:", "30 Tahun"),
-                        InfoItem("Tempat Lahir:", "Jakarta")
-                    )
-                ),
-                SectionInfo(
-                    iconRes = R.drawable.iv_borrower_ic_details,
-                    title = "Rincian tagihan",
-                    contentList = listOf(
-                        InfoItem("Nilai Pinjaman:", formatRupiah(5000000.0)),
-                        InfoItem("Jatuh Tempo:", "2026-08-30"),
-                        InfoItem("Estimasi pendapatan:", formatRupiah(250000.0)),
-                        InfoItem("Besaran Komisi:", "2%"),
-                        InfoItem("PPN Komisi:", "11%")
-                    )
-                ),
-                SectionInfo(
-                    iconRes = R.drawable.iv_borrower_ic_work,
-                    title = "Data Pekerjaan",
-                    contentList = listOf(
-                        InfoItem("Nama Perusahaan:", "PT Teknologi Indonesia"),
-                        InfoItem("Jenis Usaha:", "Teknologi Informasi"),
-                        InfoItem("Jenis Industri:", "Software"),
-                        InfoItem("Alamat kantor:", "Jakarta Selatan"),
-                        InfoItem("Lama Bekerja:", "3 Tahun"),
-                        InfoItem("Penghasilan Per Bulan:", formatRupiah(12000000.0))
-                    )
-                ),
-                SectionInfo(
-                    iconRes = R.drawable.iv_borrower_ic_score,
-                    title = "Nilai Kredit",
-                    contentList = listOf(
-                        InfoItem("Nilai Kredit(Total 100):", "85")
-                    )
-                )
-            )
+                        // Mapping Borrow Records (ois)
+                        val records = mutableListOf<BorrowRecord>()
+                        su.getAsJsonArray("ois")?.forEach { element ->
+                            val obj = element.asJsonObject
+                            records.add(BorrowRecord(
+                                tma = formatRupiah(obj.get("tma")?.asDouble ?: 0.0),
+                                pdi = obj.get("pdi")?.asString ?: "-",
+                                dun = obj.get("dun")?.asString ?: "-",
+                                ods = obj.get("ods")?.asString ?: "-"
+                            ))
+                        }
 
-            val mockRecords = listOf(
-                BorrowRecord(
-                    tma = formatRupiah(3000000.0),
-                    pdi = "Lunas",
-                    dun = "Ya",
-                    ods = "Tidak"
-                )
-            )
-
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    borrowerSections = mockSections,
-                    borrowRecordList = mockRecords
-                )
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                borrowerSections = sections,
+                                borrowRecordList = records
+                            )
+                        }
+                    } else {
+                        _uiState.update { it.copy(isLoading = false) }
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

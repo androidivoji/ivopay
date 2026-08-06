@@ -6,7 +6,10 @@ import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ivopay.app.data.api.NetworkClient
 import com.example.ivopay.app.util.SessionManager
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,34 +50,26 @@ class LenderHomeViewModel(private val context: Context) : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            // Dummy Data Peminjam
-            val mockList = listOf(
-                BorrowerItem(
-                    ati = "ID_1001",
-                    oen = "BORROWER-001",
-                    tma = 2000000.0,
-                    ife = 150000.0,
-                    npeo = "100%",
-                    bcy = "Jakarta South",
-                    bpo = "Modal Usaha",
-                    aut = "2026-07-27 10:00"
-                ),
-                BorrowerItem(
-                    ati = "ID_1002",
-                    oen = "BORROWER-002",
-                    tma = 5000000.0,
-                    ife = 400000.0,
-                    npeo = "100%",
-                    bcy = "Bandung",
-                    bpo = "Konsumtif",
-                    aut = "2026-07-27 11:30"
-                )
-            )
-
-            _uiState.value = _uiState.value.copy(
-                borrowList = mockList,
-                isLoading = false
-            )
+            try {
+                val response = NetworkClient.apiService.getBorrowerList(JsonObject())
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.code == 1) {
+                        val borrowers = body.data?.ais ?: emptyList()
+                        _uiState.value = _uiState.value.copy(
+                            borrowList = borrowers,
+                            isLoading = false
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(isLoading = false)
+                    }
+                } else {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
         }
     }
 
@@ -95,50 +90,85 @@ class LenderHomeViewModel(private val context: Context) : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            // Simulasi Response API _confirmPayBack
-            val noInsurance = InsuranceItem("Tanpa Asuransi", 0, 0.0, 0.0)
-            val mockInsurances = listOf(noInsurance, InsuranceItem("Asuransi Jiwa", 1, 2.5, 50000.0))
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("ati", Gson().toJson(selectedIds))
+                }
+                val response = NetworkClient.apiService.confirmPayBack(requestBody)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.get("code")?.asInt == 1) {
+                        val su = Gson().fromJson(body.get("data"), FinanceDetail::class.java)
+                        
+                        val insuranceList = mutableListOf<InsuranceItem>()
+                        // Tambahkan "Tanpa Asuransi" di awal (parity dengan Vue)
+                        insuranceList.add(InsuranceItem("Tanpa Asuransi", 0, 0.0, 0.0))
+                        su.isnc?.let { insuranceList.addAll(it) }
 
-            val mockDetail = FinanceDetail(
-                toa = selectedIds.size,
-                atma = 2000000.0 * selectedIds.size,
-                trv = 150000.0 * selectedIds.size,
-                iet = "30 Hari",
-                iat = 2000000.0 * selectedIds.size,
-                isnc = mockInsurances
-            )
-
-            _uiState.value = _uiState.value.copy(
-                financeDetail = mockDetail,
-                insuranceList = mockInsurances,
-                showSelectLoanDesc = true,
-                isLoading = false
-            )
+                        _uiState.value = _uiState.value.copy(
+                            financeDetail = su,
+                            insuranceList = insuranceList,
+                            showSelectLoanDesc = true,
+                            isLoading = false
+                        )
+                    } else {
+                        val msg = body?.get("msg")?.asString ?: "Gagal memuat data pendanaan"
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        _uiState.value = _uiState.value.copy(isLoading = false)
+                    }
+                } else {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
         }
     }
 
     fun onCreateOrder(selectedInsuranceIndex: Int) {
+        val selectedIds = _uiState.value.borrowList.filter { it.isSelect }.map { it.ati }
+        if (selectedIds.isEmpty()) {
+            Toast.makeText(context, "Silakan pilih peminjam", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true, showSelectLoanDesc = false)
 
-            val insurance = _uiState.value.insuranceList.getOrNull(selectedInsuranceIndex)
-            val insuranceAmount = insurance?.ima ?: 0.0
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("ati", Gson().toJson(selectedIds))
+                    
+                    val insurance = _uiState.value.insuranceList.getOrNull(selectedInsuranceIndex)
+                    if (insurance != null && insurance.ity != 0) {
+                        addProperty("ity", insurance.ity)
+                    }
+                }
 
-            val mockBill = FinanceBill(
-                bnm = "Bank BCA",
-                bkn = "BCA VA",
-                pcd = "88308123456789",
-                toa = _uiState.value.financeDetail.toa,
-                ima = insuranceAmount,
-                tpa = _uiState.value.financeDetail.iat + insuranceAmount
-            )
-
-            _uiState.value = _uiState.value.copy(
-                showSelectLoanDesc = false,
-                showConfirmPayPop = true,
-                financeBill = mockBill,
-                isLoading = false
-            )
+                val response = NetworkClient.apiService.createOrder(requestBody)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.get("code")?.asInt == 1) {
+                        val su = Gson().fromJson(body.get("data"), FinanceBill::class.java)
+                        
+                        _uiState.value = _uiState.value.copy(
+                            financeBill = su,
+                            showConfirmPayPop = true,
+                            isLoading = false
+                        )
+                    } else {
+                        val msg = body?.get("msg")?.asString ?: "Gagal membuat pesanan"
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        _uiState.value = _uiState.value.copy(isLoading = false)
+                    }
+                } else {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
         }
     }
 
