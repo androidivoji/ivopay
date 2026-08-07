@@ -11,6 +11,7 @@ import com.example.ivopay.app.data.model.RoleResponse
 import com.example.ivopay.app.data.network.CryptoInterceptor
 import com.google.gson.JsonObject
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -92,10 +93,25 @@ interface ApiService {
     @POST("v1/api/bnpt")
     suspend fun getPlatformContract(
         @Body requestBody: JsonObject = JsonObject()
-    ): Response<JsonObject>
+    ): Response<ResponseBody>
 
     @POST("v1/api/pgod")
     suspend fun getOrderDetail(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/glbc")
+    suspend fun getBorrowerContract(
+        @Body requestBody: JsonObject
+    ): Response<ResponseBody>
+
+    @POST("v1/api/sgbr")
+    suspend fun signLenderAndBorrower(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/sipt")
+    suspend fun signLenderAndPlatform(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
 }

@@ -80,6 +80,7 @@ fun WaitSignContractsScreen(
         when (item.mta) {
             102 -> onNavigateToBorrowerSign(item.mdi)
             103 -> onNavigateToPlatformSign(item.mdi)
+            104 -> Toast.makeText(context, "Kontrak telah ditandatangani, menunggu pembayaran, harap tunggu", Toast.LENGTH_SHORT).show()
             105 -> Toast.makeText(context, "Kontrak telah ditandatangani, menunggu pembayaran, harap tunggu", Toast.LENGTH_SHORT).show()
         }
     }

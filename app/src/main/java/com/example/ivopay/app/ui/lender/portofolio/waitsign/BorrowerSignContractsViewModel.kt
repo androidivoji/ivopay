@@ -4,7 +4,8 @@ import android.graphics.Bitmap
 import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.example.ivopay.app.data.api.NetworkClient
+import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,24 +24,38 @@ class BorrowerSignContractsViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            // Simulasi getLenderUserInfo
-            val mockSignImageFromUser = null // misal: su.ide.tgim jika ada
-
-            // Simulasi getSignContracts (HTML text)
-            delay(500)
-            val mockHtmlContent = """
-                <h3>PERJANJIAN PINJAMAN MEMINJAM UANG</h3>
-                <p>Pada hari ini, telah disepakati perjanjian antara Pihak Peminjam dan Pihak Pemberi Pinjaman...</p>
-                <br/><br/><br/><br/><br/>
-                <p>Silakan gulir ke bawah untuk menandatangani dokumen ini.</p>
-            """.trimIndent()
-
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    htmlText = mockHtmlContent,
-                    signImageString = mockSignImageFromUser
-                )
+            try {
+                // 1. Fetch Borrower Contract (HTML)
+                val requestBody = JsonObject().apply {
+                    addProperty("mdi", mdi)
+                }
+                val response = NetworkClient.apiService.getBorrowerContract(requestBody)
+                
+                if (response.isSuccessful) {
+                    val htmlContent = response.body()?.string() ?: ""
+                    
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            htmlText = htmlContent
+                        )
+                    }
+                } else {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            toastMessage = "Gagal memuat kontrak"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        toastMessage = e.localizedMessage
+                    )
+                }
             }
         }
     }
@@ -62,16 +77,42 @@ class BorrowerSignContractsViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true, showSignPop = false) }
 
         viewModelScope.launch {
-            val base64Image = bitmap?.let { convertBitmapToBase64(it) }
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("mdi", mdi)
+                    
+                    // Jika tanda tangan baru dibuat/diupdate, kirim dalam base64 (key: lsi)
+                    if (_uiState.value.isUpdateSignature && bitmap != null) {
+                        addProperty("lsi", convertBitmapToBase64(bitmap))
+                    }
+                }
 
-            // TODO: Panggil API _signLenderAndBorrower(mdi, lsi)
-            delay(1000)
-
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isSignSuccess = true
-                )
+                val response = NetworkClient.apiService.signLenderAndBorrower(requestBody)
+                
+                if (response.isSuccessful && response.body()?.get("code")?.asInt == 1) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isSignSuccess = true
+                        )
+                    }
+                } else {
+                    val msg = response.body()?.get("msg")?.asString ?: "Gagal tanda tangan"
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            toastMessage = msg
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        toastMessage = e.localizedMessage
+                    )
+                }
             }
         }
     }

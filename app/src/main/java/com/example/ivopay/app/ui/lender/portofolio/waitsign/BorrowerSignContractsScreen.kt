@@ -203,7 +203,7 @@ fun BorrowerSignContractsScreen(
                                     modifier = Modifier.weight(1f).height(44.dp),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Text("Tandatangani", color = Color.White)
+                                    Text("Submit", color = Color.White)
                                 }
                             }
                         }

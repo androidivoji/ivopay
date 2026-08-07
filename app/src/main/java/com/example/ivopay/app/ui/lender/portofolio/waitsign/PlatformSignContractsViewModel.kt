@@ -4,7 +4,8 @@ import android.graphics.Bitmap
 import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.example.ivopay.app.data.api.NetworkClient
+import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,24 +24,37 @@ class PlatformSignContractsViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            // 1. getUserInfo -> su.ide.tgim
-            val mockSignImageFromUser: String? = null
-
-            // 2. getPlatformContract (_getAPlatformContract)
-            delay(500)
-            val mockHtmlContent = """
-                <h3>PERJANJIAN LAYANAN PLATFORM</h3>
-                <p>Dokumen ini mengatur ketentuan antara Pemberi Pinjaman dan Penyelenggara Platform...</p>
-                <br/><br/><br/><br/>
-                <p>Silakan gulir ke bawah untuk menandatangani perjanjian platform.</p>
-            """.trimIndent()
-
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    htmlText = mockHtmlContent,
-                    signImageString = mockSignImageFromUser
-                )
+            try {
+                // 1. getPlatformContract (_getAPlatformContract)
+                val requestBody = JsonObject().apply {
+                    addProperty("mdi", mdi)
+                }
+                val response = NetworkClient.apiService.getPlatformContract(requestBody)
+                
+                if (response.isSuccessful) {
+                    val htmlContent = response.body()?.string() ?: ""
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            htmlText = htmlContent
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            toastMessage = "Gagal memuat kontrak platform"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        toastMessage = e.localizedMessage
+                    )
+                }
             }
         }
     }
@@ -62,18 +76,48 @@ class PlatformSignContractsViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true, showSignPop = false) }
 
         viewModelScope.launch {
-            val base64Image = bitmap?.let { convertBitmapToBase64(it) }
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("mdi", mdi)
+                    
+                    // Jika tanda tangan baru dibuat/diupdate, kirim dalam base64 (key: lpsi)
+                    if (_uiState.value.isUpdateSignature && bitmap != null) {
+                        addProperty("lpsi", convertBitmapToBase64(bitmap))
+                    }
+                }
 
-            // TODO: Panggil API _signLenderAndPlatform(mdi, lpsi = base64Image)
-            delay(1000)
-
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isSignSuccess = true
-                )
+                val response = NetworkClient.apiService.signLenderAndPlatform(requestBody)
+                
+                if (response.isSuccessful && response.body()?.get("code")?.asInt == 1) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isSignSuccess = true
+                        )
+                    }
+                } else {
+                    val msg = response.body()?.get("msg")?.asString ?: "Gagal tanda tangan platform"
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            toastMessage = msg
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        toastMessage = e.localizedMessage
+                    )
+                }
             }
         }
+    }
+
+    fun clearToast() {
+        _uiState.update { it.copy(toastMessage = null) }
     }
 
     private fun convertBitmapToBase64(bitmap: Bitmap): String {

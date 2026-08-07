@@ -6,5 +6,6 @@ data class PlatformSignContractsUiState(
     val signImageString: String? = null,
     val showSignPop: Boolean = false,
     val isUpdateSignature: Boolean = false,
-    val isSignSuccess: Boolean = false
+    val isSignSuccess: Boolean = false,
+    val toastMessage: String? = null
 )

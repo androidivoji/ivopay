@@ -2,6 +2,7 @@ package com.example.ivopay.app.ui.lender.portofolio.waitsign
 
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,6 +33,7 @@ fun PlatformSignContractsScreen(
     onBackClick: () -> Unit,
     viewModel: PlatformSignContractsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
@@ -47,6 +50,14 @@ fun PlatformSignContractsScreen(
     LaunchedEffect(uiState.isSignSuccess) {
         if (uiState.isSignSuccess) {
             onBackClick()
+        }
+    }
+
+    // Handle Toast Message
+    LaunchedEffect(uiState.toastMessage) {
+        uiState.toastMessage?.let { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            viewModel.clearToast()
         }
     }
 
@@ -201,7 +212,7 @@ fun PlatformSignContractsScreen(
                                     modifier = Modifier.weight(1f).height(44.dp),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Text("Tandatangani", color = Color.White)
+                                    Text("Submit", color = Color.White)
                                 }
                             }
                         }
