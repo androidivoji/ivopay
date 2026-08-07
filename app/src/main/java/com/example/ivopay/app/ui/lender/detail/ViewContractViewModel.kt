@@ -2,7 +2,8 @@ package com.example.ivopay.app.ui.lender.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.example.ivopay.app.data.api.NetworkClient
+import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +16,18 @@ class ViewContractViewModel : ViewModel() {
 
     fun getUserInfo() {
         viewModelScope.launch {
-
+            try {
+                val response = NetworkClient.apiService.getLenderUserInfo(JsonObject())
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.code == 1) {
+                        val tgim = body.data?.images?.signatureUrl ?: ""
+                        _uiState.update { it.copy(signImage = tgim) }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -25,35 +37,27 @@ class ViewContractViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            delay(600)
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("mdi", mdi)
+                }
+                
+                val response = if (type == 1) {
+                    NetworkClient.apiService.getBorrowerContract(requestBody)
+                } else {
+                    NetworkClient.apiService.getPlatformContract(requestBody)
+                }
 
-            val mockHtml = if (type == 1) {
-                """
-                <html>
-                <head><style>body { font-family: sans-serif; padding: 10px; color: #333; line-height: 1.6; }</style></head>
-                <body>
-                    <h2>SURAT PERJANJIAN PINJAM MEMINJAM</h2>
-                    <p>Antara <b>Lender</b> dan <b>Borrower</b> dengan nomor kontrak: <b>$mdi</b>.</p>
-                    <p>Pasal 1: Ketentuan Umum...</p>
-                    <p>Pasal 2: Hak dan Kewajiban...</p>
-                </body>
-                </html>
-                """.trimIndent()
-            } else {
-                """
-                <html>
-                <head><style>body { font-family: sans-serif; padding: 10px; color: #333; line-height: 1.6; }</style></head>
-                <body>
-                    <h2>PERJANJIAN LAYANAN PLATFORM</h2>
-                    <p>Antara <b>Lender</b> dan <b>Platform</b> dengan nomor kontrak: <b>$mdi</b>.</p>
-                    <p>Pasal 1: Layanan Platform...</p>
-                    <p>Pasal 2: Komisi dan Biaya...</p>
-                </body>
-                </html>
-                """.trimIndent()
+                if (response.isSuccessful) {
+                    val htmlContent = response.body()?.string() ?: ""
+                    _uiState.update { it.copy(isLoading = false, htmlText = htmlContent) }
+                } else {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update { it.copy(isLoading = false) }
             }
-
-            _uiState.update { it.copy(isLoading = false, htmlText = mockHtml) }
         }
     }
 

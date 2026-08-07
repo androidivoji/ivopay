@@ -1,6 +1,7 @@
 package com.example.ivopay.app.ui.lender.detail
 
 import androidx.compose.ui.graphics.Color
+import com.google.gson.annotations.SerializedName
 
 data class StatusInfo(
     val txt: String,
@@ -9,12 +10,12 @@ data class StatusInfo(
 )
 
 data class PaidContractItem(
-    val mdi: String,       // ID Kontrak
-    val lfn: String,       // Borrower Name
-    val lat: Double,       // Loan Amount
-    val tlr: Double,       // Lender Income
-    val let: String,       // Due Date
-    val mta: Int           // Status Code (201, 202, 203)
+    @SerializedName("mdi") val mdi: String,       // ID Kontrak
+    @SerializedName("lfn") val lfn: String,       // Borrower Name
+    @SerializedName("lat") val lat: Double,       // Loan Amount
+    @SerializedName("tlr") val tlr: Double,       // Lender Income
+    @SerializedName("let") val let: String,       // Due Date
+    @SerializedName("mta") val mta: Int           // Status Code (201, 202, 203)
 )
 
 data class AlreadyPaidBillDetailUiState(

@@ -3,7 +3,10 @@ package com.example.ivopay.app.ui.lender.detail
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.example.ivopay.app.data.api.NetworkClient
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,26 +26,38 @@ class AlreadyPaidBillDetailViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            // TODO: Ganti dengan pemanggilan API real _getOrderDetail(odi)
-            delay(600)
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("odi", odi)
+                }
+                val response = NetworkClient.apiService.getOrderDetail(requestBody)
 
-            // Simulasi response data dari backend su.odli
-            val mockData = listOf(
-                PaidContractItem(
-                    mdi = "MDI_1002",
-                    lfn = "Siti Aminah",
-                    lat = 3000000.0,
-                    tlr = 150000.0,
-                    let = "2026-09-15",
-                    mta = 202 // Dibayar sebagian
-                )
-            )
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.get("code")?.asInt == 1) {
+                        val data = body.getAsJsonObject("data")
+                        val odli = data.getAsJsonArray("odli")
+                        
+                        val orderList: List<PaidContractItem> = Gson().fromJson(
+                            odli,
+                            object : TypeToken<List<PaidContractItem>>() {}.type
+                        )
 
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    contractLists = mockData
-                )
+                        _uiState.update {
+                            it.copy(
+                                contractLists = orderList,
+                                isLoading = false
+                            )
+                        }
+                    } else {
+                        _uiState.update { it.copy(isLoading = false) }
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

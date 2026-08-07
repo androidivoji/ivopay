@@ -114,6 +114,11 @@ interface ApiService {
     suspend fun signLenderAndPlatform(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
+
+    @POST("v1/api/glsl")
+    suspend fun getBorrowerContractList(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

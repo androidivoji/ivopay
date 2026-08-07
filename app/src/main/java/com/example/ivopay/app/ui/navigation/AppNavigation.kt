@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+import com.example.ivopay.app.ui.lender.mycontracts.MyContractsScreen
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.ivopay.app.ui.auth.SelectRoleScreen
@@ -56,6 +57,7 @@ object Screen {
     const val AccountLogout = "AccountLogoutPage"
     const val LenderBasicInfo = "lender_basic_info"
     const val GestureLogin = "GestureLogin"
+    const val MyContracts = "my_contracts"
 }
 
 @Composable
@@ -467,6 +469,15 @@ fun AppNavigation(
                 mdi = mdi,
                 type = type,
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.MyContracts) {
+            MyContractsScreen(
+                onBackClick = { navController.popBackStack() },
+                onNavigateToChooseContracts = { cno ->
+                    navController.navigate("choose_contracts?cno=$cno")
+                }
             )
         }
     }
