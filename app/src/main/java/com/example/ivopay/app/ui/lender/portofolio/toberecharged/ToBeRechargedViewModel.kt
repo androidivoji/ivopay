@@ -81,8 +81,8 @@ class ToBeRechargedViewModel : ViewModel() {
     // Menggantikan fungsi _getStatusColorLender(sts)
     fun getStatus(ota: Int): StatusInfo {
         return when (ota) {
-            1 -> StatusInfo("Menunggu Pembayaran", Color(0xFFFE5455))
-            2 -> StatusInfo("Proses Verifikasi", Color(0xFFFF9800))
+            2 -> StatusInfo("Tanda tangan selesai", Color(0x66000000))
+            102 -> StatusInfo("Menunggu ditanda tangan", Color(0xFFFF7725))
             3 -> StatusInfo("Kadaluarsa", Color.Gray)
             else -> StatusInfo("Pending", Color.DarkGray)
         }

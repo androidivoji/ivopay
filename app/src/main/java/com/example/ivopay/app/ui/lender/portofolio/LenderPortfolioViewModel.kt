@@ -15,7 +15,7 @@ class LenderPortfolioViewModel : ViewModel() {
     val uiState: StateFlow<LenderPortfolioUiState> = _uiState.asStateFlow()
 
     init {
-//        fetchRechargeBadgeCount()
+        fetchRechargeBadgeCount()
     }
 
     fun onTabSelected(index: Int) {
