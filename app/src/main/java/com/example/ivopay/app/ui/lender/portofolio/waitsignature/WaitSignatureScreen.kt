@@ -112,7 +112,7 @@ fun WaitSignatureScreen(
                 isChecked = uiState.isAgreementChecked,
                 onToggleCheck = { viewModel.toggleAgreementCheck() },
                 onDismiss = { viewModel.dismissSignModal() },
-                onConfirmSign = { viewModel.executeSignItems() }
+                onConfirmSign = { viewModel.executeSignItems(onUpdateCount) }
             )
         }
 

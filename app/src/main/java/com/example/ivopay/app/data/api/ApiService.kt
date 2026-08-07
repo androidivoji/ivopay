@@ -78,6 +78,26 @@ interface ApiService {
     suspend fun createOrder(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
+
+    @POST("v1/api/gol")
+    suspend fun getBorrowerOrderList(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/bsal")
+    suspend fun batchSignAllContracts(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/bnpt")
+    suspend fun getPlatformContract(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/pgod")
+    suspend fun getOrderDetail(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

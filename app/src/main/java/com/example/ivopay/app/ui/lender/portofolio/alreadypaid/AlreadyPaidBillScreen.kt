@@ -113,7 +113,8 @@ fun PaidOrderItemCard(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        CardRowInfo(label = "Name", value = item.bnm)
+                        val displayName = item.abn.joinToString(", ")
+                        CardRowInfo(label = "Name", value = if (displayName.isNotEmpty()) displayName else item.bnm)
                         CardRowInfo(label = "Bank Name", value = item.bkn)
                         CardRowInfo(label = "No.VA", value = item.pcd)
                         CardRowInfo(label = "Amount", value = item.toa.toString())

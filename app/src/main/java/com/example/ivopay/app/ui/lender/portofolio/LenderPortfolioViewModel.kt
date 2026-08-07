@@ -2,6 +2,8 @@ package com.example.ivopay.app.ui.lender.portofolio
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ivopay.app.data.api.NetworkClient
+import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +15,7 @@ class LenderPortfolioViewModel : ViewModel() {
     val uiState: StateFlow<LenderPortfolioUiState> = _uiState.asStateFlow()
 
     init {
-        fetchRechargeBadgeCount()
+//        fetchRechargeBadgeCount()
     }
 
     fun onTabSelected(index: Int) {
@@ -23,9 +25,26 @@ class LenderPortfolioViewModel : ViewModel() {
     // Menggantikan fungsi getContracts2() pada Vue
     fun fetchRechargeBadgeCount() {
         viewModelScope.launch {
-            // Simulasi API _getBorrowerOrderList(yto = 2)
-            val mockCount = 2 // Contoh data dari API
-            _uiState.value = _uiState.value.copy(toRechargeCount = mockCount)
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("yto", "2")
+                }
+                val response = NetworkClient.apiService.getBorrowerOrderList(requestBody)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.get("code")?.asInt == 1) {
+                        val data = body.getAsJsonObject("data")
+                        val oli = data.getAsJsonArray("oli")
+                        if (oli != null && oli.size() > 0) {
+                            _uiState.value = _uiState.value.copy(toRechargeCount = oli.size())
+                        } else {
+                            _uiState.value = _uiState.value.copy(toRechargeCount = 0)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 

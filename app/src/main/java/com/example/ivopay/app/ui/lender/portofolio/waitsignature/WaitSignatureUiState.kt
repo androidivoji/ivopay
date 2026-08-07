@@ -1,12 +1,14 @@
 package com.example.ivopay.app.ui.lender.portofolio.waitsignature
 
+import com.google.gson.annotations.SerializedName
+
 data class WaitSignOrderItem(
-    val odi: String = "",         // Order ID
-    val sno: String = "",         // Serial / Serial Number
-    val toa: Int = 0,             // Amount / Quantity
-    val tpa: Double = 0.0,        // Total Amount
-    val abn: List<String> = emptyList(), // Array of Borrower Names
-    val isSelect: Boolean = false  // Local UI selection state
+    @SerializedName("odi") val odi: String = "",         // Order ID
+    @SerializedName("sno") val sno: String = "",         // Serial / Serial Number
+    @SerializedName("toa") val toa: Int = 0,             // Amount / Quantity
+    @SerializedName("tpa") val tpa: Double = 0.0,        // Total Amount
+    @SerializedName("abn") val abn: List<String> = emptyList(), // Array of Borrower Names
+    var isSelect: Boolean = false  // Local UI selection state
 )
 
 data class WaitSignatureUiState(

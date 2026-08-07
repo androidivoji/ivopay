@@ -7,6 +7,10 @@ import android.widget.Toast
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ivopay.app.data.api.NetworkClient
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,36 +26,41 @@ class ToBeRechargedViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             try {
-                // Simulasi panggilan API _getBorrowerOrderList({ yto: 2 })
-                val mockResponseList = listOf(
-                    RechargeOrderItem(
-                        odi = "RECHARGE_2001",
-                        bnm = "Ahmad Rifai",
-                        bkn = "Bank BCA",
-                        pcd = "88308998877665",
-                        toa = 3,
-                        tpa = 6000000.0,
-                        ota = 1
-                    ),
-                    RechargeOrderItem(
-                        odi = "RECHARGE_2002",
-                        bnm = "Dewi Lestari",
-                        bkn = "Bank BRI",
-                        pcd = "88308112233445",
-                        toa = 1,
-                        tpa = 2000000.0,
-                        ota = 2
+                val requestBody = JsonObject().apply {
+                    addProperty("yto", "2")
+                }
+                val response = NetworkClient.apiService.getBorrowerOrderList(requestBody)
+                
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.get("code")?.asInt == 1) {
+                        val data = body.getAsJsonObject("data")
+                        val oli = data.getAsJsonArray("oli")
+                        
+                        val orderList: List<RechargeOrderItem> = Gson().fromJson(
+                            oli, 
+                            object : TypeToken<List<RechargeOrderItem>>() {}.type
+                        )
+
+                        _uiState.value = _uiState.value.copy(
+                            contractLists = orderList,
+                            isLoading = false
+                        )
+
+                        // Update badge counter pada parent tab
+                        onUpdateCount(orderList.size)
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = body?.get("msg")?.asString ?: "Gagal memuat data"
+                        )
+                    }
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "Error: ${response.code()}"
                     )
-                )
-
-                _uiState.value = _uiState.value.copy(
-                    contractLists = mockResponseList,
-                    isLoading = false
-                )
-
-                // Update badge counter pada parent tab
-                onUpdateCount(mockResponseList.size)
-
+                }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
