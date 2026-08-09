@@ -57,4 +57,11 @@ class SystemBridge(private val context: Context) {
             android.Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
     }
+
+    fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
 }

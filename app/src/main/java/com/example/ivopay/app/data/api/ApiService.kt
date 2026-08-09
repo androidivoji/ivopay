@@ -119,6 +119,26 @@ interface ApiService {
     suspend fun getBorrowerContractList(
         @Body requestBody: JsonObject = JsonObject()
     ): Response<JsonObject>
+
+    @POST("v1/api/aict")
+    suspend fun getBorrowerLoanList(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v2/api/mgea")
+    suspend fun postMgeaBorrower(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v2/api/laey")
+    suspend fun getHomeCashConfig(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v2/api/acnt")
+    suspend fun getTadpoleHomeData(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

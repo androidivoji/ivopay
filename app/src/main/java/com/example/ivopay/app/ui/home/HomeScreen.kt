@@ -2,55 +2,43 @@ package com.example.ivopay.app.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.ivopay.R
+import com.example.ivopay.app.data.model.LoanOrder
+import com.example.ivopay.app.util.CommonUtils
 
 @Composable
 fun HomeScreen(
-    onNavigateToApply: () -> Unit,
+    viewModel: BorrowerHomeViewModel,
     onNavigateToDetail: (String) -> Unit
 ) {
-    var showPermissionDialog by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(Unit) {
+        viewModel.init()
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(bottom = 80.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -70,26 +58,15 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 2. Banner Slider (Swipe)
-        val pagerState = rememberPagerState(pageCount = { 2 })
-        HorizontalPager(
-            state = pagerState,
+        // 2. Banner
+        Image(
+            painter = painterResource(id = R.drawable.iv_hone_default_slider),
+            contentDescription = "Banner",
             modifier = Modifier
                 .fillMaxWidth()
-                .height(140.dp)
-                .padding(horizontal = 12.dp)
-        ) { page ->
-            Card(
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.iv_hone_default_slider),
-                    contentDescription = "Banner $page",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
+                .padding(horizontal = 12.dp),
+            contentScale = ContentScale.FillWidth
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -113,7 +90,7 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Permohonan dan pembayaran diselesaikan dalam APP resmi, tautan eksternal dan transfer pribadi adalah penipuan",
+                    text = "Pemohonan dan pembayaran diselesaikan dalam APP resmi, tautan eksternal dan transfer pribadi adalah penipuan",
                     fontSize = 11.sp,
                     color = Color(0xFF8C6B00)
                 )
@@ -122,112 +99,220 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4. Default Loan Card (Kartu Nilai Pinjaman)
-        Card(
-            shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(text = "Nilai Pinjaman (Rp)", fontSize = 14.sp, color = Color.Gray)
-                Text(
-                    text = "5.000.000",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF262626)
-                )
-                Text(text = "Pelunasan total: Rp 5.200.000", fontSize = 12.sp, color = Color.Gray)
+        // 4. Dynamic Card Logic
+        val currentBill = viewModel.currentBill
+        val homeConfig = viewModel.homeConfig
+        val isUserInfoCompleted = homeConfig?.cme?.uico ?: false
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Detail Tenor & Tanggal
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFFFBFBFB), RoundedCornerShape(4.dp))
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "91 hari", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text(text = "Waktu peminjaman", fontSize = 12.sp, color = Color.Gray)
-                    }
-                    Divider(
-                        modifier = Modifier
-                            .height(24.dp)
-                            .width(1.dp),
-                        color = Color.LightGray
-                    )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "--", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text(text = "Tanggal pembayaran", fontSize = 12.sp, color = Color.Gray)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = { showPermissionDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Text(text = "Ajukan pinjaman")
-                }
-            }
+        if (currentBill != null) {
+            // Bill Card
+            BillCard(
+                bill = currentBill,
+                onNavigate = onNavigateToDetail
+            )
+        } else if (isUserInfoCompleted) {
+            // Application Card (Slider)
+            ApplicationCard(
+                viewModel = viewModel,
+                onNavigate = onNavigateToDetail
+            )
+        } else {
+            // Guest / Normal Status Card
+            NormalStatusCard(
+                nodp = homeConfig?.nodp,
+                onApply = { onNavigateToDetail("ApplyLoan") }
+            )
         }
-    }
-
-    // 5. Popup Dialog Izin
-    if (showPermissionDialog) {
-        PermissionDialog(
-            onDismiss = { showPermissionDialog = false },
-            onConfirm = {
-                showPermissionDialog = false
-                onNavigateToApply()
-            }
-        )
     }
 }
 
 @Composable
-fun PermissionDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+fun BillCard(
+    bill: LoanOrder,
+    onNavigate: (String) -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = Color.White,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+    // Logic for showRepayBtn: asu in [overdue, useing_money, expired]
+    val showRepayBtn = bill.asu in listOf(4, 5, 6) 
+
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Petunjuk", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = "Lamaran saya", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                StatusBadge(asu = bill.asu)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(text = if (showRepayBtn) "Repayment Amount (Rp)" else "Nilai Pinjaman (Rp)", color = Color.Gray, fontSize = 14.sp)
+            Text(
+                text = CommonUtils.formatRupiah((if (showRepayBtn) bill.csp else bill.tma).toDouble()),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF262626)
+            )
 
-                Text(
-                    text = "IVOJI perlu mengakses izin ponsel Anda untuk menilai skor kredit Anda agar proses verifikasi berjalan cepat.",
-                    fontSize = 13.sp,
-                    color = Color.DarkGray
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Button(
-                    onClick = onConfirm,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = "Saya setuju")
+            Row(
+                modifier = Modifier.fillMaxWidth().background(Color(0xFFFBFBFB), RoundedCornerShape(4.dp)).padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "${bill.peo} days", fontWeight = FontWeight.Bold)
+                    Text(text = "Waktu peminjaman", fontSize = 12.sp, color = Color.Gray)
                 }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = bill.ade ?: "--", fontWeight = FontWeight.Bold)
+                    Text(text = "Tanggal pembayaran", fontSize = 12.sp, color = Color.Gray)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (showRepayBtn) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { onNavigate("BillDetails") }, modifier = Modifier.weight(1f)) {
+                        Text("Periksa detailnya")
+                    }
+                    Button(onClick = { onNavigate("RepayPage") }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))) {
+                        Text("Bayar Segera")
+                    }
+                }
+            } else if (bill.asu == 8) { // wait_borrow_sign
+                Button(onClick = { onNavigate("BorrowerSignContracts") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))) {
+                    Text("Proses tanda tangan")
+                }
+            } else {
+                Button(onClick = { onNavigate("BillDetails") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))) {
+                    Text("Periksa detailnya")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ApplicationCard(
+    viewModel: BorrowerHomeViewModel,
+    onNavigate: (String) -> Unit
+) {
+    var amount by remember { mutableFloatStateOf(viewModel.showAmount.toFloat()) }
+    val cashData = viewModel.cashData
+
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = "Nilai Pinjaman (Rp)", color = Color.Gray, fontSize = 14.sp)
+            Text(
+                text = CommonUtils.formatRupiah(amount.toDouble()),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF262626)
+            )
+
+            Slider(
+                value = amount,
+                onValueChange = { amount = it },
+                valueRange = (cashData?.itma?.toFloat() ?: 0f)..(cashData?.atma?.toFloat() ?: 5000000f),
+                colors = SliderDefaults.colors(thumbColor = Color(0xFFFE5455), activeTrackColor = Color(0xFFFE5455))
+            )
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = CommonUtils.formatRupiah(cashData?.itma?.toDouble() ?: 0.0), fontSize = 12.sp, color = Color.Gray)
+                Text(text = CommonUtils.formatRupiah(cashData?.atma?.toDouble() ?: 5000000.0), fontSize = 12.sp, color = Color.Gray)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Jangka Pinjaman")
+                Text("${cashData?.peo ?: 0} hari", fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = { viewModel.onApplyClick(onNavigate) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
+            ) {
+                Text("Permohonan")
+            }
+        }
+    }
+}
+
+@Composable
+fun StatusBadge(asu: Int) {
+    val (text, color, bgColor) = when (asu) {
+        1 -> Triple("Under Review", Color(0xFF1890FF), Color(0xFFE6F7FF))
+        4 -> Triple("In Use", Color(0xFF52C41A), Color(0xFFF6FFED))
+        5 -> Triple("Overdue", Color(0xFFF5222D), Color(0xFFFFF1F0))
+        8 -> Triple("Wait Sign", Color(0xFFFA8C16), Color(0xFFFFF7E6))
+        else -> Triple("Status $asu", Color.Gray, Color(0xFFF5F5F5))
+    }
+
+    Surface(
+        color = bgColor,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Text(text = text, color = color, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+    }
+}
+
+@Composable
+fun NormalStatusCard(
+    nodp: com.example.ivopay.app.data.model.NodpData?,
+    onApply: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "Nilai Pinjaman (Rp)", fontSize = 14.sp, color = Color.Gray)
+            Text(
+                text = CommonUtils.formatRupiah(nodp?.tma?.toDouble() ?: 5000000.0),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF262626)
+            )
+            Text(text = "Pelunasan total: ${CommonUtils.formatRupiah(nodp?.datm?.toDouble() ?: 5200000.0)}", fontSize = 12.sp, color = Color.Gray)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().background(Color(0xFFFBFBFB), RoundedCornerShape(4.dp)).padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "${nodp?.peo ?: 91} hari", fontWeight = FontWeight.Bold)
+                    Text(text = "Waktu peminjaman", fontSize = 12.sp, color = Color.Gray)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = nodp?.dud ?: "--", fontWeight = FontWeight.Bold)
+                    Text(text = "Tanggal pembayaran", fontSize = 12.sp, color = Color.Gray)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onApply,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
+            ) {
+                Text("Ajukan Pinjaman")
             }
         }
     }

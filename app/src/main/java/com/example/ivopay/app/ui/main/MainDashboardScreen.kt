@@ -36,6 +36,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.ivopay.app.ui.bill.BillItem
 import com.example.ivopay.app.ui.bill.MyBillScreen
+import com.example.ivopay.app.ui.home.BorrowerHomeViewModel
 import com.example.ivopay.app.ui.home.HomeScreen
 import com.example.ivopay.app.ui.mine.MineScreen
 
@@ -56,6 +57,7 @@ fun MainDashboardScreen(
     onNavigateToDetail: (String) -> Unit = {}
 ) {
     val navController = rememberNavController()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     // Logika computed data & mounted() di Vue dipindah ke sini
     val tabItems = remember(isLogin) {
@@ -170,15 +172,12 @@ fun MainDashboardScreen(
             ) {
                 // 1. TAB HOME SCREEN
                 composable(MainTabItem.Home.route) {
+                    val homeViewModel: BorrowerHomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                        BorrowerHomeViewModel(context)
+                    }
+                    
                     HomeScreen(
-                        onNavigateToApply = {
-                            if (isLogin) {
-                                onNavigateToDetail("ApplyLoan")
-                            } else {
-                                onUploadTrackingEvent("N8")
-                                onNavigateToLogin()
-                            }
-                        },
+                        viewModel = homeViewModel,
                         onNavigateToDetail = { routeName ->
                             onNavigateToDetail(routeName)
                         }

@@ -50,7 +50,7 @@ object MyEncryptUtil {
             Log.d("XBZ", "╔═══════════════════════════════════════════════")
             Log.d("XBZ", "║ DECRYPT PROCESS STARTED")
             Log.d("XBZ", "╠═══════════════════════════════════════════════")
-            Log.d("XBZ", "║ Input base64 length: ${base64Data?.length ?: 0}")
+//            Log.d("XBZ", "║ Input base64 length: ${base64Data?.length ?: 0}")
 
             if (base64Data.isNullOrEmpty()) {
                 Log.w("XBZ", "║ WARNING: base64Data is null or empty")
@@ -61,10 +61,10 @@ object MyEncryptUtil {
             val preview = if (base64Data.length > 50)
                 "${base64Data.substring(0, 50)}..."
             else base64Data
-            Log.d("XBZ", "║ Base64 preview: $preview")
+//            Log.d("XBZ", "║ Base64 preview: $preview")
 
             val data = EncodeUtils.base64Decode(base64Data)
-            Log.d("XBZ", "║ Decoded data length: ${data.size} bytes")
+//            Log.d("XBZ", "║ Decoded data length: ${data.size} bytes")
 
             val cipher = Cipher.getInstance(CIPHER_ALGORITHM)
             val staticSalt = "bA7R7324zJy@loVL"
@@ -72,9 +72,9 @@ object MyEncryptUtil {
             val vi = str!!.substring(str.length - 16, str.length)
             val key = str.substring(0, 32)
 
-            Log.d("XBZ", "║ Derived Key (first 16 chars): ${key.substring(0, 16)}...")
-            Log.d("XBZ", "║ strKey: $str")
-            Log.d("XBZ", "║ IV: $vi")
+//            Log.d("XBZ", "║ Derived Key (first 16 chars): ${key.substring(0, 16)}...")
+//            Log.d("XBZ", "║ strKey: $str")
+//            Log.d("XBZ", "║ IV: $vi")
 
             val ivParameterSpec = IvParameterSpec(vi.toByteArray())
             cipher.init(Cipher.DECRYPT_MODE, getSecretKey(key), ivParameterSpec)
