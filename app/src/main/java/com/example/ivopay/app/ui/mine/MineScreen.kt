@@ -72,8 +72,7 @@ fun MineScreen(
             }
             add(MenuItem("Hubungi Kami", "AboutUs", requiresLogin = false))
             add(MenuItem("Kebijakan Privasi", "PrivacyPolicy", requiresLogin = false))
-//            add(MenuItem("Syarat & Ketentuan", "UseAgreement", requiresLogin = false))
-            add(MenuItem("Syarat & Ketentuan", "LogoutAndExitPage", requiresLogin = false))
+            add(MenuItem("Syarat & Ketentuan", "UseAgreement", requiresLogin = false))
 
             if (isLoggedIn) {
                 add(MenuItem("Atur Pola Kunci", "GestureCreate"))

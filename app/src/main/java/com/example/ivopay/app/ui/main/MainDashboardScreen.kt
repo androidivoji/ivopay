@@ -39,6 +39,7 @@ import com.example.ivopay.app.ui.bill.MyBillScreen
 import com.example.ivopay.app.ui.home.BorrowerHomeViewModel
 import com.example.ivopay.app.ui.home.HomeScreen
 import com.example.ivopay.app.ui.mine.MineScreen
+import com.example.ivopay.app.ui.mine.MineViewModel
 
 @Composable
 fun MainDashboardScreen(
@@ -200,10 +201,14 @@ fun MainDashboardScreen(
                 }
                 // 3. Tab Mine / Profil
                 composable(MainTabItem.Mine.route) {
+                    val mineViewModel: MineViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                        MineViewModel(context)
+                    }
+
                     MineScreen(
-                        isLoggedIn = isLogin,
-                        userName = userName,
-                        userPhone = userPhone,
+                        isLoggedIn = mineViewModel.isLoggedIn,
+                        userName = mineViewModel.userName,
+                        userPhone = mineViewModel.mobile,
                         appVersion = "1.0.0",
                         isUnderReview = isUnderReview,
                         hasContract = hasContract,

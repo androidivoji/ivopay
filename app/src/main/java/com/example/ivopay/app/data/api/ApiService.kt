@@ -8,6 +8,7 @@ import com.example.ivopay.app.data.model.LoginResponse
 import com.example.ivopay.app.data.model.LoginWayResponse
 import com.example.ivopay.app.data.model.MgeaResponse
 import com.example.ivopay.app.data.model.RoleResponse
+import com.example.ivopay.app.data.model.UserInfoResponse
 import com.example.ivopay.app.data.network.CryptoInterceptor
 import com.google.gson.JsonObject
 import okhttp3.OkHttpClient
@@ -134,6 +135,11 @@ interface ApiService {
     suspend fun getHomeCashConfig(
         @Body requestBody: JsonObject = JsonObject()
     ): Response<JsonObject>
+
+    @POST("v2/api/c/gc")
+    suspend fun getUserInfo(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<UserInfoResponse>
 
     @POST("v2/api/acnt")
     suspend fun getTadpoleHomeData(
