@@ -22,6 +22,8 @@ import androidx.compose.ui.window.Dialog
 import com.example.ivopay.R
 import com.example.ivopay.app.data.model.LoanOrder
 import com.example.ivopay.app.util.CommonUtils
+import com.example.ivopay.app.util.LoanStatusMapper
+import com.example.ivopay.app.util.SessionManager
 
 @Composable
 fun HomeScreen(
@@ -29,6 +31,8 @@ fun HomeScreen(
     onNavigateToDetail: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
 
     LaunchedEffect(Unit) {
         viewModel.init()
@@ -108,6 +112,7 @@ fun HomeScreen(
             // Bill Card
             BillCard(
                 bill = currentBill,
+                hasPgsh = sessionManager.getHasPgsh(),
                 onNavigate = onNavigateToDetail
             )
         } else if (isUserInfoCompleted) {
@@ -129,10 +134,11 @@ fun HomeScreen(
 @Composable
 fun BillCard(
     bill: LoanOrder,
+    hasPgsh: Boolean,
     onNavigate: (String) -> Unit
 ) {
     // Logic for showRepayBtn: asu in [overdue, useing_money, expired]
-    val showRepayBtn = bill.asu in listOf(4, 5, 6) 
+    val showRepayBtn = bill.asu in listOf(303, 301, 302) 
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -146,7 +152,7 @@ fun BillCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Lamaran saya", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                StatusBadge(asu = bill.asu)
+                StatusBadge(asu = bill.asu, hasPgsh = hasPgsh)
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -184,7 +190,7 @@ fun BillCard(
                         Text("Bayar Segera")
                     }
                 }
-            } else if (bill.asu == 8) { // wait_borrow_sign
+            } else if (bill.asu == 601) { // wait_borrow_sign
                 Button(onClick = { onNavigate("BorrowerSignContracts") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))) {
                     Text("Proses tanda tangan")
                 }
@@ -252,20 +258,14 @@ fun ApplicationCard(
 }
 
 @Composable
-fun StatusBadge(asu: Int) {
-    val (text, color, bgColor) = when (asu) {
-        1 -> Triple("Under Review", Color(0xFF1890FF), Color(0xFFE6F7FF))
-        4 -> Triple("In Use", Color(0xFF52C41A), Color(0xFFF6FFED))
-        5 -> Triple("Overdue", Color(0xFFF5222D), Color(0xFFFFF1F0))
-        8 -> Triple("Wait Sign", Color(0xFFFA8C16), Color(0xFFFFF7E6))
-        else -> Triple("Status $asu", Color.Gray, Color(0xFFF5F5F5))
-    }
+fun StatusBadge(asu: Int, hasPgsh: Boolean) {
+    val display = LoanStatusMapper.getStatusColor(asu, hasPgsh)
 
     Surface(
-        color = bgColor,
+        color = display.bgColor,
         shape = RoundedCornerShape(12.dp)
     ) {
-        Text(text = text, color = color, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+        Text(text = display.text, color = display.color, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
     }
 }
 

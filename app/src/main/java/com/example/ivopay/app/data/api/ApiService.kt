@@ -1,6 +1,7 @@
 package com.example.ivopay.app.data.api
 
 import com.example.ivopay.app.data.model.BankListResponse
+import com.example.ivopay.app.data.model.BorrowerContractsResponse
 import com.example.ivopay.app.data.model.BorrowerListResponse
 import com.example.ivopay.app.data.model.CommonConfigResponse
 import com.example.ivopay.app.data.model.LenderUserInfoResponse
@@ -144,6 +145,26 @@ interface ApiService {
     @POST("v2/api/acnt")
     suspend fun getTadpoleHomeData(
         @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/oaict")
+    suspend fun getOldBillList(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/gbsc")
+    suspend fun getBorrowerContracts(
+        @Body requestBody: JsonObject
+    ): Response<BorrowerContractsResponse>
+
+    @POST("v1/api/gbss")
+    suspend fun getBorrowerContractsStatus(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/gsbw")
+    suspend fun borrowerSign(
+        @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
 }
 

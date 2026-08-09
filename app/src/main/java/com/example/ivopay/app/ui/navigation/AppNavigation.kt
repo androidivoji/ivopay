@@ -21,11 +21,13 @@ import com.example.ivopay.app.ui.lender.detail.AlreadyPaidBillDetailScreen
 import com.example.ivopay.app.ui.lender.detail.ChooseContractsScreen
 import com.example.ivopay.app.ui.lender.detail.ViewContractPageScreen
 import com.example.ivopay.app.ui.lender.portofolio.toberecharged.ToBeRechargedDetailScreen
-import com.example.ivopay.app.ui.lender.portofolio.waitsign.BorrowerSignContractsScreen
+import com.example.ivopay.app.ui.lender.portofolio.waitsign.BorrowerSignContractsScreen as LenderBorrowerSignContractsScreen
 import com.example.ivopay.app.ui.lender.portofolio.waitsign.PlatformSignContractsScreen
 import com.example.ivopay.app.ui.lender.portofolio.waitsign.WaitSignContractsScreen
 import com.example.ivopay.app.ui.loan.ApplyLoanScreen
 import com.example.ivopay.app.ui.loan.ApplySucceedScreen
+import com.example.ivopay.app.ui.loan.BorrowerSignContractsScreen
+import com.example.ivopay.app.ui.loan.BorrowerSignContractsViewModel
 import com.example.ivopay.app.ui.login.GestureLoginScreen
 import com.example.ivopay.app.ui.login.GestureLoginViewModel
 import com.example.ivopay.app.ui.login.LoginScreen
@@ -345,6 +347,20 @@ fun AppNavigation(
             )
         }
 
+        composable(
+            route = "BorrowerSignContracts?noc={noc}",
+            arguments = listOf(navArgument("noc") { defaultValue = "" })
+        ) { backStackEntry ->
+            val noc = backStackEntry.arguments?.getString("noc") ?: ""
+            val signViewModel: BorrowerSignContractsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+            
+            BorrowerSignContractsScreen(
+                noc = noc,
+                viewModel = signViewModel,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
         // 7. Alur Kontrak Lender
         composable(
             route = "sign_contracts/{odi}",
@@ -368,7 +384,7 @@ fun AppNavigation(
             arguments = listOf(navArgument("mdi") { type = NavType.StringType })
         ) { backStackEntry ->
             val mdi = backStackEntry.arguments?.getString("mdi") ?: ""
-            BorrowerSignContractsScreen(
+            LenderBorrowerSignContractsScreen(
                 mdi = mdi,
                 onBackClick = { navController.popBackStack() },
                 onNavigateToPlatformSign = { targetMdi ->

@@ -34,8 +34,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.ivopay.app.ui.bill.BillItem
+import com.example.ivopay.app.data.model.LoanOrder
 import com.example.ivopay.app.ui.bill.MyBillScreen
+import com.example.ivopay.app.ui.bill.MyBillViewModel
 import com.example.ivopay.app.ui.home.BorrowerHomeViewModel
 import com.example.ivopay.app.ui.home.HomeScreen
 import com.example.ivopay.app.ui.mine.MineScreen
@@ -51,7 +52,7 @@ fun MainDashboardScreen(
     maxLimitAmount: Long = 5000000,
     isUnderReview: Boolean = false,
     hasContract: Boolean = false,
-    myBillList: List<BillItem> = emptyList(),
+    myBillList: List<LoanOrder> = emptyList(),
     isBillRefreshing: Boolean = false,
     onRefreshBill: () -> Unit = {},
     onCancelBill: (String) -> Unit = {},
@@ -72,6 +73,22 @@ fun MainDashboardScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Fungsi helper untuk perpindahan tab yang aman (menjaga state)
+    val navigateToTab = { route: String ->
+        if (currentRoute != route) {
+            navController.navigate(route) {
+                // Pop up ke start destination untuk menghindari penumpukan stack tab
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                // Menghindari duplikasi destination yang sama
+                launchSingleTop = true
+                // Memulihkan state (seperti posisi scroll) saat kembali ke tab ini
+                restoreState = true
+            }
+        }
+    }
+
     Scaffold(
         bottomBar = {
             // Box kontainer untuk menggabungkan NavigationBar dan FAB Kustom di tengah
@@ -91,17 +108,7 @@ fun MainDashboardScreen(
 
                         NavigationBarItem(
                             selected = isActive,
-                            onClick = {
-                                if (currentRoute != item.route) {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
+                            onClick = { navigateToTab(item.route) },
                             icon = {
                                 Image(
                                     painter = painterResource(id = if (isActive) item.activeIcon else item.normalIcon),
@@ -187,15 +194,14 @@ fun MainDashboardScreen(
 
                 if (isLogin) {
                     composable(MainTabItem.Bill.route) {
+                        val billViewModel: MyBillViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                        
                         MyBillScreen(
-                            billList = myBillList,
-                            isRefreshing = isBillRefreshing,
-                            onRefresh = onRefreshBill,
+                            viewModel = billViewModel,
                             onItemClick = { bill ->
                                 // Navigasi detail sesuai logika router Vue (e.g. BillDetails / InlgBillDetails)
                                 onNavigateToDetail("BillDetails/${bill.noc}")
-                            },
-                            onCancelBill = onCancelBill
+                            }
                         )
                     }
                 }
@@ -206,15 +212,10 @@ fun MainDashboardScreen(
                     }
 
                     MineScreen(
-                        isLoggedIn = mineViewModel.isLoggedIn,
-                        userName = mineViewModel.userName,
-                        userPhone = mineViewModel.mobile,
-                        appVersion = "1.0.0",
-                        isUnderReview = isUnderReview,
-                        hasContract = hasContract,
+                        viewModel = mineViewModel,
                         onNavigate = { routeName ->
                             when (routeName) {
-                                "MyBill" -> navController.navigate(MainTabItem.Bill.route)
+                                "MyBill" -> navigateToTab(MainTabItem.Bill.route)
                                 else -> onNavigateToDetail(routeName)
                             }
                         },

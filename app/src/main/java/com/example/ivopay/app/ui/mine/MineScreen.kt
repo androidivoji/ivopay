@@ -25,7 +25,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,26 +52,30 @@ data class MenuItem(
 
 @Composable
 fun MineScreen(
-    isLoggedIn: Boolean,
-    userName: String?,
-    userPhone: String?,
-    appVersion: String = "1.0.0",
-    isUnderReview: Boolean = false,
-    hasContract: Boolean = false,
+    viewModel: MineViewModel,
     onNavigate: (String) -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     var showReviewDialog by remember { mutableStateOf(false) }
+    val isLoggedIn = viewModel.isLoggedIn
+    val userName = viewModel.userName
+    val userPhone = viewModel.mobile
+    val isUnderReview = false // Bisa dihubungkan ke state review jika ada di ViewModel
+
+    // Pemicu API saat layar tampil (seperti activated di Vue)
+    LaunchedEffect(Unit) {
+        if (isLoggedIn) {
+            viewModel.refreshCustomerInfo()
+        }
+    }
 
     // Membangun daftar menu secara dinamis sesuai status login
-    val menuItems = remember(isLoggedIn, hasContract) {
+    val menuItems = remember(isLoggedIn) {
         mutableListOf(
             MenuItem("Riwayat Pengajuan", "MyBill"),
             MenuItem("Profil Saya", "MyProfile")
         ).apply {
-            if (hasContract) {
-                add(1, MenuItem("Kontrak saya", "BorrowerSignContracts"))
-            }
+            // Kontrak saya bisa ditampilkan jika ada data kontrak di viewModel
             add(MenuItem("Hubungi Kami", "AboutUs", requiresLogin = false))
             add(MenuItem("Kebijakan Privasi", "PrivacyPolicy", requiresLogin = false))
             add(MenuItem("Syarat & Ketentuan", "UseAgreement", requiresLogin = false))
@@ -162,7 +168,7 @@ fun MineScreen(
 
         // 4. App Version Footer
         Text(
-            text = "IVOJI App Version v$appVersion",
+            text = "IVOJI App Version v1.0.0",
             fontSize = 12.sp,
             color = Color(0xFF8C8C8C)
         )
