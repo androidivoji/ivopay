@@ -348,14 +348,22 @@ fun AppNavigation(
         }
 
         composable(
-            route = "BorrowerSignContracts?noc={noc}",
-            arguments = listOf(navArgument("noc") { defaultValue = "" })
+            route = "BorrowerSignContracts?noc={noc}&wiue={wiue}",
+            arguments = listOf(
+                navArgument("noc") { defaultValue = "" },
+                navArgument("wiue") { 
+                    type = NavType.BoolType
+                    defaultValue = false 
+                }
+            )
         ) { backStackEntry ->
             val noc = backStackEntry.arguments?.getString("noc") ?: ""
+            val isWiue = backStackEntry.arguments?.getBoolean("wiue") ?: false
             val signViewModel: BorrowerSignContractsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
             
             BorrowerSignContractsScreen(
                 noc = noc,
+                isWiue = isWiue,
                 viewModel = signViewModel,
                 onBackClick = { navController.popBackStack() }
             )

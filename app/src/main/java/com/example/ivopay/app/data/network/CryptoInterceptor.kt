@@ -30,8 +30,54 @@ class CryptoInterceptor : Interceptor {
         // 1. Request Interceptor Logic
         if (request.method == "POST") {
             val originalBody = request.body
-            // Hanya enkripsi jika body adalah JSON (atau kosong untuk mgea)
-            if (originalBody == null || (originalBody.contentType()?.subtype?.contains("json") == true)) {
+            
+            if (originalBody is MultipartBody) {
+                // Penanganan Multipart (Request dengan file)
+                val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
+                val combineData = mutableMapOf<String, Any>()
+                
+                // Pisahkan data teks (untuk rd) dan data file
+                originalBody.parts.forEach { part ->
+                    val header = part.headers
+                    val contentDisposition = header?.get("Content-Disposition")
+                    
+                    if (contentDisposition != null && !contentDisposition.contains("filename=")) {
+                        // Ini adalah field teks biasa (bukan file)
+                        try {
+                            val buffer = okio.Buffer()
+                            part.body.writeTo(buffer)
+                            val value = buffer.readUtf8()
+                            // Ambil nama field dari header: name="noc"
+                            val nameMatch = "name=\"([^\"]+)\"".toRegex().find(contentDisposition)
+                            val name = nameMatch?.groupValues?.get(1)
+                            if (name != null) {
+                                combineData[name] = value
+                            }
+                        } catch (e: Exception) {}
+                    } else {
+                        // Ini adalah field file, biarkan apa adanya
+                        builder.addPart(part)
+                    }
+                }
+                
+                // Tambahkan common parameters
+                combineData.putAll(systemBridge.getCommonParams())
+                sessionManager.getAuthToken()?.let { combineData["tkn"] = it }
+                
+                // Signature
+                val cleanUrl = request.url.newBuilder().query(null).build().toString()
+                val signature = SecurityUtils.generateSign(request.method, cleanUrl, combineData)
+                if (signature != null) combineData["sign"] = signature
+                
+                // Enkripsi ke "rd"
+                val encryptedData = SecurityUtils.encryptParams(gson.toJson(combineData))
+                if (encryptedData != null) {
+                    builder.addFormDataPart("rd", encryptedData)
+                    request = request.newBuilder()
+                        .post(builder.build())
+                        .build()
+                }
+            } else if (originalBody == null || (originalBody.contentType()?.subtype?.contains("json") == true)) {
                 
                 val combineData = mutableMapOf<String, Any>()
                 

@@ -162,6 +162,16 @@ interface ApiService {
         @Body requestBody: JsonObject
     ): Response<JsonObject>
 
+    @POST("v1/api/gsbc")
+    suspend fun borrowerSendCode(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/gscc")
+    suspend fun borrowerCheckCode(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
     @POST("v1/api/gsbw")
     suspend fun borrowerSign(
         @Body requestBody: okhttp3.RequestBody

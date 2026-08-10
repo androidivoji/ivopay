@@ -16,7 +16,15 @@ data class BorrowerHomeData(
     @SerializedName("inlg") val inlg: LoanProductConfig? = null,
     @SerializedName("nodp") val nodp: NodpData? = null,
     @SerializedName("cme") val cme: BorrowerCmeData? = null,
-    @SerializedName("tnpo") val tnpo: TnpoData? = null,
+    @SerializedName("tnpo") val tnpo: LoanProductConfig? = null,
+    @SerializedName("c9") val c9: LoanProductConfig? = null,
+    @SerializedName("ci6") val ci6: LoanProductConfig? = null,
+    @SerializedName("ci6_w") val ci6W: LoanProductConfig? = null,
+    @SerializedName("ci7") val ci7: LoanProductConfig? = null,
+    @SerializedName("ci8") val ci8: LoanProductConfig? = null,
+    @SerializedName("ci10") val ci10: LoanProductConfig? = null,
+    @SerializedName("ci6_fe") val ci6Fe: LoanProductConfig? = null,
+    @SerializedName("ci6_e") val ci6E: LoanProductConfig? = null,
     @SerializedName("ois") val orders: List<LoanOrder>? = null
 )
 
@@ -34,7 +42,11 @@ data class LoanProductConfig(
     @SerializedName("koc") val koc: Boolean = false,
     @SerializedName("rea") val rea: String? = null,
     @SerializedName("podi") val podi: LoanOrder? = null,
-    @SerializedName("nct") val nct: NctData? = null
+    @SerializedName("nct") val nct: NctData? = null,
+    @SerializedName("resv_atma") val resvAtma: Long = 0,
+    @SerializedName("bilopt") val bilopt: Any? = null,
+    @SerializedName("resv_atma_ois") val resvAtmaOis: List<Any>? = null,
+    @SerializedName("koc_by_no_resv_atma") val kocByNoResvAtma: Boolean = false
 )
 
 data class BorrowerCmeData(
@@ -88,5 +100,9 @@ data class LoanOrder(
     @SerializedName("datm") val datm: Long = 0,
     @SerializedName("dud") val dud: String? = null,
     @SerializedName("arm") val arm: Long = 0,
-    @SerializedName("sam") val sam: Long = 0
+    @SerializedName("sam") val sam: Long = 0,
+    @SerializedName("peo_gfd") val peoGfd: String? = null,
+    @SerializedName("bae") val bae: Boolean = false,
+    @SerializedName("bae_ttm") val baeTtm: String? = null,
+    @SerializedName("bpio_txt") val bpioTxt: String? = null
 )

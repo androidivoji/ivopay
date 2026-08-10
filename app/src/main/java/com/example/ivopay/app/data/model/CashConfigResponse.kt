@@ -14,5 +14,6 @@ data class CashConfigData(
     @SerializedName("nar") val nar: Long = 0,
     @SerializedName("peo") val peo: Int = 0,
     @SerializedName("koc") val koc: Boolean = false,
-    @SerializedName("rea") val rea: String? = null
+    @SerializedName("rea") val rea: String? = null,
+    @SerializedName("peo_gfd") val peoGfd: String? = null
 )

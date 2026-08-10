@@ -6,10 +6,13 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,13 +33,22 @@ import com.example.ivopay.app.ui.components.SignatureCanvas
 @Composable
 fun BorrowerSignContractsScreen(
     noc: String,
+    isWiue: Boolean, // Pass this from navigation
     viewModel: BorrowerSignContractsViewModel,
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
     
     LaunchedEffect(noc) {
-        viewModel.init(noc)
+        viewModel.init(noc, isWiue)
+    }
+
+    // Scroll Listener to enable signing
+    LaunchedEffect(scrollState.value, scrollState.maxValue) {
+        if (scrollState.maxValue > 0 && scrollState.value >= scrollState.maxValue - 100) {
+            viewModel.canSign = true
+        }
     }
 
     Scaffold(
@@ -58,29 +70,66 @@ fun BorrowerSignContractsScreen(
         ) {
             if (viewModel.htmlText.isNotEmpty()) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    AndroidView(
-                        factory = {
-                            WebView(it).apply {
-                                webViewClient = WebViewClient()
-                                settings.javaScriptEnabled = true
-                            }
-                        },
-                        update = {
-                            it.loadDataWithBaseURL(null, viewModel.htmlText, "text/html", "UTF-8", null)
-                        },
+                    // Download Button if dpdf exists
+                    if (viewModel.dpdf.startsWith("http")) {
+                        Button(
+                            onClick = { 
+                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(viewModel.dpdf))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.padding(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFFFE5455)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFE5455)),
+                            shape = RoundedCornerShape(4.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                        ) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Text("Download Kontrak", fontSize = 12.sp)
+                        }
+                    }
+
+                    // WebView wrapped in a Scrollable Box to detect scroll to bottom
+                    Box(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(16.dp)
-                    )
+                            .verticalScroll(scrollState)
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        AndroidView(
+                            factory = {
+                                WebView(it).apply {
+                                    settings.javaScriptEnabled = true
+                                    // Disable WebView's internal scroll so outer Box can handle it
+                                    isVerticalScrollBarEnabled = false
+                                }
+                            },
+                            update = {
+                                it.loadDataWithBaseURL(null, viewModel.htmlText, "text/html", "UTF-8", null)
+                            },
+                            modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                        )
+                    }
                     
                     if (viewModel.showSignBtn) {
                         Button(
-                            onClick = { viewModel.showSignPop = true },
+                            onClick = { 
+                                if (viewModel.canSign) {
+                                    if (viewModel.isWiue) {
+                                        viewModel.sendCode { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                                    } else {
+                                        viewModel.showSignPop = true
+                                    }
+                                } else {
+                                    viewModel.showSignTipsPop = true
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
                             shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (viewModel.canSign) Color(0xFFFE5455) else Color(0xFFCCCCCC)
+                            )
                         ) {
                             Text("Tandatangani", color = Color.White, fontWeight = FontWeight.Bold)
                         }
@@ -108,6 +157,87 @@ fun BorrowerSignContractsScreen(
         }
     }
 
+    // 1. Sign Tips Popup
+    if (viewModel.showSignTipsPop) {
+        Dialog(onDismissRequest = { viewModel.showSignTipsPop = false }) {
+            Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Mohon membaca dan memahami keseluruhan perjanjian ini, sebelum melanjutkan proses tanda tangan.",
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Start,
+                        color = Color(0xFF262626)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { viewModel.showSignTipsPop = false },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
+                    ) {
+                        Text("Setuju")
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. OTP VIDA Popup
+    if (viewModel.showVIDACodePop) {
+        Dialog(onDismissRequest = { viewModel.showVIDACodePop = false }) {
+            Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Silakan masukin kode OTP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Telah mengirim sms Kode OTP ke nomor anda", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
+                    
+                    OutlinedTextField(
+                        value = viewModel.verCode,
+                        onValueChange = { if (it.length <= 4) viewModel.verCode = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Kode OTP") },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                    )
+
+                    Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.End) {
+                        Text(
+                            text = if (viewModel.sendAble) "Kirim kode verifikasi" else "Kirim kode verifikasi(${viewModel.verCountDown}s)",
+                            color = if (viewModel.sendAble) Color(0xFFBD0100) else Color.Gray,
+                            modifier = Modifier.clickable(enabled = viewModel.sendAble) { viewModel.sendCode { } }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(verticalAlignment = Alignment.Top) {
+                        Checkbox(
+                            checked = viewModel.checkAgree,
+                            onCheckedChange = { viewModel.checkAgree = it },
+                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFE5455))
+                        )
+                        Text(
+                            text = "Saya telah membaca, memahami, dan menyetujui Syarat dan Ketentuan untuk tanda tangan digital.",
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+
+                    Button(
+                        onClick = { 
+                            viewModel.verifyOTP(
+                                viewModel.verCode,
+                                onSuccess = { },
+                                onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
+                    ) {
+                        Text("Kirim")
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Signature Canvas Popup
     if (viewModel.showSignPop) {
         Dialog(onDismissRequest = { viewModel.showSignPop = false }) {
             Surface(
@@ -165,10 +295,15 @@ fun BorrowerSignContractsScreen(
                                         bitmap = viewModel.signImage!!,
                                         onSuccess = {
                                             viewModel.showSignPop = false
-                                            Toast.makeText(context, "Selesai tanda tangan", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "Tanda tangan selesai", Toast.LENGTH_SHORT).show()
                                             onBackClick()
                                         },
-                                        onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                                        onError = { code, msg -> 
+                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                            if (code == 101) {
+                                                onBackClick()
+                                            }
+                                        }
                                     )
                                 },
                                 modifier = Modifier.weight(1f),
@@ -183,3 +318,4 @@ fun BorrowerSignContractsScreen(
         }
     }
 }
+
