@@ -44,10 +44,35 @@ fun BorrowerSignContractsScreen(
         viewModel.init(noc, isWiue)
     }
 
+    // Reset canSign when new HTML is loaded
+    LaunchedEffect(viewModel.htmlText) {
+        if (viewModel.htmlText.isNotEmpty()) {
+            viewModel.canSign = false
+        }
+    }
+
     // Scroll Listener to enable signing
-    LaunchedEffect(scrollState.value, scrollState.maxValue) {
-        if (scrollState.maxValue > 0 && scrollState.value >= scrollState.maxValue - 100) {
-            viewModel.canSign = true
+    LaunchedEffect(scrollState.value, scrollState.maxValue, viewModel.isLoading, viewModel.htmlText) {
+        if (viewModel.isLoading || viewModel.htmlText.isEmpty()) {
+            viewModel.canSign = false
+            return@LaunchedEffect
+        }
+
+        if (scrollState.maxValue > 0) {
+            // Content is scrollable, check if we reached the bottom
+            if (scrollState.value >= scrollState.maxValue - 50) {
+                if (!viewModel.canSign) {
+                    android.util.Log.d("SCROLL_DEBUG", "Reached bottom: ${scrollState.value} / ${scrollState.maxValue}")
+                    viewModel.canSign = true
+                }
+            }
+        } else {
+            // Potentially non-scrollable content. Wait for measurement.
+            kotlinx.coroutines.delay(1000)
+            if (scrollState.maxValue <= 0 && viewModel.htmlText.isNotEmpty()) {
+                android.util.Log.d("SCROLL_DEBUG", "Content is definitely not scrollable")
+                viewModel.canSign = true
+            }
         }
     }
 
@@ -99,14 +124,15 @@ fun BorrowerSignContractsScreen(
                             factory = {
                                 WebView(it).apply {
                                     settings.javaScriptEnabled = true
-                                    // Disable WebView's internal scroll so outer Box can handle it
+                                    // Disable WebView's internal scroll to let Compose handle it
                                     isVerticalScrollBarEnabled = false
+                                    overScrollMode = android.view.View.OVER_SCROLL_NEVER
                                 }
                             },
                             update = {
                                 it.loadDataWithBaseURL(null, viewModel.htmlText, "text/html", "UTF-8", null)
                             },
-                            modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                     
@@ -114,12 +140,14 @@ fun BorrowerSignContractsScreen(
                         Button(
                             onClick = { 
                                 if (viewModel.canSign) {
+                                    viewModel.closeAllPopups()
                                     if (viewModel.isWiue) {
                                         viewModel.sendCode { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
                                     } else {
                                         viewModel.showSignPop = true
                                     }
                                 } else {
+                                    viewModel.closeAllPopups()
                                     viewModel.showSignTipsPop = true
                                 }
                             },
@@ -263,56 +291,26 @@ fun BorrowerSignContractsScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    if (viewModel.signImage == null) {
-                        SignatureCanvas(
-                            onClear = { /* path clear in SignatureCanvas */ },
-                            onSubmit = { bitmap ->
-                                viewModel.signImage = bitmap
-                            }
-                        )
-                    } else {
-                        Image(
-                            bitmap = viewModel.signImage!!.asImageBitmap(),
-                            contentDescription = "Signature",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                                .background(Color(0xFFF8F8F8))
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = { viewModel.signImage = null },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Ubah")
-                            }
-                            Button(
-                                onClick = {
-                                    viewModel.submitSignature(
-                                        bitmap = viewModel.signImage!!,
-                                        onSuccess = {
-                                            viewModel.showSignPop = false
-                                            Toast.makeText(context, "Tanda tangan selesai", Toast.LENGTH_SHORT).show()
-                                            onBackClick()
-                                        },
-                                        onError = { code, msg -> 
-                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                            if (code == 101) {
-                                                onBackClick()
-                                            }
-                                        }
-                                    )
+                    SignatureCanvas(
+                        onClear = { viewModel.signImage = null },
+                        onSubmit = { bitmap ->
+                            viewModel.signImage = bitmap
+                            viewModel.submitSignature(
+                                bitmap = bitmap,
+                                onSuccess = {
+                                    viewModel.closeAllPopups()
+                                    Toast.makeText(context, "Tanda tangan selesai", Toast.LENGTH_SHORT).show()
+                                    onBackClick()
                                 },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
-                            ) {
-                                Text("Tandatangani")
-                            }
+                                onError = { code, msg -> 
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                    if (code == 101) {
+                                        onBackClick()
+                                    }
+                                }
+                            )
                         }
-                    }
+                    )
                 }
             }
         }

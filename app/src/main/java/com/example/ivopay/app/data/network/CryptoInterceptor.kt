@@ -35,28 +35,59 @@ class CryptoInterceptor : Interceptor {
                 // Penanganan Multipart (Request dengan file)
                 val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
                 val combineData = mutableMapOf<String, Any>()
+                val filePartsData = mutableMapOf<String, String>() // Untuk ig_i5f calculation
                 
                 // Pisahkan data teks (untuk rd) dan data file
                 originalBody.parts.forEach { part ->
                     val header = part.headers
                     val contentDisposition = header?.get("Content-Disposition")
                     
-                    if (contentDisposition != null && !contentDisposition.contains("filename=")) {
-                        // Ini adalah field teks biasa (bukan file)
-                        try {
-                            val buffer = okio.Buffer()
-                            part.body.writeTo(buffer)
-                            val value = buffer.readUtf8()
-                            // Ambil nama field dari header: name="noc"
-                            val nameMatch = "name=\"([^\"]+)\"".toRegex().find(contentDisposition)
-                            val name = nameMatch?.groupValues?.get(1)
-                            if (name != null) {
-                                combineData[name] = value
-                            }
-                        } catch (e: Exception) {}
-                    } else {
-                        // Ini adalah field file, biarkan apa adanya
-                        builder.addPart(part)
+                    if (contentDisposition != null) {
+                        val nameMatch = "name=\"([^\"]+)\"".toRegex().find(contentDisposition)
+                        val name = nameMatch?.groupValues?.get(1) ?: ""
+                        
+                        if (!contentDisposition.contains("filename=")) {
+                            // Text part
+                            try {
+                                val buffer = okio.Buffer()
+                                part.body.writeTo(buffer)
+                                combineData[name] = buffer.readUtf8()
+                            } catch (e: Exception) {}
+                        } else {
+                            // File part
+                            builder.addPart(part)
+                            try {
+                                val buffer = okio.Buffer()
+                                part.body.writeTo(buffer)
+                                val value = buffer.readUtf8()
+                                
+                                // Vue parity: ig5F uses raw base64 data (without prefix) for hashing
+                                val base64Only = if (value.startsWith("data:image")) {
+                                    value.substringAfter("base64,")
+                                } else {
+                                    value
+                                }
+                                filePartsData[name] = base64Only
+                            } catch (e: Exception) {}
+                        }
+                    }
+                }
+
+                // Calculate ig_i5f sesuai logic: SHA1(MD5(concat(base64Content)))
+                if (filePartsData.isNotEmpty()) {
+                    val sortedKeys = filePartsData.keys.sorted()
+                    val baseStr = StringBuilder()
+                    for (key in sortedKeys) {
+                        baseStr.append(filePartsData[key])
+                    }
+                    
+                    val contentToHash = baseStr.toString()
+                    val md5 = com.example.ivopay.app.util.Sha1.getMD5(contentToHash)
+                    if (md5 != null) {
+                        val ig5f = com.example.ivopay.app.util.Sha1.getSHA1(md5)?.lowercase()
+                        if (ig5f != null) {
+                            combineData["ig_i5f"] = ig5f
+                        }
                     }
                 }
                 

@@ -29,6 +29,12 @@ class BorrowerSignContractsViewModel : ViewModel() {
     var showSignTipsPop by mutableStateOf(false)
     var showVIDACodePop by mutableStateOf(false)
     
+    fun closeAllPopups() {
+        showSignPop = false
+        showSignTipsPop = false
+        showVIDACodePop = false
+    }
+    
     // States
     var canSign by mutableStateOf(false)
     var checkAgree by mutableStateOf(false)
@@ -46,6 +52,7 @@ class BorrowerSignContractsViewModel : ViewModel() {
     fun init(noc: String, isWiue: Boolean = false) {
         this.noc = noc
         this.isWiue = isWiue
+        this.canSign = false // Reset status setiap kali masuk atau NOC berubah
         fetchContractData()
     }
 
@@ -80,9 +87,10 @@ class BorrowerSignContractsViewModel : ViewModel() {
                     
                     showSignBtn = srq && nsc
                     
-                    if (showSignBtn) {
+//                     Hilangkan popup otomatis agar tidak membingungkan user
+                     if (showSignBtn) {
                         showSignTipsPop = true
-                    }
+                     }
 
                     val newNoc = data.get("noc")?.asString
                     if (!newNoc.isNullOrEmpty()) {
@@ -165,7 +173,7 @@ class BorrowerSignContractsViewModel : ViewModel() {
                 }
                 val response = NetworkClient.apiService.borrowerCheckCode(requestBody)
                 if (response.isSuccessful && response.body()?.get("code")?.asInt == 1) {
-                    showVIDACodePop = false
+                    closeAllPopups()
                     showSignPop = true
                     onSuccess()
                 } else {
@@ -184,15 +192,19 @@ class BorrowerSignContractsViewModel : ViewModel() {
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
                 val byteArray = stream.toByteArray()
+                
+                // Konversi ke Base64 dengan prefix sesuai standar project Vue
+                val base64 = android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP)
+                val bsiContent = "data:image/png;base64,$base64"
 
-                // Ganti Content-Type ke application/octet-stream untuk bsi agar lebih aman diterima server
+                // Bangun MultipartBody
                 val requestBody = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("noc", noc)
                     .addFormDataPart(
                         "bsi", 
                         "signature.png", 
-                        byteArray.toRequestBody("application/octet-stream".toMediaTypeOrNull())
+                        bsiContent.toRequestBody("text/plain".toMediaTypeOrNull())
                     )
                     .build()
 
