@@ -55,6 +55,7 @@ object Screen {
     const val LenderBasicInfo = "lender_basic_info"
     const val GestureLogin = "GestureLogin"
     const val MyContracts = "my_contracts"
+    const val BillDetails = "BillDetails"
 }
 
 @Composable
@@ -508,6 +509,20 @@ fun AppNavigation(
                 onNavigateToChooseContracts = { cno ->
                     navController.navigate("choose_contracts?cno=$cno")
                 }
+            )
+        }
+
+        composable(
+            route = "${Screen.BillDetails}?bill={bill}",
+            arguments = listOf(navArgument("bill") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val noc = backStackEntry.arguments?.getString("bill") ?: ""
+            val billViewModel = remember { com.example.ivopay.app.ui.bill.BillDetailsViewModel(context) }
+            com.example.ivopay.app.ui.bill.BillDetailsScreen(
+                noc = noc,
+                viewModel = billViewModel,
+                onBackClick = { navController.popBackStack() },
+                onNavigate = { route -> navController.navigate(route) }
             )
         }
     }

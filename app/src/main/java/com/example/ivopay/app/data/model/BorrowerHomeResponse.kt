@@ -86,7 +86,13 @@ data class TnpoData(
 
 data class NctData(
     @SerializedName("cdi") val cdi: Boolean = false,
-    @SerializedName("noc") val noc: String? = null
+    @SerializedName("noc") val noc: String? = null,
+    @SerializedName("nct_upgd_data") val nctUpgdData: NctUpgdData? = null
+)
+
+data class NctUpgdData(
+    @SerializedName("nct_typ") val nctTyp: Int = 0,
+    @SerializedName("konfigurasi") val konfigurasi: com.google.gson.JsonObject? = null
 )
 
 data class LoanOrder(
@@ -104,5 +110,43 @@ data class LoanOrder(
     @SerializedName("peo_gfd") val peoGfd: String? = null,
     @SerializedName("bae") val bae: Boolean = false,
     @SerializedName("bae_ttm") val baeTtm: String? = null,
-    @SerializedName("bpio_txt") val bpioTxt: String? = null
+    @SerializedName("bpio_txt") val bpioTxt: String? = null,
+    @SerializedName("dbi") val dbi: BankInfoData? = null,
+    @SerializedName("buklh") val buklh: BuklhContainer? = null,
+    @SerializedName("asu_801") val asu801: Asu801Data? = null,
+    @SerializedName("asu_901") val asu901: Asu901Data? = null
+)
+
+data class BankInfoData(
+    @SerializedName("bkm") val bkm: String? = null,
+    @SerializedName("bkan") val bkan: String? = null,
+    @SerializedName("baut") val baut: String? = null
+)
+
+data class BuklhContainer(
+    @SerializedName("buklh") val buklh: BuklhData? = null,
+    @SerializedName("buklh_ewb") val buklhEwb: List<InstallmentPlan>? = null
+)
+
+data class BuklhData(
+    @SerializedName("buklh_bpio") val buklhBpio: Int = 0,
+    @SerializedName("buklh_ade") val buklhAde: String? = null,
+    @SerializedName("buklh_tma") val buklhTma: Long = 0,
+    @SerializedName("buklh_brps") val buklhBrps: Int = 0,
+    @SerializedName("buklh_lft_sec") val buklhLftSec: Long = 0
+)
+
+data class InstallmentPlan(
+    @SerializedName("rdn") val rdn: String? = null,
+    @SerializedName("otma") val otma: Long = 0,
+    @SerializedName("brps") val brps: Int = 0
+)
+
+data class Asu801Data(
+    @SerializedName("dfere_tma") val dfereTma: Long = 0,
+    @SerializedName("dfere_lft_sec") val dfereLftSec: Long = 0
+)
+
+data class Asu901Data(
+    @SerializedName("buklh") val buklh: BuklhData? = null
 )
