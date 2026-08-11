@@ -114,7 +114,18 @@ data class LoanOrder(
     @SerializedName("dbi") val dbi: BankInfoData? = null,
     @SerializedName("buklh") val buklh: BuklhContainer? = null,
     @SerializedName("asu_801") val asu801: Asu801Data? = null,
-    @SerializedName("asu_901") val asu901: Asu901Data? = null
+    @SerializedName("asu_901") val asu901: Asu901Data? = null,
+    @SerializedName("full_payment_code") val fullPaymentCode: List<PayMethod>? = null,
+    @SerializedName("udar") val udar: Long = 0,
+    @SerializedName("uda") val uda: Long = 0,
+    @SerializedName("gie") val gie: String? = null,
+    @SerializedName("uai") val uai: Int = 0
+)
+
+data class PayMethod(
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("code") val code: String? = null,
+    @SerializedName("payment_method") val paymentMethod: String? = null
 )
 
 data class BankInfoData(

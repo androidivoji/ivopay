@@ -97,7 +97,8 @@ fun BillCard(
                         color = Color(0xFFFE5455),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    Button(onClick = { onNavigate("RepayPage") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = btnColor)) {
+                    val billJson = com.google.gson.Gson().toJson(bill)
+                    Button(onClick = { onNavigate("RepayPage?bill=$billJson") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = btnColor)) {
                         Text("Bayar Segera")
                     }
                 }

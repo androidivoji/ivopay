@@ -37,7 +37,7 @@ fun InstallmentBillCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp).clickable { onNavigate("BillDetails") }) {
+        Column(modifier = Modifier.padding(16.dp).clickable { onNavigate("BillDetails?bill=${bill.noc}") }) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,7 +96,8 @@ fun InstallmentBillCard(
                         color = Color(0xFFFE5455),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    Button(onClick = { onNavigate("RepayPage") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = btnColor)) {
+                    val billJson = com.google.gson.Gson().toJson(bill)
+                    Button(onClick = { onNavigate("RepayPage?bill=$billJson") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = btnColor)) {
                         Text("Bayar Segera")
                     }
                 }
@@ -124,7 +125,7 @@ fun InstallmentBillCard(
                             Text(text = bill.baeTtm ?: "", fontSize = 11.sp)
                         }
                     }
-                    Button(onClick = { onNavigate("BillDetails") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = btnColor)) {
+                    Button(onClick = { onNavigate("BillDetails?bill=${bill.noc}") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = btnColor)) {
                         Text("Periksa detailnya")
                     }
                 }

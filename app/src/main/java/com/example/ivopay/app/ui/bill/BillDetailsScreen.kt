@@ -216,18 +216,20 @@ fun BillDetailsScreen(
                 Box(modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).background(Color.White).padding(16.dp)) {
                     if (curBill.buklh != null) {
                         Column {
-                            Button(onClick = { /* Pre Repay */ }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))) {
+                            val billJson = com.google.gson.Gson().toJson(curBill)
+                            Button(onClick = { onNavigate("RepayPage?bill=$billJson&pre_pay=1") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))) {
                                 Text("Pembayaran di muka")
                             }
                             Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedButton(onClick = { /* Current Repay */ }, modifier = Modifier.fillMaxWidth()) {
+                            OutlinedButton(onClick = { onNavigate("RepayPage?bill=$billJson&cur_pay=1") }, modifier = Modifier.fillMaxWidth()) {
                                 Text("Tagihan aktif periode ini")
                             }
                         }
                     } else {
                         val showRepayBtn = curBill.asu in listOf(301, 303, 302, 800301, 800302, 800303, 802, 801)
                         if (showRepayBtn) {
-                            Button(onClick = { onNavigate("RepayPage?bill=${curBill.noc}") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))) {
+                            val billJson = com.google.gson.Gson().toJson(curBill)
+                            Button(onClick = { onNavigate("RepayPage?bill=$billJson") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))) {
                                 Text("Bayar sekarang untuk naikkan limit")
                             }
                         }

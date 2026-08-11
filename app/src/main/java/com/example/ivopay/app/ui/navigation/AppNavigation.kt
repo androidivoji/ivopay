@@ -56,6 +56,7 @@ object Screen {
     const val GestureLogin = "GestureLogin"
     const val MyContracts = "my_contracts"
     const val BillDetails = "BillDetails"
+    const val Repay = "RepayPage"
 }
 
 @Composable
@@ -523,6 +524,29 @@ fun AppNavigation(
                 viewModel = billViewModel,
                 onBackClick = { navController.popBackStack() },
                 onNavigate = { route -> navController.navigate(route) }
+            )
+        }
+
+        composable(
+            route = "${Screen.Repay}?bill={bill}&pre_pay={pre_pay}&cur_pay={cur_pay}",
+            arguments = listOf(
+                navArgument("bill") { type = NavType.StringType },
+                navArgument("pre_pay") { defaultValue = "0" },
+                navArgument("cur_pay") { defaultValue = "0" }
+            )
+        ) { backStackEntry ->
+            val billJson = backStackEntry.arguments?.getString("bill") ?: ""
+            val prePay = backStackEntry.arguments?.getString("pre_pay") == "1"
+            val curPay = backStackEntry.arguments?.getString("cur_pay") == "1"
+            val repayViewModel = remember { com.example.ivopay.app.ui.repay.RepayViewModel(context) }
+            
+            com.example.ivopay.app.ui.repay.RepayScreen(
+                billJson = billJson,
+                isPrePay = prePay,
+                isCurPay = curPay,
+                viewModel = repayViewModel,
+                onBackClick = { navController.popBackStack() },
+                onNavigateBcaGuide = { /* Navigate to BCA Guide */ }
             )
         }
     }

@@ -176,6 +176,16 @@ interface ApiService {
     suspend fun borrowerSign(
         @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
+
+    @POST("v1/api/pyc")
+    suspend fun getPayCodeWays(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/dk/pay")
+    suspend fun getDynamicPayCode(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

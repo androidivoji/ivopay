@@ -137,11 +137,14 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
     }
 
     private suspend fun fetchLoanListWithFallback() {
-        // Tahap 1: Hit dengan { spe: 'h' }
+        // Reset tagihan aktif sebelum pengecekan baru
+        currentBill = null
+        
+        // Tahap 1: Hit dengan { spe: 'h' } (Cash Loan Utama)
         val foundInPrimary = fetchLoanList(JsonObject().apply { addProperty("spe", "h") })
         
         if (!foundInPrimary) {
-            // Tahap 2: Hit tanpa parameter (Other List) jika tidak ditemukan di tahap 1
+            // Tahap 2: Hit tanpa parameter (Other List / Cicilan) jika tidak ditemukan di tahap 1
             fetchLoanList(JsonObject())
         }
     }
