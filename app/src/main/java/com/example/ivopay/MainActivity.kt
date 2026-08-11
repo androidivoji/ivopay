@@ -8,6 +8,8 @@ import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.Utils
 import com.example.ivopay.app.ui.navigation.AppNavigation
 import com.example.ivopay.app.ui.navigation.Screen
+import com.example.ivopay.app.util.GlobalEvent
+import androidx.compose.runtime.LaunchedEffect
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +22,17 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val navController = rememberNavController()
+            
+            // Global Event Observer untuk Token Error
+            LaunchedEffect(Unit) {
+                GlobalEvent.events.collect { event ->
+                    if (event is GlobalEvent.Event.TokenError) {
+                        navController.navigate(Screen.Splash) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
+            }
 
             AppNavigation(
                 navController = navController,

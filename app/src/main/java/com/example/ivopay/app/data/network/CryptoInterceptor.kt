@@ -2,10 +2,11 @@ package com.example.ivopay.app.data.network
 
 import android.util.Log
 import com.blankj.utilcode.util.Utils
-import com.example.ivopay.app.util.SecurityUtils
-import com.example.ivopay.app.util.SessionManager
-import com.example.ivopay.app.util.SystemBridge
+import com.example.ivopay.app.util.*
 import com.google.gson.Gson
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import okhttp3.*
@@ -215,7 +216,10 @@ class CryptoInterceptor : Interceptor {
                             val decryptedJson = gson.fromJson(decryptedData, JsonObject::class.java)
                             if (decryptedJson.has("code") && decryptedJson.get("code").asInt == 5) {
                                 sessionManager.clearSession()
-                                // Logika navigasi ke logout bisa diletakkan di ViewModel atau UI layer
+                                // Kirim event global untuk ditangani di UI
+                                kotlinx.coroutines.GlobalScope.launch {
+                                    GlobalEvent.sendEvent(GlobalEvent.Event.TokenError)
+                                }
                             }
                         } catch (e: Exception) {}
                         

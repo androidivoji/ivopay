@@ -169,9 +169,13 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
 
     private fun getCurrentBill(bill: LoanOrder): Boolean {
         val asu = bill.asu
-        // Menambahkan wof_e dan status 601 sesuai response terbaru
-        if (bill.yep == "cash_credit" || bill.yep == "tloan" || bill.yep == "wof_e") {
-            return asu == 1 || asu == 2 || asu == 3 || asu == 4 || asu == 6 || asu == 5 || asu == 7 || asu == 8 || asu == 601
+        // Sinkronisasi dengan ConstData.js di Vue
+        // Mencakup: under_review(101), passed_wait_confirm(203), payment_in_progress(201), 
+        // using_money(301), expired(302), overdue(303), wait_borrow_sign(601), etc.
+        val activeStatuses = listOf(101, 203, 201, 301, 302, 303, 202, 601, 701, 801, 802, 800301, 800302, 800303)
+        
+        if (bill.yep == "cash_credit" || bill.yep == "tloan" || bill.yep == "wof_e" || bill.yep == "ci6_e") {
+            return asu in activeStatuses
         }
         return false
     }

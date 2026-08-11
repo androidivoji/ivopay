@@ -825,7 +825,7 @@ fun ApplicationCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
             ) {
-                Text("Permohonan")
+                Text("Permohonan ApplicationCard")
             }
         }
     }

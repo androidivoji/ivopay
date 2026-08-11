@@ -9,9 +9,6 @@ import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import com.example.ivopay.app.ui.home.BorrowerHomeViewModel
-import com.example.ivopay.app.ui.home.HomeScreen
-import com.example.ivopay.app.ui.lender.mycontracts.MyContractsScreen
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.ivopay.app.ui.auth.SelectRoleScreen
@@ -20,6 +17,7 @@ import com.example.ivopay.app.ui.lender.borrower.BorrowerDetailScreen
 import com.example.ivopay.app.ui.lender.detail.AlreadyPaidBillDetailScreen
 import com.example.ivopay.app.ui.lender.detail.ChooseContractsScreen
 import com.example.ivopay.app.ui.lender.detail.ViewContractPageScreen
+import com.example.ivopay.app.ui.lender.mycontracts.MyContractsScreen
 import com.example.ivopay.app.ui.lender.portofolio.toberecharged.ToBeRechargedDetailScreen
 import com.example.ivopay.app.ui.lender.portofolio.waitsign.BorrowerSignContractsScreen as LenderBorrowerSignContractsScreen
 import com.example.ivopay.app.ui.lender.portofolio.waitsign.PlatformSignContractsScreen
@@ -34,18 +32,13 @@ import com.example.ivopay.app.ui.login.LoginScreen
 import com.example.ivopay.app.ui.login.LoginViewModel
 import com.example.ivopay.app.ui.main.LenderMainDashboardScreen
 import com.example.ivopay.app.ui.main.MainDashboardScreen
-import com.example.ivopay.app.ui.mine.BaseInfoScreen
-import com.example.ivopay.app.ui.mine.ContactInfoScreen
-import com.example.ivopay.app.ui.mine.ContactInfoV2Screen
-import com.example.ivopay.app.ui.mine.JobInfoV2Screen
-import com.example.ivopay.app.ui.mine.LenderBasicInfoScreen
-import com.example.ivopay.app.ui.mine.LenderBasicInfoViewModel
-import com.example.ivopay.app.ui.mine.LogoutAndExitScreen
-import com.example.ivopay.app.ui.mine.MyProfileScreen
-import com.example.ivopay.app.ui.mine.PersonalInfoScreen
+import com.example.ivopay.app.ui.mine.*
+import com.example.ivopay.app.ui.splash.SplashScreen
+import com.example.ivopay.app.ui.splash.SplashViewModel
 import com.example.ivopay.app.util.SessionManager
 
 object Screen {
+    const val Splash = "splash_screen"
     const val SelectRole = "select_role"
     const val Main = "main"
     const val LenderMain = "l_main"
@@ -76,7 +69,21 @@ fun AppNavigation(
         navController = navController,
         startDestination = startDestination
     ) {
-        // 0. Screen Select Role (Pilih Borrower / Lender)
+        // 0. Splash Screen
+        composable(Screen.Splash) {
+            val splashViewModel = remember { SplashViewModel(context) }
+            SplashScreen(
+                viewModel = splashViewModel,
+                onNavigate = { state ->
+                    // Handle navigation from Splash logic (Simplified for global logout)
+                    navController.navigate(Screen.SelectRole) {
+                        popUpTo(Screen.Splash) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 1. Screen Select Role (Pilih Borrower / Lender)
         composable(Screen.SelectRole) {
             val roleViewModel: SelectRoleViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
             
@@ -89,7 +96,6 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToLenderLogin = { isLender ->
-                    // Membawa parameter role=1 jika isLender == true
                     val roleParam = if (isLender) "1" else "0"
                     navController.navigate("${Screen.Login}?role=$roleParam")
                 },
@@ -107,7 +113,6 @@ fun AppNavigation(
                             onFinished(hasInm)
                         },
                         onError = { error ->
-                            // Handle error, misal tampilkan toast
                             android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_SHORT).show()
                         }
                     )
@@ -115,7 +120,7 @@ fun AppNavigation(
             )
         }
 
-        // 1. Dashboard Utama Peminjam (Main)
+        // 2. Dashboard Utama Peminjam (Main)
         composable(Screen.Main) {
             MainDashboardScreen(
                 isLogin = sessionManager.isUserLoggedIn(),
@@ -127,7 +132,7 @@ fun AppNavigation(
             )
         }
 
-        // 2. Dashboard Lender / Mitra (l_main)
+        // 3. Dashboard Lender / Mitra (l_main)
         composable(Screen.LenderMain) {
             LenderMainDashboardScreen(
                 lenderStatus = 1,
@@ -135,7 +140,7 @@ fun AppNavigation(
             )
         }
 
-        // 3. Screen Login (Mendukung query parameter ?role=1)
+        // 4. Screen Login
         composable(
             route = "${Screen.Login}?role={role}",
             arguments = listOf(
@@ -189,12 +194,11 @@ fun AppNavigation(
                 },
                 onNavigateBackToLogin = { reset ->
                     if (reset) {
-                        sessionManager.saveSavedPhoneNumber("") // Clear saved phone
+                        sessionManager.saveSavedPhoneNumber("")
                         navController.navigate(Screen.Login) {
                             popUpTo(Screen.SelectRole) { inclusive = false }
                         }
                     } else {
-                        // Phone Login with send_code=1 logic
                         val currentRole = gestureViewModel.userRole
                         navController.navigate("${Screen.Login}?role=$currentRole")
                     }
@@ -202,7 +206,7 @@ fun AppNavigation(
             )
         }
 
-        // 4. Screen Logout dan Profile
+        // 5. Screen Logout dan Profile
         composable(Screen.LogoutAndExit) {
             LogoutAndExitScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -227,7 +231,7 @@ fun AppNavigation(
             )
         }
 
-        // 5. Alur Informasi Pengguna (KYC / Onboarding)
+        // 6. Alur Informasi Pengguna (KYC / Onboarding)
         composable(Screen.BaseInfo) {
             BaseInfoScreen(
                 onBackClick = { navController.popBackStack() },
@@ -268,7 +272,7 @@ fun AppNavigation(
             )
         }
 
-        // 6. Alur Pinjaman (Loan)
+        // 7. Alur Pinjaman (Loan)
         composable(Screen.ApplyLoan) {
             ApplyLoanScreen(
                 onBackClick = { navController.popBackStack() },
@@ -369,7 +373,7 @@ fun AppNavigation(
             )
         }
 
-        // 7. Alur Kontrak Lender
+        // 8. Alur Kontrak Lender
         composable(
             route = "sign_contracts/{odi}",
             arguments = listOf(navArgument("odi") { type = NavType.StringType })
