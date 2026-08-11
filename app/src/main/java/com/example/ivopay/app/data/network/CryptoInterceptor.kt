@@ -59,16 +59,16 @@ class CryptoInterceptor : Interceptor {
                             try {
                                 val buffer = okio.Buffer()
                                 part.body.writeTo(buffer)
-                                val value = buffer.readUtf8()
+                                val bytes = buffer.readByteArray()
                                 
-                                // Vue parity: ig5F uses raw base64 data (without prefix) for hashing
-                                val base64Only = if (value.startsWith("data:image")) {
-                                    value.substringAfter("base64,")
-                                } else {
-                                    value
-                                }
-                                filePartsData[name] = base64Only
-                            } catch (e: Exception) {}
+                                // Backend Parity: Backend menghitung base64_encode(binary_content)
+                                // Jadi kita ubah binary ke Base64 murni (Standard, NO_WRAP) untuk hashing
+                                val base64ForHash = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                                filePartsData[name] = base64ForHash
+                                Log.e("IG5F_DEBUG", "File Part: $name, Base64 Length for Hash: ${base64ForHash.length}")
+                            } catch (e: Exception) {
+                                Log.e("IG5F_DEBUG", "Error reading file bytes", e)
+                            }
                         }
                     }
                 }

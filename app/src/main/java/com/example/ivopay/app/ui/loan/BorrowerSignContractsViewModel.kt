@@ -192,19 +192,16 @@ class BorrowerSignContractsViewModel : ViewModel() {
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
                 val byteArray = stream.toByteArray()
-                
-                // Konversi ke Base64 dengan prefix sesuai standar project Vue
-                val base64 = android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP)
-                val bsiContent = "data:image/png;base64,$base64"
 
-                // Bangun MultipartBody
+                // Kirim sebagai binary murni (application/octet-stream)
+                // Backend akan membaca ini dengan file_get_contents()
                 val requestBody = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("noc", noc)
                     .addFormDataPart(
                         "bsi", 
                         "signature.png", 
-                        bsiContent.toRequestBody("text/plain".toMediaTypeOrNull())
+                        byteArray.toRequestBody("application/octet-stream".toMediaTypeOrNull())
                     )
                     .build()
 
