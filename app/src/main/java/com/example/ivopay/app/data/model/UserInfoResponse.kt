@@ -15,9 +15,20 @@ data class UserInfoData(
     @SerializedName("stag") val steps: FlowSteps? = null,
     @SerializedName("processing_credit_id") val processingCreditId: Int? = null,
     @SerializedName("tttp") val tttp: Int? = null,
-    @SerializedName("is_lackin_flow") val isLackinFlow: Boolean = false,
+    @SerializedName("is_lackin_flow") val isLackinFlow: Boolean? = null,
     @SerializedName("aig_sce") val aigSce: Boolean = false,
-    @SerializedName("aig_ned_apl") val aigNedApl: Boolean = false
+    @SerializedName("aig_ned_apl") val aigNedApl: Boolean = false,
+    @SerializedName("stag_lackin") val stagLackin: StagLackin? = null
+)
+
+data class StagLackin(
+    @SerializedName("s1") val s1: Boolean = false,
+    @SerializedName("s2") val s2: Boolean = false,
+    @SerializedName("s3") val s3: Boolean = false,
+    @SerializedName("s4") val s4: Boolean = false,
+    @SerializedName("s5") val s5: Boolean = false,
+    @SerializedName("s2_a") val s2_a: Boolean = false,
+    @SerializedName("s3_a") val s3_a: Boolean = false
 )
 
 data class CustomerData(

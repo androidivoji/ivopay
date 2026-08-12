@@ -77,10 +77,12 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                 
                 if (responseObj?.code == 1) {
                     homeConfig = responseObj.data
-                    // Simpan status pgsh dan rasn
+                    // Simpan status pgsh, rasn, lackinA, uico
                     responseObj.data?.cme?.let {
                         sessionManager.savePgshStatus(it.pgsh)
                         sessionManager.saveRasn(it.rasn)
+                        sessionManager.saveLackinA(it.lackinA)
+                        sessionManager.saveUico(it.uico)
                     }
                     true
                 } else false

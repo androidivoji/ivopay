@@ -18,6 +18,7 @@ class MineViewModel(context: Context) : ViewModel() {
     var userInfo by mutableStateOf<UserInfoData?>(null)
     var isLoading by mutableStateOf(false)
     var mobile by mutableStateOf(sessionManager.getMobileNumber() ?: "")
+    var userName by mutableStateOf(sessionManager.getUserFullName() ?: "Pengguna")
 
     init {
         if (sessionManager.isUserLoggedIn()) {
@@ -29,7 +30,7 @@ class MineViewModel(context: Context) : ViewModel() {
         isLoading = true
         viewModelScope.launch {
             try {
-                val response = NetworkClient.apiService.getUserInfo(JsonObject())
+                val response = NetworkClient.apiService.getUserInfo(JsonObject().apply { addProperty("spe", "h") })
                 isLoading = false
                 if (response.isSuccessful) {
                     val body = response.body()
@@ -42,6 +43,7 @@ class MineViewModel(context: Context) : ViewModel() {
                         }
                         val name = body.data.customer?.personalInfo?.fullName
                         if (!name.isNullOrEmpty()) {
+                            userName = name
                             sessionManager.saveUserFullName(name)
                         }
                     }
@@ -54,5 +56,4 @@ class MineViewModel(context: Context) : ViewModel() {
     }
 
     val isLoggedIn: Boolean get() = sessionManager.isUserLoggedIn()
-    val userName: String get() = sessionManager.getUserFullName() ?: "Pengguna"
 }

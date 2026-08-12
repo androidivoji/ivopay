@@ -200,7 +200,7 @@ fun MainDashboardScreen(
                             viewModel = billViewModel,
                             onItemClick = { bill ->
                                 // Navigasi detail sesuai logika router Vue (e.g. BillDetails / InlgBillDetails)
-                                onNavigateToDetail("BillDetails/${bill.noc}")
+//                                onNavigateToDetail("BillDetails/${bill.noc}")
                             }
                         )
                     }

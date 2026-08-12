@@ -223,11 +223,14 @@ fun AppNavigation(
         }
 
         composable(Screen.MyProfile) {
+            val profileViewModel: com.example.ivopay.app.ui.mine.MyProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                com.example.ivopay.app.ui.mine.MyProfileViewModel(context)
+            }
             MyProfileScreen(
-                isLoggedIn = sessionManager.isUserLoggedIn(),
+                viewModel = profileViewModel,
                 onBackClick = { navController.popBackStack() },
                 onNavigateToStep = { stepRoute, isFinished ->
-                    navController.navigate("$stepRoute?infoFinished=$isFinished")
+                    navController.navigate(stepRoute)
                 },
                 onNavigateToLogin = { navController.navigate(Screen.Login) }
             )

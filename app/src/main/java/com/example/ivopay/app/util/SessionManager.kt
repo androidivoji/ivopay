@@ -68,6 +68,26 @@ class SessionManager(context: Context) {
         sharedPreferences.edit().putBoolean(KEY_PGSH, hasPgsh).apply()
     }
 
+    // Mendapatkan lackinA
+    fun getLackinA(): Boolean {
+        return sharedPreferences.getBoolean(KEY_LACKIN_A, false)
+    }
+
+    // Menyimpan lackinA
+    fun saveLackinA(lackinA: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_LACKIN_A, lackinA).apply()
+    }
+
+    // Mendapatkan uico
+    fun getUico(): Boolean {
+        return sharedPreferences.getBoolean(KEY_UICO, false)
+    }
+
+    // Menyimpan uico
+    fun saveUico(uico: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_UICO, uico).apply()
+    }
+
     // Mendapatkan rasn (wof)
     fun getRasn(): Int {
         return sharedPreferences.getInt(KEY_RASN, 0)
@@ -168,5 +188,7 @@ class SessionManager(context: Context) {
         private const val KEY_OLD_TOKEN = "oldTkn"
         private const val KEY_SAVED_PHONE_NUMBER = "savePhoneNumber"
         private const val KEY_RASN = "rasn"
+        private const val KEY_LACKIN_A = "lackinA"
+        private const val KEY_UICO = "uico"
     }
 }
