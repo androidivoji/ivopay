@@ -97,24 +97,12 @@ class BaseInfoViewModel(context: Context) : ViewModel() {
                         val ide = data.customer?.identityImages
                         
                         // Format Local Address (Domisili)
-                        val localAddr = buildString {
-                            if (!lotn?.rtidn.isNullOrEmpty()) append("${lotn?.rtidn}/")
-                            if (!lotn?.rwidn.isNullOrEmpty()) append("${lotn?.rwidn} ")
-                            if (!lotn?.lpidn.isNullOrEmpty()) append("${lotn?.lpidn} ")
-                            if (!lotn?.lcidn.isNullOrEmpty()) append("${lotn?.lcidn} ")
-                            if (!lotn?.ldidn.isNullOrEmpty()) append("${lotn?.ldidn} ")
-                            if (!lotn?.viidn.isNullOrEmpty()) append("${lotn?.viidn}")
-                        }.trim()
+                        val localRtRw = "${lotn?.rtidn ?: ""}/${lotn?.rwidn ?: ""}"
+                        val localAddr = "$localRtRw ${lotn?.lpidn ?: ""} ${lotn?.lcidn ?: ""} ${lotn?.ldidn ?: ""} ${lotn?.viidn ?: ""}".trim()
 
                         // Format Company Address (Kantor)
-                        val companyAddr = buildString {
-                            if (!wiLotn?.rtidn.isNullOrEmpty()) append("${wiLotn?.rtidn}/")
-                            if (!wiLotn?.rwidn.isNullOrEmpty()) append("${wiLotn?.rwidn} ")
-                            if (!wiLotn?.lpidn.isNullOrEmpty()) append("${wiLotn?.lpidn} ")
-                            if (!wiLotn?.lcidn.isNullOrEmpty()) append("${wiLotn?.lcidn} ")
-                            if (!wiLotn?.ldidn.isNullOrEmpty()) append("${wiLotn?.ldidn} ")
-                            if (!wiLotn?.viidn.isNullOrEmpty()) append("${wiLotn?.viidn}")
-                        }.trim()
+                        val companyRtRw = "${wiLotn?.rtidn ?: ""}/${wiLotn?.rwidn ?: ""}"
+                        val companyAddr = "$companyRtRw ${wiLotn?.lpidn ?: ""} ${wiLotn?.lcidn ?: ""} ${wiLotn?.ldidn ?: ""} ${wiLotn?.viidn ?: ""}".trim()
 
                         state = state.copy(
                             inm = pi?.ktpMasked ?: "",

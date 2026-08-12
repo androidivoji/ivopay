@@ -252,9 +252,15 @@ fun AppNavigation(
         }
 
         composable(Screen.PersonalInfoV2) {
-            PersonalInfoScreen(
+            val personalViewModel: com.example.ivopay.app.ui.mine.PersonalInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                com.example.ivopay.app.ui.mine.PersonalInfoV2ViewModel(context)
+            }
+            com.example.ivopay.app.ui.mine.PersonalInfoScreen(
+                viewModel = personalViewModel,
                 onBackClick = { navController.popBackStack() },
-                onNextClick = { navController.navigate(Screen.ContactInfo) }
+                onNextClick = { 
+                    navController.navigate(Screen.ContactInfo)
+                }
             )
         }
 

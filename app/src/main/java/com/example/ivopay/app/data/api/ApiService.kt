@@ -52,7 +52,7 @@ interface ApiService {
         @Body requestBody: JsonObject = JsonObject()
     ): Response<CommonConfigResponse>
 
-    @POST("v1/api/c/b")
+    @POST("v2/api/c/b")
     suspend fun getBankList(
         @Body requestBody: JsonObject
     ): Response<BankListResponse>
@@ -177,12 +177,12 @@ interface ApiService {
         @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
 
-    @POST("v1/api/pyc")
+    @POST("api/pyc")
     suspend fun getPayCodeWays(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
 
-    @POST("v1/api/dk/pay")
+    @POST("api/dk/pay")
     suspend fun getDynamicPayCode(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
@@ -221,6 +221,11 @@ interface ApiService {
     @POST("v1/api/c/up")
     suspend fun updateBaseInfo(
         @Body requestBody: okhttp3.RequestBody
+    ): Response<JsonObject>
+
+    @POST("api/c/up")
+    suspend fun updateUserInfo(
+        @Body requestBody: JsonObject
     ): Response<JsonObject>
 }
 

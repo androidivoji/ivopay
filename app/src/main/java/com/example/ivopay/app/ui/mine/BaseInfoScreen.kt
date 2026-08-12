@@ -123,7 +123,7 @@ fun BaseInfoScreen(
                 // 3. Selection Fields (Simulated Click to Open List)
                 SelectionField(
                     label = "Jenis Kelamin",
-                    value = if (viewModel.state.gen == 1) "Laki-laki" else if (viewModel.state.gen == 2) "Perempuan" else "",
+                    value = viewModel.state.genn,
                     onClick = { /* Show Gender Dialog */ }
                 )
 

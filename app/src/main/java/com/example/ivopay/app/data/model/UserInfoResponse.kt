@@ -46,7 +46,27 @@ data class CustomerPersonalInfo(
     @SerializedName("mob") val mob: String? = null,
     @SerializedName("inmt") val inmt: Int? = null,
     @SerializedName("inm") val ktpMasked: String? = null,
-    @SerializedName("eil") val email: String? = null
+    @SerializedName("eil") val email: String? = null,
+    @SerializedName("moe") val motherName: String? = null,
+    @SerializedName("rel") val religion: Int? = null,
+    @SerializedName("reln") val religionName: String? = null,
+    @SerializedName("edn") val education: Int? = null,
+    @SerializedName("ednn") val educationName: String? = null,
+    @SerializedName("lite") val houseType: Int? = null,
+    @SerializedName("liten") val houseTypeName: String? = null,
+    @SerializedName("lidn") val stayDuration: Int? = null,
+    @SerializedName("lidnn") val stayDurationName: String? = null,
+    @SerializedName("lope") val loanPurpose: Int? = null,
+    @SerializedName("lopen") val loanPurposeName: String? = null,
+    @SerializedName("mas") val marryStatus: Int? = null,
+    @SerializedName("masn") val marryStatusName: String? = null,
+    @SerializedName("fas") val familySize: Int? = null,
+    @SerializedName("fasn") val familySizeName: String? = null,
+    @SerializedName("spane") val spouseName: String? = null,
+    @SerializedName("spabire") val spouseBirthDate: String? = null,
+    @SerializedName("happtyagmet") val hasPropertyAgreement: Int? = null,
+    @SerializedName("happtyagmetne") val hasPropertyAgreementName: String? = null,
+    @SerializedName("lvstr") val liveAddrStr: String? = null
 )
 
 data class IdentityImages(
