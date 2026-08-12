@@ -40,11 +40,13 @@ data class CustomerData(
 
 data class CustomerPersonalInfo(
     @SerializedName("fun") val fullName: String? = null,
-    @SerializedName("mob") val mob: String? = null,
-    @SerializedName("inm") val ktpMasked: String? = null,
-    @SerializedName("eil") val email: String? = null,
+    @SerializedName("gen") val gender: Int? = null,
     @SerializedName("genn") val genderName: String? = null,
-    @SerializedName("bire") val birthDate: String? = null
+    @SerializedName("bire") val birthDate: String? = null,
+    @SerializedName("mob") val mob: String? = null,
+    @SerializedName("inmt") val inmt: Int? = null,
+    @SerializedName("inm") val ktpMasked: String? = null,
+    @SerializedName("eil") val email: String? = null
 )
 
 data class IdentityImages(
@@ -56,8 +58,38 @@ data class IdentityImages(
 data class CustomerAddress(
     @SerializedName("adst") val addressDetail: String? = null,
     @SerializedName("del") val street: String? = null,
-    @SerializedName("bipl") val city: String? = null,
-    @SerializedName("poco") val postCode: String? = null
+    @SerializedName("bipl") val birthPlace: String? = null,
+    @SerializedName("poco") val postCode: String? = null,
+    @SerializedName("rtidn") val rtidn: String? = null,
+    @SerializedName("rwidn") val rwidn: String? = null,
+    @SerializedName("lpidn") val lpidn: String? = null,
+    @SerializedName("lcidn") val lcidn: String? = null,
+    @SerializedName("ldidn") val ldidn: String? = null,
+    @SerializedName("viidn") val viidn: String? = null,
+    @SerializedName("lpid") val lpid: String? = null,
+    @SerializedName("lcid") val lcid: String? = null,
+    @SerializedName("ldid") val ldid: String? = null,
+    @SerializedName("viid") val viid: String? = null,
+    @SerializedName("rtid") val rtid: String? = null,
+    @SerializedName("rwid") val rwid: String? = null
+)
+
+data class CompanyAddress(
+    @SerializedName("cadst") val addressDetail: String? = null,
+    @SerializedName("cdel") val street: String? = null,
+    @SerializedName("cpoco") val postCode: String? = null,
+    @SerializedName("crtidn") val rtidn: String? = null,
+    @SerializedName("crwidn") val rwidn: String? = null,
+    @SerializedName("cpidn") val lpidn: String? = null,
+    @SerializedName("ccidn") val lcidn: String? = null,
+    @SerializedName("cdidn") val ldidn: String? = null,
+    @SerializedName("cviidn") val viidn: String? = null,
+    @SerializedName("cpid") val lpid: String? = null,
+    @SerializedName("ccid") val lcid: String? = null,
+    @SerializedName("cdid") val ldid: String? = null,
+    @SerializedName("cviid") val viid: String? = null,
+    @SerializedName("crtid") val rtid: String? = null,
+    @SerializedName("crwid") val rwid: String? = null
 )
 
 data class WorkInfo(
@@ -65,7 +97,8 @@ data class WorkInfo(
     @SerializedName("con") val companyAddress: String? = null,
     @SerializedName("cot") val companyPhone: String? = null,
     @SerializedName("inin") val industry: String? = null,
-    @SerializedName("syamt") val salary: Long? = null
+    @SerializedName("syamt") val salary: Long? = null,
+    @SerializedName("lotn") val lotn: CompanyAddress? = null
 )
 
 data class ContactItem(

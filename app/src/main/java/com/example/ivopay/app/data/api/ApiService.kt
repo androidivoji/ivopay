@@ -201,6 +201,27 @@ interface ApiService {
     suspend fun applyLoan(
         @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
+
+    // OCR & Base Info
+    @POST("api/soime")
+    suspend fun uploadOcrPhoto(
+        @Body requestBody: okhttp3.RequestBody
+    ): Response<JsonObject>
+
+    @POST("api/sonfo")
+    suspend fun getOcrResult(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/c/pcd")
+    suspend fun getAddressList(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/c/up")
+    suspend fun updateBaseInfo(
+        @Body requestBody: okhttp3.RequestBody
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

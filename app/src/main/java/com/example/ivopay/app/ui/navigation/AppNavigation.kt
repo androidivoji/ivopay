@@ -238,11 +238,16 @@ fun AppNavigation(
 
         // 6. Alur Informasi Pengguna (KYC / Onboarding)
         composable(Screen.BaseInfo) {
+            val baseInfoViewModel: com.example.ivopay.app.ui.mine.BaseInfoViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                com.example.ivopay.app.ui.mine.BaseInfoViewModel(context)
+            }
             BaseInfoScreen(
+                viewModel = baseInfoViewModel,
                 onBackClick = { navController.popBackStack() },
-                onNextClick = { navController.navigate(Screen.PersonalInfoV2) },
-                onSelectKtpPhoto = { /* Panggil Intent kamera */ },
-                onOpenTermsAndConditions = { navController.navigate("TermsAndConditionsPage") }
+                onNextClick = { 
+                    // Logic from Vue: _checkInfo() or go to next step
+                    navController.navigate(Screen.PersonalInfoV2)
+                }
             )
         }
 
