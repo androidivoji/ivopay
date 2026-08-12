@@ -38,6 +38,7 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
     // UI flags
     var showConfirmBillPop by mutableStateOf(false)
     var showPermissionTipPop by mutableStateOf(false)
+    var showUnqualifiedPop2 by mutableStateOf(false)
     var showUnqualifiedPop3 by mutableStateOf(false)
 
     val isLogin: Boolean get() = sessionManager.isUserLoggedIn()
@@ -76,8 +77,11 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                 
                 if (responseObj?.code == 1) {
                     homeConfig = responseObj.data
-                    // Simpan status pgsh
-                    responseObj.data?.cme?.pgsh?.let { sessionManager.savePgshStatus(it) }
+                    // Simpan status pgsh dan rasn
+                    responseObj.data?.cme?.let {
+                        sessionManager.savePgshStatus(it.pgsh)
+                        sessionManager.saveRasn(it.rasn)
+                    }
                     true
                 } else false
             } else false
@@ -189,26 +193,45 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
         }
     }
 
-    fun onApplyClick(onNavigate: (String) -> Unit) {
+    fun onApplyClick(onNavigate: (String) -> Unit, productType: String = "wof_e") {
         if (currentBill != null) {
             // Toast: "Anda memiliki pesanan sedang diproses..."
             return
         }
-        if (cashData?.koc == true) {
-            showUnqualifiedPop3 = true
-            return
-        }
-        
-        if (homeConfig?.cme?.wof == false) {
-             if (homeConfig?.fcoa?.psw == 1) {
-                 onNavigate("CashLoan")
-             } else if (homeConfig?.tnpo?.psw == 1) {
-                 onNavigate("TadpoleCash")
-             } else {
-                 onNavigate("ApplyLoan")
-             }
-        } else {
-            onNavigate("ApplyLoan")
+
+        viewModelScope.launch {
+            isLoading = true
+            try {
+                // 1. Refresh Customer Info (GET_USER_INFO)
+                val userResponse = NetworkClient.apiService.getUserInfo(JsonObject().apply { addProperty("spe", "h") })
+                if (userResponse.isSuccessful) {
+                    val userData = userResponse.body()?.data
+                    
+                    // 2. Logic Lackin Flow
+                    if (userData?.isLackinFlow == true && userData.aigSce && userData.aigNedApl) {
+                        val lackinResp = NetworkClient.apiService.lackinApply()
+                        if (lackinResp.isSuccessful && lackinResp.body()?.get("code")?.asInt == 1) {
+                            onNavigate("UnderReviewPage")
+                        }
+                    } else {
+                        // 3. Normal Flow
+                        if (cashData?.koc == true) {
+                            showUnqualifiedPop2 = true
+                        } else {
+                            when (productType) {
+                                "fcoa" -> onNavigate("CashLoan")
+                                "tnpo" -> onNavigate("TadpoleCash")
+                                "wof_e" -> onNavigate("ApplyLoan")
+                                else -> onNavigate("ApplyLoan")
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "onApplyClick error: ${e.message}")
+            } finally {
+                isLoading = false
+            }
         }
     }
 }

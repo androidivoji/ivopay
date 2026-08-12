@@ -120,8 +120,27 @@ class CryptoInterceptor : Interceptor {
                         originalBody.writeTo(buffer)
                         val originalJson = buffer.readUtf8()
                         if (originalJson.isNotEmpty()) {
-                            val map: Map<String, Any> = gson.fromJson(originalJson, object : TypeToken<Map<String, Any>>() {}.type)
-                            combineData.putAll(map)
+                            val jsonObject = gson.fromJson(originalJson, JsonObject::class.java)
+                            jsonObject.entrySet().forEach { (key, value) ->
+                                if (value.isJsonPrimitive) {
+                                    val primitive = value.asJsonPrimitive
+                                    if (primitive.isNumber) {
+                                        val num = primitive.asNumber
+                                        // Cek apakah bilangan bulat
+                                        if (num.toDouble() == num.toLong().toDouble()) {
+                                            combineData[key] = num.toLong()
+                                        } else {
+                                            combineData[key] = num.toDouble()
+                                        }
+                                    } else if (primitive.isBoolean) {
+                                        combineData[key] = primitive.asBoolean
+                                    } else {
+                                        combineData[key] = primitive.asString
+                                    }
+                                } else {
+                                    combineData[key] = value.toString()
+                                }
+                            }
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()

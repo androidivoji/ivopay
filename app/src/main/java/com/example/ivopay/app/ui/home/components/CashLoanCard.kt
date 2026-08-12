@@ -16,11 +16,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ivopay.app.data.model.CashConfigData
 import com.example.ivopay.app.data.model.LoanProductConfig
+import com.example.ivopay.app.ui.home.BorrowerHomeViewModel
 import com.example.ivopay.app.util.CommonUtils
 import com.example.ivopay.app.util.SessionManager
 
 @Composable
 fun CashLoanCard(
+    viewModel: BorrowerHomeViewModel,
     config: LoanProductConfig?,
     cashData: CashConfigData?,
     showAmount: Long,
@@ -92,12 +94,7 @@ fun CashLoanCard(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { 
-                             if (productType == "fcoa") onNavigate("CashLoan")
-                             else if (productType == "tnpo") onNavigate("TadpoleCash")
-                             else if (productType == "wof_e") onNavigate("ApplyLoan")
-                             else onNavigate("ApplyLoan")
-                        },
+                        onClick = { viewModel.onApplyClick(onNavigate, productType) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455)),
                         enabled = config.koc == false

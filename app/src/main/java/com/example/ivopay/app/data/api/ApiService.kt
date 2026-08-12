@@ -186,6 +186,21 @@ interface ApiService {
     suspend fun getDynamicPayCode(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
+
+    @POST("v2/api/ado")
+    suspend fun lackinApply(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/lcea")
+    suspend fun getAmountCashConfig(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/yatc")
+    suspend fun applyLoan(
+        @Body requestBody: okhttp3.RequestBody
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

@@ -15,5 +15,29 @@ data class CashConfigData(
     @SerializedName("peo") val peo: Int = 0,
     @SerializedName("koc") val koc: Boolean = false,
     @SerializedName("rea") val rea: String? = null,
-    @SerializedName("peo_gfd") val peoGfd: String? = null
+    @SerializedName("peo_gfd") val peoGfd: String? = null,
+    @SerializedName("tpos") val tpos: List<DayOption>? = null,
+    @SerializedName("dtma") val dtma: Int = 0,
+    @SerializedName("dpeo") val dpeo: Int = 0,
+    @SerializedName("yep") val yep: String? = null,
+    @SerializedName("bio") val bio: BankInfo? = null
+)
+
+data class DayOption(
+    @SerializedName("peo") val peo: Int = 0,
+    @SerializedName("aow") val aow: Boolean = true,
+    @SerializedName("dop") val dop: List<LoanOption>? = null
+)
+
+data class LoanOption(
+    @SerializedName("tma") val tma: Long = 0,
+    @SerializedName("sam") val sam: Long = 0,
+    @SerializedName("ife") val ife: Long = 0,
+    @SerializedName("dua") val dua: Long = 0
+)
+
+data class BankInfo(
+    @SerializedName("bkan") val bkan: String? = null,
+    @SerializedName("bkm") val bkm: String? = null,
+    @SerializedName("baut") val baut: String? = null
 )

@@ -276,10 +276,12 @@ fun AppNavigation(
 
         // 7. Alur Pinjaman (Loan)
         composable(Screen.ApplyLoan) {
+            val applyViewModel = remember { com.example.ivopay.app.ui.loan.ApplyLoanViewModel(context) }
             ApplyLoanScreen(
+                viewModel = applyViewModel,
                 onBackClick = { navController.popBackStack() },
-                onSubmitSuccess = {
-                    navController.navigate("ApplySucceedPage") {
+                onSubmitSuccess = { noc ->
+                    navController.navigate("ApplySucceedPage?noc=$noc&showPop=1") {
                         popUpTo(Screen.Main) { inclusive = false }
                     }
                 }
@@ -287,28 +289,31 @@ fun AppNavigation(
         }
 
         composable(
-            route = "ApplySucceedPage?noc={noc}&cash_type={cash_type}&mob={mob}&need_confirm={need_confirm}",
+            route = "ApplySucceedPage?noc={noc}&cash_type={cash_type}&mob={mob}&need_confirm={need_confirm}&showPop={showPop}",
             arguments = listOf(
                 navArgument("noc") { defaultValue = "" },
                 navArgument("cash_type") { defaultValue = "" },
                 navArgument("mob") { defaultValue = "" },
-                navArgument("need_confirm") { defaultValue = "0" }
+                navArgument("need_confirm") { defaultValue = "0" },
+                navArgument("showPop") { defaultValue = "0" }
             )
         ) { backStackEntry ->
             val noc = backStackEntry.arguments?.getString("noc") ?: ""
             val cashType = backStackEntry.arguments?.getString("cash_type") ?: ""
             val mob = backStackEntry.arguments?.getString("mob") ?: ""
             val needConfirmStr = backStackEntry.arguments?.getString("need_confirm") ?: "0"
+            val showPopParam = backStackEntry.arguments?.getString("showPop") ?: "0"
             val needConfirm = needConfirmStr == "1"
+            val showInitialPop = showPopParam == "1"
 
             val prefs = context.getSharedPreferences("app_prefs", MODE_PRIVATE)
-            val showRatePop = !prefs.getBoolean("showRatePop", false)
-            if (showRatePop) {
+            val showRatePop = !prefs.getBoolean("showRatePop", false) || showInitialPop
+            if (showRatePop && !showInitialPop) {
                 prefs.edit().putBoolean("showRatePop", true).apply()
             }
 
             ApplySucceedScreen(
-                ocEui = false,
+                ocEui = sessionManager.getActStatus() == "1", // Example logic
                 cashType = cashType,
                 needConfirm = needConfirm,
                 mob = mob,

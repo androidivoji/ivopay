@@ -14,7 +14,10 @@ data class UserInfoData(
     @SerializedName("bac") val bankAccount: CustomerBankAccountData? = null,
     @SerializedName("stag") val steps: FlowSteps? = null,
     @SerializedName("processing_credit_id") val processingCreditId: Int? = null,
-    @SerializedName("tttp") val tttp: Int? = null
+    @SerializedName("tttp") val tttp: Int? = null,
+    @SerializedName("is_lackin_flow") val isLackinFlow: Boolean = false,
+    @SerializedName("aig_sce") val aigSce: Boolean = false,
+    @SerializedName("aig_ned_apl") val aigNedApl: Boolean = false
 )
 
 data class CustomerData(

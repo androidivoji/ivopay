@@ -68,9 +68,22 @@ class SessionManager(context: Context) {
         sharedPreferences.edit().putBoolean(KEY_PGSH, hasPgsh).apply()
     }
 
+    // Mendapatkan rasn (wof)
+    fun getRasn(): Int {
+        return sharedPreferences.getInt(KEY_RASN, 0)
+    }
+
+    // Menyimpan rasn
+    fun saveRasn(rasn: Int) {
+        sharedPreferences.edit().putInt(KEY_RASN, rasn).apply()
+    }
+
     // Menggantikan localStorage.getItem('act')
     fun getActStatus(): String {
-        return sharedPreferences.getString(KEY_ACT, "") ?: ""
+        // Jika user memaksa default "1" di getString, ia hanya bekerja jika key tidak ada.
+        // Jika key ada tapi isinya "", ia akan mengembalikan "".
+        val status = sharedPreferences.getString(KEY_ACT, "") ?: ""
+        return if (status.isEmpty()) "1" else status // Paksa "1" jika belum di-set atau kosong untuk testing
     }
 
     // Menggantikan localStorage.setItem('act', data.act ? "1" : "")
@@ -154,5 +167,6 @@ class SessionManager(context: Context) {
         private const val KEY_ACT = "act"
         private const val KEY_OLD_TOKEN = "oldTkn"
         private const val KEY_SAVED_PHONE_NUMBER = "savePhoneNumber"
+        private const val KEY_RASN = "rasn"
     }
 }

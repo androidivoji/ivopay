@@ -139,6 +139,7 @@ fun HomeScreen(
         val fcoa = homeConfig?.fcoa
         if (fcoa?.psw == 1 || fcoa?.podi != null) {
             CashLoanCard(
+                viewModel = viewModel,
                 config = fcoa,
                 cashData = viewModel.cashData,
                 showAmount = viewModel.showAmount,
@@ -153,6 +154,7 @@ fun HomeScreen(
         val tnpo = homeConfig?.tnpo
         if (tnpo?.psw == 1 || tnpo?.podi != null) {
             CashLoanCard(
+                viewModel = viewModel,
                 config = tnpo,
                 cashData = viewModel.cashData,
                 showAmount = viewModel.showAmount,
@@ -271,5 +273,24 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Copyright © 2026 IVOJI. All rights reserved.", fontSize = 10.sp, color = Color.LightGray)
         }
+        
+        if (viewModel.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.padding(16.dp), color = Color(0xFFFE5455))
+        }
+    }
+
+    // Popups
+    if (viewModel.showUnqualifiedPop2) {
+        UnqualifiedPopup(
+            message = viewModel.cashData?.rea, // "rea" is the reason from API
+            onDismiss = { viewModel.showUnqualifiedPop2 = false }
+        )
+    }
+
+    if (viewModel.showUnqualifiedPop3) {
+        UnqualifiedPopup(
+            message = viewModel.cashData?.rea,
+            onDismiss = { viewModel.showUnqualifiedPop3 = false }
+        )
     }
 }
