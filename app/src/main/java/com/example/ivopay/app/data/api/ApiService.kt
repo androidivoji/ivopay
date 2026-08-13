@@ -37,10 +37,25 @@ interface ApiService {
         @Body requestBody: JsonObject
     ): Response<LoginWayResponse>
 
+    @POST("v1/api/lg/sc")
+    suspend fun sendVerCode(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/lg/v")
+    suspend fun verifyLogin(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
     @POST("v1/api/lg/gen")
     suspend fun gestureLogin(
         @Body requestBody: JsonObject
     ): Response<LoginResponse>
+
+    @POST("v1/api/geup")
+    suspend fun setGesturePwd(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
 
     @POST("v2/api/gast")
     suspend fun getRole(

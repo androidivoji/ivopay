@@ -26,6 +26,8 @@ import com.example.ivopay.app.ui.loan.ApplyLoanScreen
 import com.example.ivopay.app.ui.loan.ApplySucceedScreen
 import com.example.ivopay.app.ui.loan.BorrowerSignContractsScreen
 import com.example.ivopay.app.ui.loan.BorrowerSignContractsViewModel
+import com.example.ivopay.app.ui.login.GestureCreateScreen
+import com.example.ivopay.app.ui.login.GestureCreateViewModel
 import com.example.ivopay.app.ui.login.GestureLoginScreen
 import com.example.ivopay.app.ui.login.GestureLoginViewModel
 import com.example.ivopay.app.ui.login.LoginScreen
@@ -54,6 +56,7 @@ object Screen {
     const val AccountLogout = "AccountLogoutPage"
     const val LenderBasicInfo = "lender_basic_info"
     const val GestureLogin = "GestureLogin"
+    const val GestureCreate = "GestureCreate"
     const val MyContracts = "my_contracts"
     const val BillDetails = "BillDetails"
     const val Repay = "RepayPage"
@@ -203,6 +206,25 @@ fun AppNavigation(
                     } else {
                         val currentRole = gestureViewModel.userRole
                         navController.navigate("${Screen.Login}?role=$currentRole")
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = "${Screen.GestureCreate}?fromPage={fromPage}",
+            arguments = listOf(navArgument("fromPage") { defaultValue = "" })
+        ) { backStackEntry ->
+            val fromPage = backStackEntry.arguments?.getString("fromPage") ?: ""
+            val gestureCreateViewModel: GestureCreateViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                GestureCreateViewModel(context)
+            }
+            GestureCreateScreen(
+                viewModel = gestureCreateViewModel,
+                onBackClick = { navController.popBackStack() },
+                onSuccess = {
+                    navController.navigate(Screen.Main) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

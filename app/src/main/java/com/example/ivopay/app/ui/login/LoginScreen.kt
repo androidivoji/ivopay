@@ -198,7 +198,10 @@ fun LoginScreen(
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.clickable {
-                                    viewModel.startCountDown()
+                                    viewModel.sendVerCode(
+                                        onSuccess = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() },
+                                        onError = { error -> Toast.makeText(context, error, Toast.LENGTH_SHORT).show() }
+                                    )
                                 }
                             )
                         } else {
@@ -255,13 +258,13 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Tombol Utama (Selanjutnya / Login & Registrasi)
                 Button(
                     onClick = {
                         if (viewModel.haveInputNumber) {
-                            viewModel.handleLoginClick { targetRoute ->
-                                onNavigate(targetRoute)
-                            }
+                            viewModel.handleLoginClick(
+                                onSuccess = { targetRoute -> onNavigate(targetRoute) },
+                                onError = { error -> Toast.makeText(context, error, Toast.LENGTH_SHORT).show() }
+                            )
                         } else {
                             viewModel.handleNextClick(
                                 onSuccessAutoLogin = { targetRoute ->
@@ -272,7 +275,9 @@ fun LoginScreen(
                                 },
                                 onFaceLogin = { onNavigate("FaceCheckWaitingPage") },
                                 onBaseInfo = { onNavigate(Screen.BaseInfo) },
-                                onShowOtpInput = { viewModel.startCountDown() },
+                                onOtpStepReady = { 
+                                    Toast.makeText(context, "Kode verifikasi telah dikirim", Toast.LENGTH_SHORT).show()
+                                },
                                 onError = { error ->
                                     Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                                 }
@@ -383,7 +388,8 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             viewModel.showLoginTipPop = false
-                            onNavigate(Screen.Main)
+                            val targetRoute = if (viewModel.userRole == 1) Screen.LenderMain else Screen.Main
+                            onNavigate(targetRoute)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = ActiveRed),
                         modifier = Modifier.fillMaxWidth()

@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 class LoginViewModel(private val context: Context) : ViewModel() {
 
     private val sessionManager = SessionManager(context)
+    private val gson = com.google.gson.Gson()
 
     // Flag Role (1 = Lender, 0 = Borrower/Default)
     var isLenderRole by mutableStateOf(false)
@@ -32,6 +33,7 @@ class LoginViewModel(private val context: Context) : ViewModel() {
     var showLoginWay by mutableStateOf(false)
     var showWaLogin by mutableStateOf(false)
     var codeWayChecked by mutableStateOf("1") // "1": WhatsApp, "2": SMS
+    var currentType by mutableStateOf("1") // 1: SMS, 3: WA
 
     var sendAble by mutableStateOf(true)
     var verCountDown by mutableStateOf(0)
@@ -40,6 +42,13 @@ class LoginViewModel(private val context: Context) : ViewModel() {
     var isLoading by mutableStateOf(false)
     var showLoginTipPop by mutableStateOf(false)
     var inmText by mutableStateOf("")
+
+    // Additional flags from Vue logic
+    var pya by mutableStateOf("")
+    var nway by mutableStateOf(false)
+    
+    // Store login data temporarily for navigation decision
+    private var tempLoginData: JsonObject? = null
 
     // Setter untuk menentukan role saat pengguna datang dari SelectRoleScreen
     fun setRole(isLender: Boolean) {
@@ -72,7 +81,7 @@ class LoginViewModel(private val context: Context) : ViewModel() {
         }
 
     // Hitung Mundur OTP (60 detik)
-    fun startCountDown() {
+    private fun startCountDown() {
         sendAble = false
         verCountDown = 60
         countDownJob?.cancel()
@@ -85,13 +94,54 @@ class LoginViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    // Simulasi aksi saat "Selanjutnya" diklik (Sudah disesuaikan dengan logika Vue)
+    // Fungsi untuk mengirim Kode OTP
+    fun sendVerCode(onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        if (!sendAble) {
+            onError("Silakan klik lagi setelah $verCountDown detik")
+            return
+        }
+
+        currentType = if (showWaLogin && codeWayChecked == "1") "3" else "1"
+        val evme = if (currentType == "3") "N22" else "N5"
+
+        isLoading = true
+        viewModelScope.launch {
+            try {
+                uploadTrackingEvent(evme)
+
+                val requestBody = JsonObject().apply {
+                    addProperty("mob", userPhone)
+                    addProperty("tye", currentType)
+                }
+
+                val response = NetworkClient.apiService.sendVerCode(requestBody)
+                isLoading = false
+
+                if (response.isSuccessful && response.body()?.get("code")?.asInt == 1) {
+                    onSuccess("Setelah mengirimkan kode verifikasi, harap tunggu beberapa saat")
+                    startCountDown()
+                } else {
+                    val errorMsg = response.body()?.get("msg")?.asString ?: "Gagal mengirim kode"
+                    val code = response.body()?.get("code")?.asInt
+                    if (code == 101) {
+                        handleNextClick({}, { _, _ -> }, {}, {}, {}, { onError(it) })
+                    }
+                    onError(errorMsg)
+                }
+            } catch (e: Exception) {
+                isLoading = false
+                onError(e.message ?: "Koneksi bermasalah")
+            }
+        }
+    }
+
+    // Simulasi aksi saat "Selanjutnya" diklik
     fun handleNextClick(
         onSuccessAutoLogin: (targetRoute: String) -> Unit,
         onGestureLogin: (phone: String, role: Int) -> Unit,
         onFaceLogin: () -> Unit,
         onBaseInfo: () -> Unit,
-        onShowOtpInput: () -> Unit,
+        onOtpStepReady: () -> Unit,
         onError: (String) -> Unit
     ) {
         isLoading = true
@@ -102,7 +152,6 @@ class LoginViewModel(private val context: Context) : ViewModel() {
                 val savedPhone = sessionManager.getSavedPhoneNumber()
 
                 if (!oldTkn.isNullOrEmpty() && savedPhone == userPhone) {
-                    // Pulihkan session dan langsung masuk ke main
                     sessionManager.saveLoginSession(
                         token = oldTkn,
                         role = userRole,
@@ -122,31 +171,38 @@ class LoginViewModel(private val context: Context) : ViewModel() {
                 }
                 
                 val response = NetworkClient.apiService.getLoginWay(requestBody)
-                isLoading = false
 
                 if (response.isSuccessful) {
                     val resData = response.body()?.data
                     if (resData != null) {
-                        // 3. Logika Navigasi berdasarkan response
                         if (resData.hasGesture) {
-                            // Jika g=true, langsung masuk ke Gesture Login sesuai permintaan Anda
+                            isLoading = false
                             onGestureLogin(userPhone, userRole)
                         } else if (resData.hasFaceLogin) {
+                            isLoading = false
                             onFaceLogin()
                         } else if (resData.vLtr) {
+                            isLoading = false
                             onBaseInfo()
                         } else {
-                            // Scenario 4: Masuk ke tahap pilihan OTP (WA / SMS)
+                            // Standard OTP Flow
                             showLoginWay = true
                             showWaLogin = resData.hasWaLogin
                             codeWayChecked = if (resData.hasWaLogin) "1" else "2"
                             haveInputNumber = true
-                            onShowOtpInput()
+                            isLoading = false
+                            
+                            sendVerCode(
+                                onSuccess = { msg -> onOtpStepReady() },
+                                onError = { error -> onError(error) }
+                            )
                         }
                     } else {
+                        isLoading = false
                         onError("Data tidak ditemukan")
                     }
                 } else {
+                    isLoading = false
                     onError("Error: ${response.code()}")
                 }
             } catch (e: Exception) {
@@ -156,42 +212,153 @@ class LoginViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    // Handling Login / Registrasi
-    fun handleLoginClick(onSuccess: (targetRoute: String) -> Unit) {
+    // Handling Login / Registrasi (Verify OTP)
+    fun handleLoginClick(onSuccess: (targetRoute: String) -> Unit, onError: (String) -> Unit) {
+        if (pya.isNotEmpty()) {
+            uploadTrackingEvent("F19")
+        }
+        
         isLoading = true
         viewModelScope.launch {
-            delay(1000) // Simulasi Hit API Login
-            isLoading = false
+            try {
+                val requestBody = JsonObject().apply {
+                    addProperty("mob", userPhone)
+                    addProperty("ver", verCode)
+                    addProperty("acs", userRole.toString())
+                    addProperty("pya", pya)
+                    addProperty("tye", currentType)
+                }
 
-            // Tentukan rute dinamis berdasarkan role yang diset
-            val activeRole = if (isLenderRole || userRole == 1) 1 else 0
-            val targetRoute = if (activeRole == 1) {
-                Screen.LenderMain // "l_main"
-            } else {
-                Screen.Main       // "main"
+                val response = NetworkClient.apiService.verifyLogin(requestBody)
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.get("code")?.asInt == 1) {
+                        val data = body.getAsJsonObject("data")
+                        if (data != null) {
+                            tempLoginData = data
+                            Log.d("LoginVM", "Verify Login Success. data: $data")
+                            
+                            // Conceptually clear old session as per Vue
+                            sessionManager.clearSession()
+                            
+                            // Safe parsing from GSON JsonObject
+                            val token = if (data.has("tkn") && !data.get("tkn").isJsonNull) data.get("tkn").asString else ""
+                            val mobile = if (data.has("mie") && !data.get("mie").isJsonNull) data.get("mie").asString else userPhone
+                            val isActive = if (data.has("act") && !data.get("act").isJsonNull) data.get("act").asBoolean else false
+                            val lost = if (data.has("lost") && !data.get("lost").isJsonNull) data.get("lost").asString else null
+                            val tinm = if (data.has("tinm") && !data.get("tinm").isJsonNull) data.get("tinm").asString else ""
+
+                            // Save session initially
+                            sessionManager.saveLoginSession(
+                                token = token,
+                                role = userRole,
+                                hasPgsh = false,
+                                isActive = isActive,
+                                mobile = mobile
+                            )
+                            sessionManager.saveSavedPhoneNumber(mobile)
+                            
+                            // Tracking
+                            if (nway) uploadTrackingEvent("N15")
+                            uploadTrackingEvent("N10")
+                            if (codeWayChecked == "1") uploadTrackingEvent("N23") else uploadTrackingEvent("N20")
+
+                            // Account Recovery Popup logic (highest priority)
+                            if (lost == "3") {
+                                isLoading = false
+                                inmText = tinm
+                                showLoginTipPop = true
+                            } else {
+                                // MENGHUBUNGI getRole() SEBELUM NAVIGASI
+                                onVerifySuccessWithRole(onSuccess, onError)
+                            }
+                        } else {
+                            isLoading = false
+                            onError("Data response kosong")
+                        }
+                    } else {
+                        isLoading = false
+                        onError(body?.get("msg")?.asString ?: "Verifikasi gagal")
+                    }
+                } else {
+                    isLoading = false
+                    onError("Verifikasi gagal: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                isLoading = false
+                Log.e("LoginViewModel", "Verify OTP error", e)
+                onError("Terjadi kesalahan: ${e.message}")
             }
+        }
+    }
 
-            Log.d("LoginViewModel", "Login Success. Role: $activeRole -> Route: $targetRoute")
-            val formattedPhone = when {
-                userPhone.startsWith("08") -> userPhone
-                userPhone.startsWith("8") -> "0$userPhone"
-                else -> userPhone
+    private fun onVerifySuccessWithRole(onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val roleRequestBody = JsonObject().apply {
+                    addProperty("acs", userRole.toString())
+                }
+                val roleResponse = NetworkClient.apiService.getRole(roleRequestBody)
+                isLoading = false
+
+                if (roleResponse.isSuccessful) {
+                    val roleData = roleResponse.body()?.data
+                    Log.d("LoginVM", "getRole Success. roleData: $roleData")
+                    
+                    val isActive = if (tempLoginData?.has("act") == true && !tempLoginData!!.get("act").isJsonNull) tempLoginData!!.get("act").asBoolean else false
+                    val ngup = if (tempLoginData?.has("ngup") == true && !tempLoginData!!.get("ngup").isJsonNull) tempLoginData!!.get("ngup").asBoolean else false
+                    
+                    Log.d("LoginVM", "isActive: $isActive, ngup: $ngup")
+
+                    if (isActive) {
+                        onSuccess(Screen.Main)
+                    } else if (roleData?.acs == "1") {
+                        // Lender logic
+                        sessionManager.saveLoginSession(
+                            token = sessionManager.getAuthToken() ?: "",
+                            role = 1,
+                            hasPgsh = sessionManager.getHasPgsh(),
+                            isActive = true,
+                            mobile = sessionManager.getMobileNumber() ?: ""
+                        )
+                        if (roleData.uico) {
+                            onSuccess(Screen.LenderMain)
+                        } else {
+                            onSuccess(Screen.LenderBasicInfo)
+                        }
+                    } else {
+                        // Borrower logic
+                        if (ngup) {
+                            Log.d("LoginVM", "Navigating to GestureCreate")
+                            // Target to Gesture creation
+                            onSuccess("${Screen.GestureCreate}?fromPage=PhoneLogin")
+                        } else {
+                            onSuccess(Screen.Main)
+                        }
+                    }
+                } else {
+                    Log.e("LoginVM", "getRole Failed: ${roleResponse.code()}")
+                    onSuccess(if (userRole == 1) Screen.LenderMain else Screen.Main)
+                }
+            } catch (e: Exception) {
+                isLoading = false
+                Log.e("LoginVM", "getRole Exception", e)
+                onSuccess(if (userRole == 1) Screen.LenderMain else Screen.Main)
             }
+        }
+    }
 
-            // Simpan nomor HP untuk pengecekan Token Recovery & Gesture di masa depan
-            sessionManager.saveSavedPhoneNumber(formattedPhone)
-
-            // Simpan Session ke EncryptedSharedPreferences dengan role yang sesuai
-            sessionManager.saveLoginSession(
-                token = "sample_jwt_token",
-                role = activeRole,
-                hasPgsh = false,
-                mobile = formattedPhone,
-                fullName = ""
-            )
-
-            // Kirimkan targetRoute hasil evaluasi (bukan hardcoded)
-            onSuccess(targetRoute)
+    private fun uploadTrackingEvent(evme: String) {
+        viewModelScope.launch {
+            try {
+                val body = JsonObject().apply {
+                    addProperty("evme", evme)
+                    addProperty("eval", "1")
+                    addProperty("spe", "h")
+                }
+                NetworkClient.apiService.uploadEvent(body)
+            } catch (e: Exception) {}
         }
     }
 
