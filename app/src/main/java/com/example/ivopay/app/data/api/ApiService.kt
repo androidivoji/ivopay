@@ -223,7 +223,7 @@ interface ApiService {
         @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
 
-    @POST("api/c/up")
+    @POST("v1/api/c/up")
     suspend fun updateUserInfo(
         @Body requestBody: JsonObject
     ): Response<JsonObject>

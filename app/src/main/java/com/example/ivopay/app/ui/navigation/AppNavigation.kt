@@ -244,8 +244,8 @@ fun AppNavigation(
             val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
             val isNeedBack = infoFinished == "1"
 
-            val baseInfoViewModel: com.example.ivopay.app.ui.mine.BaseInfoViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
-                com.example.ivopay.app.ui.mine.BaseInfoViewModel(context)
+            val baseInfoViewModel: BaseInfoViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                BaseInfoViewModel(context)
             }
             BaseInfoScreen(
                 viewModel = baseInfoViewModel,
@@ -267,10 +267,10 @@ fun AppNavigation(
             val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
             val isNeedBack = infoFinished == "1"
 
-            val personalViewModel: com.example.ivopay.app.ui.mine.PersonalInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
-                com.example.ivopay.app.ui.mine.PersonalInfoV2ViewModel(context)
+            val personalViewModel: PersonalInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                PersonalInfoV2ViewModel(context)
             }
-            com.example.ivopay.app.ui.mine.PersonalInfoScreen(
+            PersonalInfoScreen(
                 viewModel = personalViewModel,
                 onBackClick = { navController.popBackStack() },
                 onNextClick = { 
@@ -290,7 +290,11 @@ fun AppNavigation(
             val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
             val isNeedBack = infoFinished == "1"
 
+            val contactViewModel: ContactInfoViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                ContactInfoViewModel(context)
+            }
             ContactInfoScreen(
+                viewModel = contactViewModel,
                 onBackClick = { navController.popBackStack() },
                 onNextClick = { 
                     if (isNeedBack) {

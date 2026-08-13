@@ -124,6 +124,7 @@ data class WorkInfo(
 data class ContactItem(
     @SerializedName("fun") val name: String? = null,
     @SerializedName("phe") val phone: String? = null,
+    @SerializedName("rel") val rel: String? = null,
     @SerializedName("reln") val relationName: String? = null
 )
 
