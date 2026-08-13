@@ -141,7 +141,7 @@ class BaseInfoViewModel(context: Context) : ViewModel() {
         uploadJob = viewModelScope.launch {
             try {
                 val stream = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
                 val bytes = stream.toByteArray()
                 aru = CommonUtils.generateSessionId()
                 

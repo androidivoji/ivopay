@@ -194,17 +194,26 @@ private fun cropBitmapToGuideline(bitmap: Bitmap, viewSize: IntSize): Bitmap {
     val ox = (vw - dw) / 2f
     val oy = (vh - dh) / 2f
 
-    // Koordinat Guideline di layar (Sesuai logic Canvas)
+    // Koordinat Guideline di layar
     val rw = vw * 0.9f
     val rh = rw * (54f / 85f)
     val rl = (vw - rw) / 2f
     val rt = (vh - rh) / 2f
 
+    // TAMBAHKAN MARGIN AMAN (10% lebih luas agar tidak terlalu mepet)
+    val marginW = rw * 0.05f // 5% kiri + 5% kanan
+    val marginH = rh * 0.05f // 5% atas + 5% bawah
+    
+    val expandedRL = rl - marginW
+    val expandedRT = rt - marginH
+    val expandedRW = rw + (marginW * 2)
+    val expandedRH = rh + (marginH * 2)
+
     // Konversi koordinat layar ke koordinat piksel Bitmap asli
-    val cropL = ((rl - ox) / scale).toInt().coerceIn(0, bitmap.width - 1)
-    val cropT = ((rt - oy) / scale).toInt().coerceIn(0, bitmap.height - 1)
-    val cropW = (rw / scale).toInt().coerceAtMost(bitmap.width - cropL)
-    val cropH = (rh / scale).toInt().coerceAtMost(bitmap.height - cropT)
+    val cropL = ((expandedRL - ox) / scale).toInt().coerceIn(0, bitmap.width - 1)
+    val cropT = ((expandedRT - oy) / scale).toInt().coerceIn(0, bitmap.height - 1)
+    val cropW = (expandedRW / scale).toInt().coerceAtMost(bitmap.width - cropL)
+    val cropH = (expandedRH / scale).toInt().coerceAtMost(bitmap.height - cropT)
 
     return try {
         Bitmap.createBitmap(bitmap, cropL, cropT, cropW, cropH)
