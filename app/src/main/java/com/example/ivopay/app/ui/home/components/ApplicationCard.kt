@@ -55,7 +55,7 @@ fun ApplicationCard(
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = { viewModel.onApplyClick(onNavigate, "wof_e") },
+                onClick = { viewModel.checkInfo(onNavigate) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
             ) {

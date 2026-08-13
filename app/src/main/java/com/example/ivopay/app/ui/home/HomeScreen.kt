@@ -38,6 +38,25 @@ fun HomeScreen(
         viewModel.init()
     }
 
+    // Handle Action Events dari ViewModel (Face Live, dll)
+    LaunchedEffect(viewModel.actionEvent) {
+        viewModel.actionEvent?.let { event ->
+            when (event) {
+                HomeActionEvent.StartLoginFaceLive -> {
+                    // Logika panggil SDK deteksi wajah untuk login face
+                    // Setelah sukses, panggil _setLoginFaceAig lalu refresh info
+                    onNavigateToDetail("FaceDetection") 
+                }
+                HomeActionEvent.StartLackinFaceLive -> {
+                    // Logika panggil SDK deteksi wajah untuk Lackin A
+                    onNavigateToDetail("FaceDetection")
+                }
+            }
+            // Reset event setelah diproses
+            viewModel.actionEvent = null
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -118,7 +137,8 @@ fun HomeScreen(
                 config = ci10,
                 isWof = isWof,
                 isWiue = isWiue,
-                onNavigate = onNavigateToDetail
+                onNavigate = onNavigateToDetail,
+                onApply = { viewModel.checkInfo(onNavigateToDetail) }
             )
         }
 
@@ -131,7 +151,8 @@ fun HomeScreen(
                 config = inlg,
                 isWof = isWof,
                 isWiue = isWiue,
-                onNavigate = onNavigateToDetail
+                onNavigate = onNavigateToDetail,
+                onApply = { viewModel.checkInfo(onNavigateToDetail) }
             )
         }
 
@@ -187,7 +208,7 @@ fun HomeScreen(
         if (!isUserInfoCompleted) {
             NormalStatusCard(
                 nodp = homeConfig?.nodp,
-                onApply = { onNavigateToDetail("ApplyLoan") }
+                onApply = { viewModel.checkInfo(onNavigateToDetail) }
             )
             
             val ci6Fe = homeConfig?.ci6Fe
@@ -213,6 +234,7 @@ fun HomeScreen(
                 isWof = isWof,
                 isWiue = isWiue,
                 onNavigate = onNavigateToDetail,
+                onApply = { viewModel.checkInfo(onNavigateToDetail) },
                 durationUnit = "hari",
                 targetRoute = "RevolvingLoan",
                 overrideDuration = 14
@@ -233,7 +255,8 @@ fun HomeScreen(
                     config = config,
                     isWof = isWof,
                     isWiue = isWiue,
-                    onNavigate = onNavigateToDetail
+                    onNavigate = onNavigateToDetail,
+                    onApply = { viewModel.checkInfo(onNavigateToDetail) }
                 )
             }
         }
@@ -251,6 +274,7 @@ fun HomeScreen(
                     isWof = isWof,
                     isWiue = isWiue,
                     onNavigate = onNavigateToDetail,
+                    onApply = { viewModel.checkInfo(onNavigateToDetail) },
                     subtitle = "Anda dapat mengajukan permohonan produk lain jika membayar tepat waktu.",
                     durationUnit = "hari",
                     buttonText = "Permohonan",

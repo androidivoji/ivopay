@@ -94,7 +94,7 @@ fun CashLoanCard(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { viewModel.onApplyClick(onNavigate, productType) },
+                        onClick = { viewModel.checkInfo(onNavigate) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455)),
                         enabled = config.koc == false

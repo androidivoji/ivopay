@@ -30,6 +30,7 @@ fun ProductCard(
     isWof: Boolean,
     isWiue: Boolean,
     onNavigate: (String) -> Unit,
+    onApply: (() -> Unit)? = null,
     subtitle: String? = null,
     durationUnit: String = "bulan",
     buttonText: String = "Ajukan pinjaman",
@@ -134,7 +135,9 @@ fun ProductCard(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Button(
-                            onClick = { onNavigate(targetRoute) },
+                            onClick = { 
+                                if (onApply != null) onApply() else onNavigate(targetRoute) 
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455)),
                             enabled = config.koc == false

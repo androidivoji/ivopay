@@ -60,6 +60,10 @@ object Screen {
     const val MyContracts = "my_contracts"
     const val BillDetails = "BillDetails"
     const val Repay = "RepayPage"
+    const val BankInfo = "BankInfo"
+    const val RegisterInfoWaiting = "RegisterInfoWaitingPage"
+    const val UnderReview = "UnderReviewPage"
+    const val A_Apply = "A_ApplyPage"
 }
 
 @Composable
@@ -651,6 +655,30 @@ fun AppNavigation(
                 onBackClick = { navController.popBackStack() },
                 onNavigateBcaGuide = { /* Navigate to BCA Guide */ }
             )
+        }
+
+        composable(Screen.BankInfo) {
+            // BankInfoScreen(onBackClick = { navController.popBackStack() })
+        }
+
+        composable(Screen.RegisterInfoWaiting) {
+            // RegisterInfoWaitingScreen()
+        }
+
+        composable(Screen.UnderReview) {
+            // UnderReviewScreen()
+        }
+
+        composable(
+            route = "${Screen.A_Apply}?lackin_flow_typ={lackin_flow_typ}&konfigurasi={konfigurasi}",
+            arguments = listOf(
+                navArgument("lackin_flow_typ") { defaultValue = "" },
+                navArgument("konfigurasi") { defaultValue = "" }
+            )
+        ) { backStackEntry ->
+            val typ = backStackEntry.arguments?.getString("lackin_flow_typ") ?: ""
+            val config = backStackEntry.arguments?.getString("konfigurasi") ?: ""
+            // A_ApplyScreen(typ = typ, config = config)
         }
     }
 }

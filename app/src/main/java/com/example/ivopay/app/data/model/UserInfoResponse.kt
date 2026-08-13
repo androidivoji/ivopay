@@ -15,8 +15,10 @@ data class UserInfoData(
     @SerializedName("stag") val steps: FlowSteps? = null,
     @SerializedName("processing_credit_id") val processingCreditId: Int? = null,
     @SerializedName("tttp") val tttp: Int? = null,
+    @SerializedName("rpns") val rpns: Boolean = false,
     @SerializedName("is_lackin_flow") val isLackinFlow: Boolean? = null,
-    @SerializedName("aig_sce") val aigSce: Boolean = false,
+    @SerializedName("aig_sce") val aigSce: Boolean? = null,
+    @SerializedName("aig_ned") val aigNed: Boolean = false,
     @SerializedName("aig_ned_apl") val aigNedApl: Boolean = false,
     @SerializedName("stag_lackin") val stagLackin: StagLackin? = null
 )
@@ -34,9 +36,16 @@ data class StagLackin(
 data class CustomerData(
     @SerializedName("pi") val personalInfo: CustomerPersonalInfo? = null,
     @SerializedName("ide") val identityImages: IdentityImages? = null,
-    @SerializedName("lotn") val address: CustomerAddress? = null,
+    @SerializedName("lotn") val address: Any? = null,
     @SerializedName("wi") val workInfo: WorkInfo? = null
-)
+) {
+    /**
+     * Helper untuk mengambil data alamat secara aman meskipun server mengirim string kosong.
+     */
+    fun getAddressSafe(): CustomerAddress? {
+        return if (address is CustomerAddress) address else null
+    }
+}
 
 data class CustomerPersonalInfo(
     @SerializedName("fun") val fullName: String? = null,

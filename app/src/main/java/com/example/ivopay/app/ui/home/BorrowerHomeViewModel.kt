@@ -9,11 +9,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ivopay.app.data.api.NetworkClient
 import com.example.ivopay.app.data.model.*
+import com.example.ivopay.app.ui.navigation.Screen
 import com.example.ivopay.app.util.SessionManager
 import com.example.ivopay.app.util.SystemBridge
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.launch
+
+sealed class HomeActionEvent {
+    object StartLoginFaceLive : HomeActionEvent()
+    object StartLackinFaceLive : HomeActionEvent()
+}
 
 /**
  * ViewModel untuk Home Borrower dengan alur hit API berurutan (Sequential).
@@ -40,6 +46,9 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
     var showPermissionTipPop by mutableStateOf(false)
     var showUnqualifiedPop2 by mutableStateOf(false)
     var showUnqualifiedPop3 by mutableStateOf(false)
+
+    // Events for Navigation or Actions
+    var actionEvent by mutableStateOf<HomeActionEvent?>(null)
 
     val isLogin: Boolean get() = sessionManager.isUserLoggedIn()
 
@@ -179,8 +188,6 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
     private fun getCurrentBill(bill: LoanOrder): Boolean {
         val asu = bill.asu
         // Sinkronisasi dengan ConstData.js di Vue
-        // Mencakup: under_review(101), passed_wait_confirm(203), payment_in_progress(201), 
-        // using_money(301), expired(302), overdue(303), wait_borrow_sign(601), etc.
         val activeStatuses = listOf(101, 203, 201, 301, 302, 303, 202, 601, 701, 801, 802, 800301, 800302, 800303)
         
         if (bill.yep == "cash_credit" || bill.yep == "tloan" || bill.yep == "wof_e" || bill.yep == "ci6_e") {
@@ -195,9 +202,13 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
         }
     }
 
-    fun onApplyClick(onNavigate: (String) -> Unit, productType: String = "wof_e") {
-        if (currentBill != null) {
-            // Toast: "Anda memiliki pesanan sedang diproses..."
+    /**
+     * Logika _checkInfo dari project Vue:
+     * Memastikan data nasabah lengkap sebelum mengizinkan pengajuan pinjaman.
+     */
+    fun checkInfo(onNavigate: (String) -> Unit) {
+        if (!isLogin) {
+            onNavigate(Screen.Login)
             return
         }
 
@@ -205,35 +216,124 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
             isLoading = true
             try {
                 // 1. Refresh Customer Info (GET_USER_INFO)
-                val userResponse = NetworkClient.apiService.getUserInfo(JsonObject().apply { addProperty("spe", "h") })
-                if (userResponse.isSuccessful) {
-                    val userData = userResponse.body()?.data
-                    
-                    // 2. Logic Lackin Flow
-                    if (userData?.isLackinFlow == true && userData.aigSce && userData.aigNedApl) {
-                        val lackinResp = NetworkClient.apiService.lackinApply()
-                        if (lackinResp.isSuccessful && lackinResp.body()?.get("code")?.asInt == 1) {
-                            onNavigate("UnderReviewPage")
-                        }
-                    } else {
-                        // 3. Normal Flow
-                        if (cashData?.koc == true) {
+                val response = NetworkClient.apiService.getUserInfo(JsonObject())
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.code == 1 && body.data != null) {
+                        val cu = body.data
+                        
+                        // rpns check (Kondisi tidak memenuhi syarat)
+                        if (cu.rpns) {
                             showUnqualifiedPop2 = true
-                        } else {
-                            when (productType) {
-                                "fcoa" -> onNavigate("CashLoan")
-                                "tnpo" -> onNavigate("TadpoleCash")
-                                "wof_e" -> onNavigate("ApplyLoan")
-                                else -> onNavigate("ApplyLoan")
+                            isLoading = false
+                            return@launch
+                        }
+
+                        if (cu.stagLackin != null) {
+                            val stag = cu.stagLackin
+                            val cme = homeConfig?.cme
+
+                            // Alur Pengecekan Tahapan (Staging)
+                            if (!stag.s1) {
+                                onNavigate(Screen.BaseInfo)
+                            } else if (cu.isLackinFlow == null) {
+                                onNavigate(Screen.RegisterInfoWaiting)
+                            } else if (cme?.lackinA == false) {
+                                // Alur Normal (Non-Lackin A)
+                                if (cu.isLackinFlow == false && cme.aigEp) {
+                                    actionEvent = HomeActionEvent.StartLoginFaceLive
+                                } else if (!stag.s3) {
+                                    onNavigate(Screen.PersonalInfoV2)
+                                } else if (!stag.s4) {
+                                    onNavigate(Screen.ContactInfo)
+                                } else if (!stag.s5) {
+                                    onNavigate(Screen.JobInfoV2)
+                                } else {
+                                    // Semua info lengkap, lanjut ke apply
+                                    onApplyClick(onNavigate)
+                                }
+                            } else if (cme?.lackinA == true) {
+                                // Alur Lackin A
+                                if (cu.aigSce == null && cu.aigNed) {
+                                    actionEvent = HomeActionEvent.StartLackinFaceLive
+                                } else {
+                                    if (!stag.s2_a) {
+                                        onNavigate(Screen.ContactInfoV2)
+                                    } else if (!stag.s3_a) {
+                                        onNavigate(Screen.BankInfo)
+                                    } else {
+                                        if (cu.isLackinFlow == true && cu.aigSce == true) {
+                                            if (cu.aigNedApl) {
+                                                lackinApply(onNavigate)
+                                            } else {
+                                                lackinCC(onNavigate)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
+                    } else if (body?.code == 6) {
+                        // Error code 6: Biasanya sesi bermasalah atau butuh BaseInfo ulang
+                        onNavigate(Screen.BaseInfo)
                     }
                 }
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "onApplyClick error: ${e.message}")
+                Log.e("HomeViewModel", "checkInfo error: ${e.message}")
             } finally {
                 isLoading = false
             }
+        }
+    }
+
+    private suspend fun lackinApply(onNavigate: (String) -> Unit) {
+        try {
+            val response = NetworkClient.apiService.lackinApply()
+            if (response.isSuccessful && response.body()?.get("code")?.asInt == 1) {
+                onNavigate(Screen.UnderReview)
+            }
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "lackinApply error: ${e.message}")
+        }
+    }
+
+    private suspend fun lackinCC(onNavigate: (String) -> Unit) {
+        try {
+            val response = NetworkClient.apiService.lackinCC()
+            if (response.isSuccessful) {
+                val body = response.body()
+                val data = body?.getAsJsonObject("data")
+                val asu = data?.get("lackin_flow_app_asu")?.asInt
+                
+                if (asu == 1) {
+                    onNavigate(Screen.UnderReview)
+                } else if (asu == 2) {
+                    val typ = data.get("lackin_flow_typ")?.asString ?: ""
+                    val config = data.get("konfigurasi")?.toString() ?: ""
+                    onNavigate("${Screen.A_Apply}?lackin_flow_typ=$typ&konfigurasi=$config")
+                } else {
+                    onApplyClick(onNavigate)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "lackinCC error: ${e.message}")
+        }
+    }
+
+    fun onApplyClick(onNavigate: (String) -> Unit, productType: String = "wof_e") {
+        if (currentBill != null) {
+            return
+        }
+
+        if (cashData?.koc == true) {
+            showUnqualifiedPop3 = true
+            return
+        }
+
+        when (productType) {
+            "fcoa" -> onNavigate("CashLoan")
+            "tnpo" -> onNavigate("TadpoleCash")
+            else -> onNavigate(Screen.ApplyLoan)
         }
     }
 }

@@ -208,6 +208,11 @@ interface ApiService {
     ): Response<JsonObject>
 
     @POST("v1/api/lcea")
+    suspend fun lackinCC(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/lcea")
     suspend fun getAmountCashConfig(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
@@ -218,12 +223,12 @@ interface ApiService {
     ): Response<JsonObject>
 
     // OCR & Base Info
-    @POST("api/soime")
+    @POST("v2/api/soime")
     suspend fun uploadOcrPhoto(
         @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
 
-    @POST("api/sonfo")
+    @POST("v2/api/sonfo")
     suspend fun getOcrResult(
         @Body requestBody: JsonObject
     ): Response<JsonObject>

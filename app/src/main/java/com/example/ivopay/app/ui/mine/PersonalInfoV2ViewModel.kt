@@ -95,7 +95,7 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                     val data = response.body()?.data
                     if (data != null) {
                         val pi = data.customer?.personalInfo
-                        val lotn = data.customer?.address
+                        val lotn = data.customer?.getAddressSafe()
                         val bac = data.bankAccount
                         
                         // Format Alamat (Domisili) - Parity with Vue logic

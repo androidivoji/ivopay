@@ -2,8 +2,10 @@ package com.example.ivopay.app.ui.mine
 
 import android.graphics.Bitmap
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.ivopay.R
+import com.example.ivopay.app.ui.components.KtpCameraView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,157 +42,189 @@ fun BaseInfoScreen(
     val scrollState = rememberScrollState()
     var showAddressSheet by remember { mutableStateOf(false) }
     var addressMode by remember { mutableStateOf("l") } // "l" for local, "c" for company
+    var showCamera by remember { mutableStateOf(false) }
     
     val sheetState = rememberModalBottomSheetState()
+
+    // Launcher untuk izin kamera
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            showCamera = true
+        } else {
+            Toast.makeText(context, "Izin kamera diperlukan untuk mengambil foto KTP", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.init()
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Informasi Dasar", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(painterResource(id = R.drawable.iv_popup_ic_cancel), contentDescription = "Back")
+    if (showCamera) {
+        KtpCameraView(
+            onImageCaptured = { bitmap ->
+                viewModel.uploadKtp(bitmap)
+                showCamera = false
+            },
+            onClose = { showCamera = false }
+        )
+    } else {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("Informasi Dasar", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(painterResource(id = R.drawable.iv_popup_ic_cancel), contentDescription = "Back")
+                        }
                     }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(16.dp)
-                    .padding(bottom = 80.dp)
-            ) {
-                // 1. KTP Photo Section
-                Card(
-                    modifier = Modifier.fillMaxWidth().height(200.dp).clickable { 
-                        // Simulate taking photo
-                        Toast.makeText(context, "Membuka Kamera...", Toast.LENGTH_SHORT).show()
-                    },
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                    shape = RoundedCornerShape(8.dp)
+                )
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(16.dp)
+                        .padding(bottom = 80.dp)
                 ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        if (viewModel.showOCRLoading) {
-                            CircularProgressIndicator(color = Color(0xFFBD0100))
-                        } else {
-                            if (viewModel.state.ktpUrl.isNotEmpty()) {
-                                AsyncImage(
-                                    model = viewModel.state.ktpUrl,
-                                    contentDescription = "KTP Photo",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.FillBounds,
-                                    placeholder = painterResource(id = R.drawable.iv_data_ic_sign),
-                                    error = painterResource(id = R.drawable.iv_data_ic_sign)
-                                )
+                    // 1. KTP Photo Section
+                    Card(
+                        modifier = Modifier.fillMaxWidth().height(200.dp).clickable { 
+                            if (!viewModel.canUpdateIdFile && viewModel.state.inm.isNotEmpty()) {
+                                Toast.makeText(context, "Identitas ini tidak ada masalah, tidak perlu diupload ulang", Toast.LENGTH_SHORT).show()
                             } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(painterResource(id = R.drawable.iv_data_ic_sign), contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.Gray)
-                                    Text("Scan Sisi Depan KTP", fontSize = 14.sp, color = Color.Gray)
+                                permissionLauncher.launch(android.Manifest.permission.CAMERA)
+                            }
+                        },
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            if (viewModel.showOCRLoading) {
+                                CircularProgressIndicator(color = Color(0xFFBD0100))
+                            } else {
+                                if (viewModel.capturedBitmap != null) {
+                                    Image(
+                                        bitmap = viewModel.capturedBitmap!!.asImageBitmap(),
+                                        contentDescription = "Captured KTP",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.FillBounds
+                                    )
+                                } else if (viewModel.state.ktpUrl.isNotEmpty()) {
+                                    AsyncImage(
+                                        model = viewModel.state.ktpUrl,
+                                        contentDescription = "KTP Photo",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.FillBounds,
+                                        placeholder = painterResource(id = R.drawable.iv_data_ic_sign),
+                                        error = painterResource(id = R.drawable.iv_data_ic_sign)
+                                    )
+                                } else {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(painterResource(id = R.drawable.iv_data_ic_sign), contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.Gray)
+                                        Text("Scan Sisi Depan KTP", fontSize = 14.sp, color = Color.Gray)
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                if (viewModel.ocrAts == 2) {
-                    StatusTip(text = "NIK & Nama berhasil dikenali", color = Color(0xFFE6FFFA), icon = Icons.Default.Info)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 2. Input Fields
-                OutlinedTextField(
-                    value = viewModel.state.inm,
-                    onValueChange = { if (it.length <= 16) viewModel.updateField(viewModel.state.copy(inm = it)) },
-                    label = { Text("Nomor NIK KTP") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                OutlinedTextField(
-                    value = viewModel.state.funName,
-                    onValueChange = { viewModel.updateField(viewModel.state.copy(funName = it)) },
-                    label = { Text("Nama Lengkap (Sesuai KTP)") },
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                // 3. Selection Fields (Simulated Click to Open List)
-                SelectionField(
-                    label = "Jenis Kelamin",
-                    value = viewModel.state.genn,
-                    onClick = { /* Show Gender Dialog */ }
-                )
-
-                SelectionField(
-                    label = "Tanggal Lahir",
-                    value = viewModel.state.bire,
-                    onClick = { /* Show Date Picker */ }
-                )
-
-                SelectionField(
-                    label = "Alamat Domisili",
-                    value = viewModel.state.lvstr,
-                    onClick = { 
-                        addressMode = "l"
-                        viewModel.loadAddresses(1, "0")
-                        showAddressSheet = true 
+                    if (viewModel.ocrAts == 2) {
+                        StatusTip(text = "NIK & Nama berhasil dikenali", color = Color(0xFFE6FFFA), icon = Icons.Default.Info)
                     }
-                )
 
-                SelectionField(
-                    label = "Alamat Kantor",
-                    value = viewModel.state.cstr,
-                    onClick = { 
-                        addressMode = "c"
-                        viewModel.loadAddresses(1, "0")
-                        showAddressSheet = true 
-                    }
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = viewModel.state.eil,
-                    onValueChange = { viewModel.updateField(viewModel.state.copy(eil = it)) },
-                    label = { Text("Email (Gmail)") },
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    shape = RoundedCornerShape(8.dp)
-                )
-            }
-
-            // Bottom Action Bar
-            Surface(
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
-                shadowElevation = 8.dp,
-                color = Color.White
-            ) {
-                Row(modifier = Modifier.padding(16.dp)) {
-                    OutlinedButton(
-                        onClick = onBackClick,
-                        modifier = Modifier.weight(1f).height(48.dp),
+                    // 2. Input Fields
+                    OutlinedTextField(
+                        value = viewModel.state.inm,
+                        onValueChange = { if (it.length <= 16) viewModel.updateField(viewModel.state.copy(inm = it)) },
+                        label = { Text("Nomor NIK KTP") },
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Sebelumnya", color = Color.Gray)
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Button(
+                    )
+
+                    OutlinedTextField(
+                        value = viewModel.state.funName,
+                        onValueChange = { viewModel.updateField(viewModel.state.copy(funName = it)) },
+                        label = { Text("Nama Lengkap (Sesuai KTP)") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+
+                    // 3. Selection Fields
+                    SelectionField(
+                        label = "Jenis Kelamin",
+                        value = viewModel.state.genn,
+                        onClick = { /* Show Gender Dialog */ }
+                    )
+
+                    SelectionField(
+                        label = "Tanggal Lahir",
+                        value = viewModel.state.bire,
+                        onClick = { /* Show Date Picker */ }
+                    )
+
+                    SelectionField(
+                        label = "Alamat Domisili",
+                        value = viewModel.state.lvstr,
                         onClick = { 
-                            viewModel.submitInfo(
-                                onSuccess = onNextClick,
-                                onError = { msg, code -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
-                            )
-                        },
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100)),
+                            addressMode = "l"
+                            viewModel.loadAddresses(1, "0")
+                            showAddressSheet = true 
+                        }
+                    )
+
+                    SelectionField(
+                        label = "Alamat Kantor",
+                        value = viewModel.state.cstr,
+                        onClick = { 
+                            addressMode = "c"
+                            viewModel.loadAddresses(1, "0")
+                            showAddressSheet = true 
+                        }
+                    )
+
+                    OutlinedTextField(
+                        value = viewModel.state.eil,
+                        onValueChange = { viewModel.updateField(viewModel.state.copy(eil = it)) },
+                        label = { Text("Email (Gmail)") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                         shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Selanjutnya")
+                    )
+                }
+
+                // Bottom Action Bar
+                Surface(
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                    shadowElevation = 8.dp,
+                    color = Color.White
+                ) {
+                    Row(modifier = Modifier.padding(16.dp)) {
+                        OutlinedButton(
+                            onClick = onBackClick,
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Sebelumnya", color = Color.Gray)
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Button(
+                            onClick = { 
+                                viewModel.submitInfo(
+                                    onSuccess = onNextClick,
+                                    onError = { msg, code -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                                )
+                            },
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Selanjutnya")
+                        }
                     }
                 }
             }
