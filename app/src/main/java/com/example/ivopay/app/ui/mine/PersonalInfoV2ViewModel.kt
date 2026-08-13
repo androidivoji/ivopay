@@ -11,6 +11,7 @@ import com.example.ivopay.app.data.api.NetworkClient
 import com.example.ivopay.app.data.model.*
 import com.example.ivopay.app.util.SessionManager
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import kotlinx.coroutines.launch
 
@@ -68,11 +69,21 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
     var commonBankList by mutableStateOf<List<BankItem>>(emptyList())
     var bankMaxLength by mutableStateOf(20)
     var commonParams by mutableStateOf<JsonObject?>(null)
+    var cmeData by mutableStateOf<BorrowerCmeData?>(null)
+
+    // Statics tracking as per Vue
+    private val statics = mutableMapOf(
+        "live_addr_province_modify_count" to 0,
+        "live_address_detail_use_paste" to 0,
+        "live_type_modify_count" to 0,
+        "live_duration_modify_count" to 0
+    )
 
     fun init() {
         fetchInitialUserInfo()
         fetchBankList()
         fetchCommonParams()
+        fetchHomeConfig()
     }
 
     private fun fetchInitialUserInfo() {
@@ -136,6 +147,7 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                             bant = bac?.accountNo ?: "",
                             bante = bac?.accountHolder ?: pi?.fullName ?: "",
                             lope = pi?.loanPurpose?.toString() ?: "",
+                            lopen = pi?.loanPurposeName ?: "",
                             spane = pi?.spouseName ?: "",
                             spabire = pi?.spouseBirthDate ?: "",
                             happtyagmet = pi?.hasPropertyAgreement?.toString() ?: "",
@@ -180,6 +192,27 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
         }
     }
 
+    private fun fetchHomeConfig() {
+        viewModelScope.launch {
+            try {
+                val response = NetworkClient.apiService.getHomeCashConfig(JsonObject().apply { addProperty("spe", "h") })
+                if (response.isSuccessful) {
+                    val bodyString = response.body()?.toString()
+                    if (bodyString != null) {
+                        val jsonBody = gson.fromJson(bodyString, JsonObject::class.java)
+                        val dataObj = jsonBody.getAsJsonObject("data")
+                        val cmeObj = dataObj.get("cme")
+                        if (cmeObj != null && !cmeObj.isJsonNull) {
+                            cmeData = gson.fromJson(cmeObj, BorrowerCmeData::class.java)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("PersonalInfoV2VM", "fetchHomeConfig error", e)
+            }
+        }
+    }
+
     fun updateField(newState: PersonalInfoV2State) {
         state = newState
     }
@@ -190,12 +223,62 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
         state = state.copy(ban = bankName)
     }
 
+    fun uploadEvent(evme: String) {
+        viewModelScope.launch {
+            try {
+                val body = JsonObject().apply {
+                    addProperty("evme", evme)
+                    addProperty("eval", "1")
+                    addProperty("spe", "h")
+                }
+                NetworkClient.apiService.uploadEvent(body)
+            } catch (e: Exception) {}
+        }
+    }
+
+    private fun postEventsList() {
+        viewModelScope.launch {
+            try {
+                val eventsArray = JsonArray()
+                statics.forEach { (key, value) ->
+                    val eventObj = JsonObject()
+                    eventObj.addProperty("evme", key)
+                    eventObj.addProperty("eval", value.toString())
+                    eventsArray.add(eventObj)
+                }
+                val body = JsonObject().apply {
+                    addProperty("el", eventsArray.toString())
+                    addProperty("spe", "h")
+                }
+                NetworkClient.apiService.uploadEvent(body)
+            } catch (e: Exception) {}
+        }
+    }
+
     fun submitInfo(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        uploadEvent("P4")
         isLoading = true
         viewModelScope.launch {
             try {
+                // 1. Post statistics if wof is false
+                if (cmeData?.wof == false) {
+                    postEventsList()
+                }
+
+                // 2. Get Loan List to check for errors as per Vue logic
+                val loanListResponse = NetworkClient.apiService.getBorrowerLoanList(JsonObject().apply { addProperty("spe", "h") })
+                if (loanListResponse.isSuccessful) {
+                    val data = loanListResponse.body()?.get("data")?.asJsonObject
+                    val errorMsg = data?.get("c_up_bae_erro")?.asString
+                    if (!errorMsg.isNullOrEmpty()) {
+                        onError(errorMsg)
+                        isLoading = false
+                        return@launch
+                    }
+                }
+
+                // 3. Prepare body for update
                 val body = JsonObject()
-                // Manual mapping to ensure correct field names for the API
                 body.addProperty("moe", state.moe)
                 body.addProperty("rel", state.rel)
                 body.addProperty("reln", state.reln)
@@ -228,6 +311,7 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                     body.addProperty("spabire", "")
                 }
 
+                // 4. Update User Info
                 val response = NetworkClient.apiService.updateUserInfo(body)
                 if (response.isSuccessful && response.body()?.get("code")?.asInt == 1) {
                     onSuccess()

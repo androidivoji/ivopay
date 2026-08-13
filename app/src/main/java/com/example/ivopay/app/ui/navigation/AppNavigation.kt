@@ -237,7 +237,13 @@ fun AppNavigation(
         }
 
         // 6. Alur Informasi Pengguna (KYC / Onboarding)
-        composable(Screen.BaseInfo) {
+        composable(
+            route = "${Screen.BaseInfo}?infoFinished={infoFinished}",
+            arguments = listOf(navArgument("infoFinished") { defaultValue = "" })
+        ) { backStackEntry ->
+            val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
+            val isNeedBack = infoFinished == "1"
+
             val baseInfoViewModel: com.example.ivopay.app.ui.mine.BaseInfoViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
                 com.example.ivopay.app.ui.mine.BaseInfoViewModel(context)
             }
@@ -245,13 +251,22 @@ fun AppNavigation(
                 viewModel = baseInfoViewModel,
                 onBackClick = { navController.popBackStack() },
                 onNextClick = { 
-                    // Logic from Vue: _checkInfo() or go to next step
-                    navController.navigate(Screen.PersonalInfoV2)
+                    if (isNeedBack) {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(Screen.PersonalInfoV2)
+                    }
                 }
             )
         }
 
-        composable(Screen.PersonalInfoV2) {
+        composable(
+            route = "${Screen.PersonalInfoV2}?infoFinished={infoFinished}",
+            arguments = listOf(navArgument("infoFinished") { defaultValue = "" })
+        ) { backStackEntry ->
+            val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
+            val isNeedBack = infoFinished == "1"
+
             val personalViewModel: com.example.ivopay.app.ui.mine.PersonalInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
                 com.example.ivopay.app.ui.mine.PersonalInfoV2ViewModel(context)
             }
@@ -259,29 +274,50 @@ fun AppNavigation(
                 viewModel = personalViewModel,
                 onBackClick = { navController.popBackStack() },
                 onNextClick = { 
-                    navController.navigate(Screen.ContactInfo)
+                    if (isNeedBack) {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(Screen.ContactInfo)
+                    }
                 }
             )
         }
 
-        composable(Screen.ContactInfo) {
+        composable(
+            route = "${Screen.ContactInfo}?infoFinished={infoFinished}",
+            arguments = listOf(navArgument("infoFinished") { defaultValue = "" })
+        ) { backStackEntry ->
+            val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
+            val isNeedBack = infoFinished == "1"
+
             ContactInfoScreen(
                 onBackClick = { navController.popBackStack() },
-                onNextClick = { navController.navigate(Screen.JobInfoV2) }
+                onNextClick = { 
+                    if (isNeedBack) {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(Screen.JobInfoV2)
+                    }
+                }
             )
         }
 
-        composable(Screen.ContactInfoV2) {
-            ContactInfoV2Screen(
-                onBackClick = { navController.popBackStack() },
-                onSubmitClick = { _, _ -> navController.navigate("BankInfo") }
-            )
-        }
+        composable(
+            route = "${Screen.JobInfoV2}?infoFinished={infoFinished}",
+            arguments = listOf(navArgument("infoFinished") { defaultValue = "" })
+        ) { backStackEntry ->
+            val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
+            val isNeedBack = infoFinished == "1"
 
-        composable(Screen.JobInfoV2) {
             JobInfoV2Screen(
                 onBackClick = { navController.popBackStack() },
-                onSubmitClick = { navController.navigate(Screen.Main) },
+                onSubmitClick = { 
+                    if (isNeedBack) {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(Screen.Main) 
+                    }
+                },
                 onTakeWorkProofPhoto = { _, onPhotoCaptured ->
                     onPhotoCaptured("path/to/work_proof_image.jpg")
                 }

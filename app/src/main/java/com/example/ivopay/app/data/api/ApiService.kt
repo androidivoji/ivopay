@@ -227,6 +227,11 @@ interface ApiService {
     suspend fun updateUserInfo(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
+
+    @POST("v1/api/pa/e")
+    suspend fun uploadEvent(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
 }
 
 object NetworkClient {
