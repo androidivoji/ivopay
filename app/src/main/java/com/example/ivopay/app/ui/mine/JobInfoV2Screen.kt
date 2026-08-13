@@ -1,68 +1,62 @@
 package com.example.ivopay.app.ui.mine
 
+import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.ivopay.R
+import com.example.ivopay.app.data.model.BorrowerCmeData
 import com.example.ivopay.app.ui.components.OptionItem
 import com.example.ivopay.app.ui.components.SelectableField
-
-// Model State Informasi Pekerjaan
-data class JobInfoData(
-    var con: String = "",       // Nama Perusahaan
-    var syamt: String = "",     // Pendapatan Bulanan
-    var joiun: String = "",     // Jenis Usaha (Business Type Label)
-    var join: String = "",      // Jenis Pekerjaan (Work Type Label)
-    var joi: String = "",       // Jenis Pekerjaan Key
-    var iniun: String = "",     // Jenis Industri Label
-    var inin: String = "",      // Sektor Ekonomi Label
-    var ini: String = "",       // Sektor Ekonomi Key
-    var jorkn: String = "",     // Jabatan Label
-    var jork: String = "",      // Jabatan Key
-    var wkdnn: String = "",     // Lama Bekerja Label
-    var wkdn: String = "",      // Lama Bekerja Key
-    var cstr: String = "",      // Alamat Kantor Gabungan
-    var cdel: String = "",      // Detail Alamat Perusahaan
-    var wkptie: String = "",    // Image/URL Bukti Kerja
-    var wkptie_yep: String = "" // Tipe Dokumen Bukti Kerja
-)
+import com.google.gson.JsonObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JobInfoV2Screen(
+    viewModel: JobInfoV2ViewModel,
     onBackClick: () -> Unit,
-    onSubmitClick: (JobInfoData) -> Unit,
-    initialData: JobInfoData = JobInfoData(),
-    isWorkProofMandatory: Boolean = false,
-    onTakeWorkProofPhoto: (typeIndex: Int, callback: (String) -> Unit) -> Unit = { _, _ -> }
+    onNextClick: (BorrowerCmeData?, JsonObject?, JsonObject?) -> Unit,
+    onTakeWorkProofPhoto: (callback: (Bitmap) -> Unit) -> Unit = {}
 ) {
-    var jobInfo by remember { mutableStateOf(initialData) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    
+    // UI states for selection sheet
+    var showActionSheet by remember { mutableStateOf(false) }
+    var currentSelectionType by remember { mutableStateOf("") }
+    var actionSheetTitle by remember { mutableStateOf("") }
+    var currentOptions by remember { mutableStateOf<List<OptionItem>>(emptyList()) }
+    
+    var showWorkProofTypePop by remember { mutableStateOf(false) }
+    
+    val sheetState = rememberModalBottomSheetState()
 
-    // Dialog & Bottom Sheet States
-    var showWorkProofDialog by remember { mutableStateOf(false) }
-    var showPickerBottomSheet by remember { mutableStateOf(false) }
-    var pickerTitle by remember { mutableStateOf("") }
-    var currentPickerOptions by remember { mutableStateOf<List<OptionItem>>(emptyList()) }
-    var onOptionSelectedAction by remember { mutableStateOf<((OptionItem) -> Unit)?>(null) }
+    LaunchedEffect(Unit) {
+        viewModel.init()
+    }
 
     val workDocumentList = listOf(
         "1. ID card karyawan",
@@ -72,386 +66,343 @@ fun JobInfoV2Screen(
         "5. Foto selfie beserta lingkungan kerja"
     )
 
-    // Validasi Pendapatan Bulanan
-    fun checkMonthlyIncome(valStr: String): String? {
-        if (valStr.isEmpty()) return "Konten teks tidak boleh kosong"
-        val cleaned = valStr.replace("[.,]".toRegex(), "")
-        val amount = cleaned.toLongOrNull() ?: 0L
-        if (amount < 3_000_000L || amount > 80_000_000L) {
-            return "Kisaran pengisian pendapatan bulanan 3.000.000-80.000.000"
+    // Helper to get options from commonParams
+    fun getOptions(key: String): List<OptionItem> {
+        val list = mutableListOf<OptionItem>()
+        viewModel.commonParams?.getAsJsonArray(key)?.forEach { element ->
+            val obj = element.asJsonObject
+            list.add(OptionItem(obj.get("k").asString, obj.get("v").asString))
         }
-        return null
+        return list
     }
 
-    // Validasi Keseluruhan Form
-    fun validateForm(): Boolean {
-        if (jobInfo.con.trim().isEmpty()) {
-            errorMessage = "Nama Perusahaan tidak boleh kosong"
-            return false
+    // Cascading options (jos/ines)
+    fun getNestedOptions(key: String): List<OptionItem> {
+        val list = mutableListOf<OptionItem>()
+        viewModel.commonParams?.getAsJsonArray(key)?.forEach { element ->
+            val obj = element.asJsonObject
+            list.add(OptionItem(obj.get("n").asString, obj.get("n").asString))
         }
-        val incomeErr = checkMonthlyIncome(jobInfo.syamt)
-        if (incomeErr != null) {
-            errorMessage = incomeErr
-            return false
-        }
-        if (jobInfo.joiun.isEmpty()) {
-            errorMessage = "Harap pilih Jenis Usaha"
-            return false
-        }
-        if (jobInfo.cdel.trim().isEmpty()) {
-            errorMessage = "Alamat lengkap perusahaan tidak boleh kosong"
-            return false
-        }
-        if (isWorkProofMandatory && jobInfo.wkptie.isEmpty()) {
-            errorMessage = "Harap pilih foto bukti kerja terlebih dahulu"
-            return false
-        }
+        return list
+    }
 
-        errorMessage = null
-        return true
+    // Logic to open next picker automatically
+    fun triggerNextPicker(type: String, selectedItem: OptionItem) {
+        val state = viewModel.state
+        when (type) {
+            "jos_parent" -> {
+                // Find child options
+                val nested = viewModel.commonParams?.getAsJsonArray("jos")?.find { it.asJsonObject.get("n").asString == selectedItem.key }
+                val childArray = nested?.asJsonObject?.getAsJsonArray("jos")
+                val options = mutableListOf<OptionItem>()
+                childArray?.forEach { el ->
+                    val obj = el.asJsonObject
+                    options.add(OptionItem(obj.get("d").asString, obj.get("n").asString))
+                }
+                currentSelectionType = "joi"
+                actionSheetTitle = "Jenis Pekerjaan"
+                currentOptions = options
+                showActionSheet = true
+            }
+            "joi" -> {
+                if (state.iniun.isEmpty()) {
+                    currentSelectionType = "ines_parent"
+                    actionSheetTitle = "Jenis Industri"
+                    currentOptions = getNestedOptions("ines")
+                    showActionSheet = true
+                }
+            }
+            "ines_parent" -> {
+                val nested = viewModel.commonParams?.getAsJsonArray("ines")?.find { it.asJsonObject.get("n").asString == selectedItem.key }
+                val childArray = nested?.asJsonObject?.getAsJsonArray("ines")
+                val options = mutableListOf<OptionItem>()
+                childArray?.forEach { el ->
+                    val obj = el.asJsonObject
+                    options.add(OptionItem(obj.get("d").asString, obj.get("n").asString))
+                }
+                currentSelectionType = "ini"
+                actionSheetTitle = "Sektor Ekonomi"
+                currentOptions = options
+                showActionSheet = true
+            }
+            "ini" -> {
+                if (state.jorkn.isEmpty()) {
+                    currentSelectionType = "jork"
+                    actionSheetTitle = "Jabatan"
+                    currentOptions = getOptions("jork")
+                    showActionSheet = true
+                }
+            }
+            "jork" -> {
+                if (state.wkdnn.isEmpty()) {
+                    currentSelectionType = "wkdns"
+                    actionSheetTitle = "Lama Bekerja"
+                    currentOptions = getOptions("wkdns")
+                    showActionSheet = true
+                }
+            }
+        }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Informasi Pekerjaan", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+            CenterAlignedTopAppBar(
+                title = { Text("Informasi Pekerjaan", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(painterResource(id = R.drawable.iv_popup_ic_cancel), contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                }
             )
-        },
-        containerColor = Color.White
+        }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 1. Nama Perusahaan
-            OutlinedTextField(
-                value = jobInfo.con,
-                onValueChange = { jobInfo = jobInfo.copy(con = it) },
-                label = { Text("Nama Perusahaan") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 2. Pendapatan Bulanan
-            val incomeErr = if (jobInfo.syamt.isNotEmpty()) checkMonthlyIncome(jobInfo.syamt) else null
-            OutlinedTextField(
-                value = jobInfo.syamt,
-                onValueChange = { input ->
-                    val filtered = input.filter { it.isDigit() }
-                    jobInfo = jobInfo.copy(syamt = filtered)
-                },
-                label = { Text("Pendapatan Bulanan") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                isError = incomeErr != null,
-                supportingText = {
-                    if (incomeErr != null) {
-                        Text(incomeErr, color = Color.Red, fontSize = 12.sp)
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 3. Jenis Usaha
-            SelectableField(
-                label = "Jenis Usaha",
-                value = jobInfo.joiun,
-                onClick = {
-                    pickerTitle = "Jenis Usaha"
-                    currentPickerOptions = listOf(
-                        OptionItem("1", "Manufaktur / Industri"),
-                        OptionItem("2", "Perdagangan / Ritel"),
-                        OptionItem("3", "Jasa / Teknologi"),
-                        OptionItem("4", "Keuangan / Perbankan")
-                    )
-                    onOptionSelectedAction = { selected ->
-                        jobInfo = jobInfo.copy(joiun = selected.value)
-                    }
-                    showPickerBottomSheet = true
-                }
-            )
-
-            // Dynamic Job Fields (ditampilkan jika Jenis Usaha diisi)
-            if (jobInfo.joiun.isNotEmpty() || jobInfo.join.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Jenis Pekerjaan
-                SelectableField(
-                    label = "Jenis Pekerjaan",
-                    value = jobInfo.join,
-                    onClick = {
-                        pickerTitle = "Jenis Pekerjaan"
-                        currentPickerOptions = listOf(
-                            OptionItem("1", "Karyawan Tetap"),
-                            OptionItem("2", "Karyawan Kontrak"),
-                            OptionItem("3", "Pekerja Lepas / Freelance")
-                        )
-                        onOptionSelectedAction = { selected ->
-                            jobInfo = jobInfo.copy(join = selected.value, joi = selected.key)
-                        }
-                        showPickerBottomSheet = true
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Sektor Ekonomi
-                SelectableField(
-                    label = "Sektor Ekonomi",
-                    value = jobInfo.inin,
-                    onClick = {
-                        pickerTitle = "Sektor Ekonomi"
-                        currentPickerOptions = listOf(
-                            OptionItem("1", "Swasta"),
-                            OptionItem("2", "BUMN / BUMD"),
-                            OptionItem("3", "Pemerintahan")
-                        )
-                        onOptionSelectedAction = { selected ->
-                            jobInfo = jobInfo.copy(inin = selected.value, ini = selected.key)
-                        }
-                        showPickerBottomSheet = true
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Jabatan
-                SelectableField(
-                    label = "Jabatan",
-                    value = jobInfo.jorkn,
-                    onClick = {
-                        pickerTitle = "Jabatan"
-                        currentPickerOptions = listOf(
-                            OptionItem("1", "Staf / Anggota"),
-                            OptionItem("2", "Supervisor / Manager"),
-                            OptionItem("3", "Direktur / Eksekutif")
-                        )
-                        onOptionSelectedAction = { selected ->
-                            jobInfo = jobInfo.copy(jorkn = selected.value, jork = selected.key)
-                        }
-                        showPickerBottomSheet = true
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Lama Bekerja
-                SelectableField(
-                    label = "Lama Bekerja",
-                    value = jobInfo.wkdnn,
-                    onClick = {
-                        pickerTitle = "Lama Bekerja"
-                        currentPickerOptions = listOf(
-                            OptionItem("1", "< 1 Tahun"),
-                            OptionItem("2", "1 - 3 Tahun"),
-                            OptionItem("3", "3 - 5 Tahun"),
-                            OptionItem("4", "> 5 Tahun")
-                        )
-                        onOptionSelectedAction = { selected ->
-                            jobInfo = jobInfo.copy(wkdnn = selected.value, wkdn = selected.key)
-                        }
-                        showPickerBottomSheet = true
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Alamat Kantor (Readonly Summary)
-            OutlinedTextField(
-                value = jobInfo.cstr,
-                onValueChange = {},
-                readOnly = true,
-                enabled = false,
-                label = { Text("Alamat kantor") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = Color(0xFF262626),
-                    disabledBorderColor = Color(0xFFCCCCCC),
-                    disabledLabelColor = Color(0xFF666666)
-                )
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Detail Alamat Perusahaan
-            OutlinedTextField(
-                value = jobInfo.cdel,
-                onValueChange = { jobInfo = jobInfo.copy(cdel = it) },
-                label = { Text("Alamat Lengkap Perusahaan") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Kartu Upload Bukti Kerja
-            Card(
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showWorkProofDialog = true },
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9))
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 22.dp)
+                    .padding(bottom = 100.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = if (isWorkProofMandatory) "Bukti kerja (Wajib)" else "Bukti kerja (Opsional)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = Color(0xFF262626)
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // 1. Nama Perusahaan
+                OutlinedTextField(
+                    value = viewModel.state.con,
+                    onValueChange = { viewModel.updateField(viewModel.state.copy(con = it)) },
+                    label = { Text("Nama Perusahaan") },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                // 2. Pendapatan Bulanan
+                OutlinedTextField(
+                    value = viewModel.state.syamt,
+                    onValueChange = { viewModel.updateField(viewModel.state.copy(syamt = it)) },
+                    label = { Text("Pendapatan Bulanan") },
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                // 3. Jenis Usaha (Parent of jos)
+                SelectableField(
+                    label = "Jenis Usaha", 
+                    value = viewModel.state.joiun, 
+                    onClick = { 
+                        currentSelectionType = "jos_parent"
+                        actionSheetTitle = "Jenis Usaha"
+                        currentOptions = getNestedOptions("jos")
+                        showActionSheet = true
+                    }
+                )
+
+                // 4. Dynamic Fields (showJobField logic)
+                val showJobField = viewModel.state.joiun.isNotEmpty() || viewModel.state.join.isNotEmpty() || viewModel.state.iniun.isNotEmpty() || viewModel.state.inin.isNotEmpty() || viewModel.state.jorkn.isNotEmpty() || viewModel.state.wkdnn.isNotEmpty()
+                
+                if (showJobField) {
+                    SelectableField(
+                        label = "Jenis Pekerjaan", 
+                        value = viewModel.state.join, 
+                        onClick = { 
+                            currentSelectionType = "jos_parent"
+                            actionSheetTitle = "Jenis Usaha"
+                            currentOptions = getNestedOptions("jos")
+                            showActionSheet = true
+                        }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (jobInfo.wkptie.isNotEmpty()) {
-                        Text(
-                            text = "Foto Terpilih ✓",
-                            color = Color(0xFF4CAF50),
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp
-                        )
-                    } else {
-                        Text(
-                            text = "+ Ambil Foto Bukti Kerja",
-                            color = Color(0xFFBD0100),
-                            fontSize = 13.sp
-                        )
+                    SelectableField(
+                        label = "Jenis Industri", 
+                        value = viewModel.state.iniun, 
+                        onClick = { 
+                            currentSelectionType = "ines_parent"
+                            actionSheetTitle = "Jenis Industri"
+                            currentOptions = getNestedOptions("ines")
+                            showActionSheet = true
+                        }
+                    )
+                    SelectableField(
+                        label = "Sektor Ekonomi", 
+                        value = viewModel.state.inin, 
+                        onClick = { 
+                            currentSelectionType = "ines_parent"
+                            actionSheetTitle = "Jenis Industri"
+                            currentOptions = getNestedOptions("ines")
+                            showActionSheet = true
+                        }
+                    )
+                    SelectableField(
+                        label = "Jabatan", 
+                        value = viewModel.state.jorkn, 
+                        onClick = { 
+                            currentSelectionType = "jork"
+                            actionSheetTitle = "Jabatan"
+                            currentOptions = getOptions("jork")
+                            showActionSheet = true
+                        }
+                    )
+                    SelectableField(
+                        label = "Lama Bekerja", 
+                        value = viewModel.state.wkdnn, 
+                        onClick = { 
+                            currentSelectionType = "wkdns"
+                            actionSheetTitle = "Lama Bekerja"
+                            currentOptions = getOptions("wkdns")
+                            showActionSheet = true
+                        }
+                    )
+                }
+
+                SelectableField(
+                    label = "Alamat kantor", 
+                    value = viewModel.state.cstr, 
+                    onClick = { /* Readonly summary */ }
+                )
+
+                OutlinedTextField(
+                    value = viewModel.state.cdel,
+                    onValueChange = { viewModel.updateField(viewModel.state.copy(cdel = it)) },
+                    label = { Text("Alamat Lengkap Perusahaan") },
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // 5. Bukti Kerja
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clickable { showWorkProofTypePop = true },
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (viewModel.state.wkptie_bitmap != null) {
+                            Image(
+                                bitmap = viewModel.state.wkptie_bitmap!!.asImageBitmap(),
+                                contentDescription = "Work Proof",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else if (viewModel.state.wkptie.isNotEmpty()) {
+                            AsyncImage(
+                                model = viewModel.state.wkptie,
+                                contentDescription = "Work Proof",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                                error = painterResource(id = R.drawable.iv_data_ic_sign)
+                            )
+                        } else {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(painterResource(id = R.drawable.iv_data_ic_sign), contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.Gray)
+                                Text("Upload Bukti Kerja", fontSize = 14.sp, color = Color.Gray)
+                            }
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Banner Info Cepat
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(vertical = 4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = null,
-                    tint = Color(0xFF888888),
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Unggah bukti kerja untuk mempercepat verifikasi.",
-                    fontSize = 12.sp,
-                    color = Color(0x66000000)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Tampilan Pesan Error
-            errorMessage?.let { msg ->
-                Text(
-                    text = msg,
-                    color = Color.Red,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-            }
-
-            // Button Navigasi (Sebelumnya & Selanjutnya)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                OutlinedButton(
-                    onClick = onBackClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
-                    Text("Sebelumnya", color = Color(0xFF262626))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                    Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFBD0100))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Unggah bukti kerja untuk mempercepat verifikasi.", fontSize = 12.sp, color = Color.Gray)
                 }
+            }
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Button(
-                    onClick = {
-                        if (validateForm()) {
-                            onSubmitClick(jobInfo)
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100)),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
-                    Text("Selanjutnya", color = Color.White)
+            // Bottom Action Bar
+            Surface(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                shadowElevation = 8.dp,
+                color = Color.White
+            ) {
+                Row(modifier = Modifier.padding(16.dp)) {
+                    OutlinedButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Text("Sebelumnya", color = Color(0xFF262626))
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Button(
+                        onClick = { 
+                            viewModel.submitInfo(
+                                onSuccess = onNextClick,
+                                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                            )
+                        },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100)),
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Text("Selanjutnya")
+                    }
                 }
             }
         }
     }
 
-    // Modal Dialog Pemilihan Dokumen Bukti Kerja
-    if (showWorkProofDialog) {
+    // Modal Bottom Sheet for pickers
+    if (showActionSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showActionSheet = false },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text(text = actionSheetTitle, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                LazyColumn(modifier = Modifier.fillMaxHeight(0.5f)) {
+                    items(currentOptions) { item ->
+                        ListItem(
+                            headlineContent = { Text(item.value) },
+                            modifier = Modifier.clickable {
+                                handleJobOptionSelected(viewModel, currentSelectionType, item)
+                                showActionSheet = false
+                                triggerNextPicker(currentSelectionType, item)
+                            }
+                        )
+                        HorizontalDivider(color = Color(0xFFF0F0F0))
+                    }
+                }
+            }
+        }
+    }
+
+    // Work Proof Type Popup
+    if (showWorkProofTypePop) {
         AlertDialog(
-            onDismissRequest = { showWorkProofDialog = false },
-            title = {
-                Text(
-                    text = if (isWorkProofMandatory) "Bukti kerja" else "Bukti kerja (Tidak Wajib)",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            },
+            onDismissRequest = { showWorkProofTypePop = false },
+            title = { Text("Bukti Kerja", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text(
-                        text = if (isWorkProofMandatory)
-                            "Diwajibkan mengupload salah satu dokumen:"
-                        else
-                            "*Mengunggah bukti kerja dapat mempercepat proses audit:",
-                        fontSize = 13.sp,
-                        color = if (isWorkProofMandatory) Color(0xFF262626) else Color(0xFFD93717),
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
+                    val text = if (viewModel.isWorkProofMandatory) "Diwajibkan mengupload salah satu dokumen:" 
+                               else "*Mengunggah bukti kerja dapat mempercepat proses audit:"
+                    val color = if (viewModel.isWorkProofMandatory) Color.Black else Color(0xFFD93717)
+                    
+                    Text(text, fontSize = 13.sp, color = color)
+                    Spacer(modifier = Modifier.height(12.dp))
                     HorizontalDivider()
+                    
                     workDocumentList.forEachIndexed { index, doc ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    showWorkProofDialog = false
-                                    onTakeWorkProofPhoto(index) { photoPath ->
-                                        jobInfo = jobInfo.copy(
-                                            wkptie = photoPath,
-                                            wkptie_yep = (index + 1).toString()
-                                        )
+                                    viewModel.updateField(viewModel.state.copy(wkptie_yep = (index + 1).toString()))
+                                    showWorkProofTypePop = false
+                                    onTakeWorkProofPhoto { bitmap ->
+                                        viewModel.updateField(viewModel.state.copy(wkptie_bitmap = bitmap))
                                     }
                                 }
                                 .padding(vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = doc, fontSize = 14.sp, modifier = Modifier.weight(1f))
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = Color.Gray
-                            )
+                            Text(doc, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                            Icon(painterResource(id = R.drawable.iv_set_right_arrow), contentDescription = null, modifier = Modifier.size(16.dp))
                         }
                         HorizontalDivider(color = Color(0xFFF0F0F0))
                     }
@@ -459,47 +410,22 @@ fun JobInfoV2Screen(
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { showWorkProofDialog = false }) {
+                TextButton(onClick = { showWorkProofTypePop = false }) {
                     Text("Batal")
                 }
             },
             containerColor = Color.White
         )
     }
+}
 
-    // Modal Bottom Sheet Generik untuk Seleksi
-    if (showPickerBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showPickerBottomSheet = false },
-            containerColor = Color.White
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = pickerTitle,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-                HorizontalDivider()
-                currentPickerOptions.forEach { option ->
-                    Text(
-                        text = option.value,
-                        fontSize = 15.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onOptionSelectedAction?.invoke(option)
-                                showPickerBottomSheet = false
-                            }
-                            .padding(vertical = 14.dp)
-                    )
-                    HorizontalDivider(color = Color(0xFFF0F0F0))
-                }
-            }
-        }
+private fun handleJobOptionSelected(viewModel: JobInfoV2ViewModel, type: String, item: OptionItem) {
+    when (type) {
+        "jos_parent" -> viewModel.updateField(viewModel.state.copy(joiun = item.value, join = ""))
+        "joi" -> viewModel.updateField(viewModel.state.copy(joi = item.key, join = item.value))
+        "ines_parent" -> viewModel.updateField(viewModel.state.copy(iniun = item.value, inin = ""))
+        "ini" -> viewModel.updateField(viewModel.state.copy(ini = item.key, inin = item.value))
+        "jork" -> viewModel.updateField(viewModel.state.copy(jork = item.key, jorkn = item.value))
+        "wkdns" -> viewModel.updateField(viewModel.state.copy(wkdn = item.key, wkdnn = item.value))
     }
 }

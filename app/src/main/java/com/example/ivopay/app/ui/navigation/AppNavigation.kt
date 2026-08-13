@@ -313,17 +313,39 @@ fun AppNavigation(
             val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
             val isNeedBack = infoFinished == "1"
 
-            JobInfoV2Screen(
+            val jobViewModel: com.example.ivopay.app.ui.mine.JobInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                com.example.ivopay.app.ui.mine.JobInfoV2ViewModel(context)
+            }
+
+            com.example.ivopay.app.ui.mine.JobInfoV2Screen(
+                viewModel = jobViewModel,
                 onBackClick = { navController.popBackStack() },
-                onSubmitClick = { 
+                onNextClick = { cme, fcoa, tnpo ->
                     if (isNeedBack) {
                         navController.popBackStack()
+                    } else if (cme?.uico == true) {
+                        if (cme.wof == false) {
+                            // Conditional loan navigation
+                            val fcoaPsw = fcoa?.get("psw")?.asInt ?: 0
+                            val tnpoPsw = tnpo?.get("psw")?.asInt ?: 0
+                            
+                            if (fcoaPsw == 1) {
+                                navController.navigate(Screen.ApplyLoan) 
+                            } else if (tnpoPsw == 1) {
+                                navController.navigate(Screen.Main) // Map to Tadpole equivalent
+                            } else {
+                                navController.navigate(Screen.Main)
+                            }
+                        } else {
+                            navController.navigate(Screen.ApplyLoan)
+                        }
                     } else {
-                        navController.navigate(Screen.Main) 
+                        navController.navigate(Screen.MyProfile)
                     }
                 },
-                onTakeWorkProofPhoto = { _, onPhotoCaptured ->
-                    onPhotoCaptured("path/to/work_proof_image.jpg")
+                onTakeWorkProofPhoto = { callback ->
+                    // Simulate camera result
+                    // jobViewModel.updateField(jobViewModel.state.copy(wkptie_bitmap = bitmap))
                 }
             )
         }

@@ -113,11 +113,20 @@ data class CompanyAddress(
 )
 
 data class WorkInfo(
-    @SerializedName("cene") val companyName: String? = null,
-    @SerializedName("con") val companyAddress: String? = null,
+    @SerializedName("con") val companyName: String? = null,
     @SerializedName("cot") val companyPhone: String? = null,
-    @SerializedName("inin") val industry: String? = null,
+    @SerializedName("ini") val economicSectorId: Int? = null,
+    @SerializedName("inin") val economicSectorName: String? = null,
+    @SerializedName("iniun") val industryTypeName: String? = null,
     @SerializedName("syamt") val salary: Long? = null,
+    @SerializedName("syidn") val salaryRangeName: String? = null,
+    @SerializedName("jork") val jobPositionId: Int? = null,
+    @SerializedName("jorkn") val jobPositionName: String? = null,
+    @SerializedName("joi") val workTypeId: Int? = null,
+    @SerializedName("join") val workTypeName: String? = null,
+    @SerializedName("joiun") val businessTypeName: String? = null,
+    @SerializedName("wkdn") val workDurationId: Int? = null,
+    @SerializedName("wkdnn") val workDurationName: String? = null,
     @SerializedName("lotn") val lotn: CompanyAddress? = null
 )
 
