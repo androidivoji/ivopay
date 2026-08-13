@@ -55,7 +55,7 @@ fun PersonalInfoScreen(
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, dayOfMonth ->
-            val date = String.format("%02d/%02d/%d", dayOfMonth, month + 1, year)
+            val date = String.format(Locale.getDefault(), "%02d/%02d/%d", dayOfMonth, month + 1, year)
             viewModel.updateField(viewModel.state.copy(spabire = date))
         },
         calendar.get(Calendar.YEAR) - 25,
@@ -71,6 +71,37 @@ fun PersonalInfoScreen(
             list.add(OptionItem(obj.get("k").asString, obj.get("v").asString))
         }
         return list
+    }
+
+    // Logic to open next picker automatically (Parity with Vue onActionSelect)
+    fun triggerNextPicker(type: String) {
+        val state = viewModel.state
+        when (type) {
+            "rel" -> {
+                if (state.ednn.isEmpty()) {
+                    currentSelectionType = "edn"
+                    actionSheetTitle = "Pendidikan"
+                    currentOptions = getOptions("edn")
+                    showActionSheet = true
+                }
+            }
+            "edn" -> {
+                if (state.liten.isEmpty()) {
+                    currentSelectionType = "lite"
+                    actionSheetTitle = "Tipe Tempat Tinggal"
+                    currentOptions = getOptions("lite")
+                    showActionSheet = true
+                }
+            }
+            "lite" -> {
+                if (state.lidnn.isEmpty()) {
+                    currentSelectionType = "lidn"
+                    actionSheetTitle = "Lama Menetap"
+                    currentOptions = getOptions("lidn")
+                    showActionSheet = true
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -90,9 +121,11 @@ fun PersonalInfoScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .padding(16.dp)
-                    .padding(bottom = 80.dp)
+                    .padding(horizontal = 22.dp) // Adjusted padding to match "padding44" roughly
+                    .padding(bottom = 100.dp)
             ) {
+                Spacer(modifier = Modifier.height(10.dp))
+
                 // 1. Informasi Identitas
                 OutlinedTextField(
                     value = viewModel.state.moe,
@@ -101,22 +134,23 @@ fun PersonalInfoScreen(
                         viewModel.updateField(viewModel.state.copy(moe = filtered)) 
                     },
                     label = { Text("Nama Ibu Kandung") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     shape = RoundedCornerShape(8.dp)
                 )
-                Text("*Nama lengkap ibu kandung (sesuai dengan KTP)", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
+                Text("*Nama lengkap ibu kandung (sesuai dengan KTP)", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
 
                 SelectableField(
                     label = "Agama", 
                     value = viewModel.state.reln, 
                     onClick = { 
                         currentSelectionType = "rel"
-                        actionSheetTitle = "Pilih Agama"
+                        actionSheetTitle = "Agama"
                         currentOptions = getOptions("rel")
                         showActionSheet = true
                     }
                 )
 
+                // Sesuai logic Vue: showStatusField
                 val showStatusField = viewModel.state.reln.isNotEmpty() || viewModel.state.masn.isNotEmpty() || viewModel.state.ednn.isNotEmpty() || viewModel.state.fasn.isNotEmpty() || viewModel.state.lidnn.isNotEmpty()
                 
                 if (showStatusField) {
@@ -125,7 +159,7 @@ fun PersonalInfoScreen(
                         value = viewModel.state.ednn, 
                         onClick = { 
                             currentSelectionType = "edn"
-                            actionSheetTitle = "Pilih Pendidikan"
+                            actionSheetTitle = "Pendidikan"
                             currentOptions = getOptions("edn")
                             showActionSheet = true
                         }
@@ -135,7 +169,7 @@ fun PersonalInfoScreen(
                         value = viewModel.state.liten, 
                         onClick = { 
                             currentSelectionType = "lite"
-                            actionSheetTitle = "Pilih Tipe Tempat Tinggal"
+                            actionSheetTitle = "Tipe Tempat Tinggal"
                             currentOptions = getOptions("lite")
                             showActionSheet = true
                         }
@@ -145,7 +179,7 @@ fun PersonalInfoScreen(
                         value = viewModel.state.lidnn, 
                         onClick = { 
                             currentSelectionType = "lidn"
-                            actionSheetTitle = "Pilih Lama Menetap"
+                            actionSheetTitle = "Lama Menetap"
                             currentOptions = getOptions("lidn")
                             showActionSheet = true
                         }
@@ -157,23 +191,16 @@ fun PersonalInfoScreen(
                     value = viewModel.state.lopen, 
                     onClick = { 
                         currentSelectionType = "lope"
-                        actionSheetTitle = "Pilih Tujuan Pinjaman"
+                        actionSheetTitle = "Tujuan Pinjaman"
                         currentOptions = getOptions("lope")
                         showActionSheet = true
                     }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Alamat Lengkap", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                
-                OutlinedTextField(
-                    value = viewModel.state.lvstr,
-                    onValueChange = {},
-                    label = { Text("Alamat tempat tinggal / domisili") },
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    readOnly = true,
-                    enabled = false,
-                    shape = RoundedCornerShape(8.dp)
+                SelectableField(
+                    label = "Alamat tempat tinggal / domisili",
+                    value = viewModel.state.lvstr, 
+                    onClick = { /* Readonly field linked to BaseInfo */ }
                 )
                 
                 OutlinedTextField(
@@ -186,15 +213,14 @@ fun PersonalInfoScreen(
 
                 // 2. Rekening Bank
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("Rekening Kartu Bank", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("Rekening Kartu Bank", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF262626))
 
                 SelectableField(
                     label = "Nama Bank", 
                     value = viewModel.state.ban, 
                     onClick = { 
                         currentSelectionType = "bank"
-                        actionSheetTitle = "Pilih Bank"
-                        // Filter by ais == 1 as per Vue logic
+                        actionSheetTitle = "Nama Bank"
                         currentOptions = viewModel.commonBankList
                             .filter { it.ais == 1 }
                             .map { OptionItem(it.name ?: "", it.fullName ?: "") }
@@ -229,7 +255,7 @@ fun PersonalInfoScreen(
 
                 // 3. Informasi Keluarga
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("Informasi Keluarga", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("Informasi Keluarga", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF262626))
 
                 SelectableField(
                     label = "Status Pernikahan", 
@@ -293,9 +319,9 @@ fun PersonalInfoScreen(
                     OutlinedButton(
                         onClick = onBackClick,
                         modifier = Modifier.weight(1f).height(48.dp),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(24.dp)
                     ) {
-                        Text("Sebelumnya", color = Color.Gray)
+                        Text("Sebelumnya", color = Color(0xFF262626))
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Button(
@@ -307,7 +333,7 @@ fun PersonalInfoScreen(
                         },
                         modifier = Modifier.weight(1f).height(48.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100)),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(24.dp)
                     ) {
                         Text("Selanjutnya")
                     }
@@ -334,6 +360,7 @@ fun PersonalInfoScreen(
                             modifier = Modifier.clickable {
                                 handleOptionSelected(viewModel, currentSelectionType, item)
                                 showActionSheet = false
+                                triggerNextPicker(currentSelectionType)
                             }
                         )
                         HorizontalDivider(color = Color(0xFFF0F0F0))
@@ -351,11 +378,10 @@ private fun handleOptionSelected(viewModel: PersonalInfoV2ViewModel, type: Strin
         "lite" -> viewModel.updateField(viewModel.state.copy(lite = item.key, liten = item.value))
         "lidn" -> viewModel.updateField(viewModel.state.copy(lidn = item.key, lidnn = item.value))
         "lope" -> viewModel.updateField(viewModel.state.copy(lope = item.key, lopen = item.value))
-        "bank" -> viewModel.bankChange(item.key) 
+        "bank" -> viewModel.bankChange(item.value) // In bankChange, we search by name (it.name == bankName) which is item.key here
         "mas" -> viewModel.updateField(viewModel.state.copy(mas = item.key, masn = item.value))
         "fas" -> {
              if (viewModel.state.mas == "2" && item.value == "Tidak Ada") {
-                 // Sesuai logika Vue: minimal 1 orang untuk kawin
                  return
              }
              viewModel.updateField(viewModel.state.copy(fas = item.key, fasn = item.value))

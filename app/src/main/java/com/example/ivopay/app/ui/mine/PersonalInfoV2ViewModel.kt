@@ -87,6 +87,20 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                         val lotn = data.customer?.address
                         val bac = data.bankAccount
                         
+                        // Format Alamat (Domisili) - Parity with Vue logic
+                        var rtRw = ""
+                        if (!lotn?.rtidn.isNullOrEmpty() && !lotn?.rwidn.isNullOrEmpty()) {
+                            rtRw = "${lotn?.rtidn}/${lotn?.rwidn}"
+                        }
+                        
+                        val localAddr = buildString {
+                            if (rtRw.isNotEmpty()) append("$rtRw ")
+                            if (!lotn?.lpidn.isNullOrEmpty()) append("${lotn?.lpidn} ")
+                            if (!lotn?.lcidn.isNullOrEmpty()) append("${lotn?.lcidn} ")
+                            if (!lotn?.ldidn.isNullOrEmpty()) append("${lotn?.ldidn} ")
+                            if (!lotn?.viidn.isNullOrEmpty()) append("${lotn?.viidn}")
+                        }.trim()
+
                         state = state.copy(
                             bipl = lotn?.birthPlace ?: "",
                             moe = pi?.motherName ?: "",
@@ -117,7 +131,7 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                             liten = pi?.houseTypeName ?: "",
                             lidn = pi?.stayDuration?.toString() ?: "",
                             lidnn = pi?.stayDurationName ?: "",
-                            lvstr = pi?.liveAddrStr ?: "",
+                            lvstr = localAddr,
                             ban = bac?.bankName ?: "",
                             bant = bac?.accountNo ?: "",
                             bante = bac?.accountHolder ?: pi?.fullName ?: "",
@@ -181,12 +195,33 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             try {
                 val body = JsonObject()
-                val stateJson = gson.toJson(state)
-                val map = gson.fromJson(stateJson, JsonObject::class.java)
-                map.entrySet().forEach { body.add(it.key, it.value) }
+                // Manual mapping to ensure correct field names for the API
+                body.addProperty("moe", state.moe)
+                body.addProperty("rel", state.rel)
+                body.addProperty("reln", state.reln)
+                body.addProperty("edn", state.edn)
+                body.addProperty("ednn", state.ednn)
+                body.addProperty("lite", state.lite)
+                body.addProperty("liten", state.liten)
+                body.addProperty("lidn", state.lidn)
+                body.addProperty("lidnn", state.lidnn)
+                body.addProperty("lope", state.lope)
+                body.addProperty("lvstr", state.lvstr)
+                body.addProperty("del", state.del)
+                body.addProperty("ban", state.ban)
+                body.addProperty("bant", state.bant)
+                body.addProperty("bante", state.bante)
+                body.addProperty("mas", state.mas)
+                body.addProperty("masn", state.masn)
 
-                // Check mas for spouse fields
-                if (state.mas != "2") {
+                if (state.mas == "2") {
+                    body.addProperty("fas", state.fas)
+                    body.addProperty("fasn", state.fasn)
+                    body.addProperty("spane", state.spane)
+                    body.addProperty("spabire", state.spabire)
+                    body.addProperty("happtyagmet", state.happtyagmet)
+                    body.addProperty("happtyagmetne", state.happtyagmetne)
+                } else {
                     body.addProperty("spane", "")
                     body.addProperty("happtyagmet", "")
                     body.addProperty("happtyagmetne", "")

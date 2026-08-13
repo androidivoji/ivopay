@@ -230,7 +230,9 @@ interface ApiService {
 }
 
 object NetworkClient {
-    private const val BASE_URL = "https://devapi.ivoji.id/"
+    private const val BASE_URL_DEVEL = "https://devapi.ivoji.id/"
+    private const val BASE_URL_1 = "https://appv.ivoji.id/index.html/"
+    private const val BASE_URL = "https://backend.ivoji.id/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -245,7 +247,7 @@ object NetworkClient {
 
     val apiService: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BASE_URL_DEVEL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
