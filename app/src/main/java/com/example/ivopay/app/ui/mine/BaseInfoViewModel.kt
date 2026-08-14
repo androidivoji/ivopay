@@ -407,6 +407,7 @@ class BaseInfoViewModel(context: Context) : ViewModel() {
                 builder.addFormDataPart("fun", state.funName)
                 builder.addFormDataPart("gen", state.gen.toString())
                 builder.addFormDataPart("bire", state.bire)
+                builder.addFormDataPart("bipl", state.lvstr) //tempat lahir
                 builder.addFormDataPart("eil", state.eil)
                 builder.addFormDataPart("lvstr", state.lvstr)
                 builder.addFormDataPart("cstr", state.cstr)

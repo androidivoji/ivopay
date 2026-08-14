@@ -352,7 +352,7 @@ fun BaseInfoScreen(
                     Text("Jika terdapat ketidaksesuaian data dengan KTP maka akan mempengaruhi lamanya proses pengajuan pinjaman", fontSize = 12.sp, color = Color.Red)
                     Spacer(modifier = Modifier.height(24.dp))
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(onClick = { viewModel.showConfirmInfoPop = false }, modifier = Modifier.weight(1f)) { Text("Belum Sesuai") }
+                        OutlinedButton(onClick = { viewModel.showConfirmInfoPop = false }, modifier = Modifier.weight(1f)) { Text("Perbaiki") }
                         Spacer(modifier = Modifier.width(12.dp))
                         Button(onClick = { 
                             viewModel.showConfirmInfoPop = false
