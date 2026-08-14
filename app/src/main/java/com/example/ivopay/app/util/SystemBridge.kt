@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import android.os.Build
 import androidx.core.content.ContextCompat
+import com.example.ivopay.app.data.api.ApiService
+import com.google.gson.JsonObject
 
 class SystemBridge(private val context: Context) {
 
@@ -42,12 +44,19 @@ class SystemBridge(private val context: Context) {
     fun getCommonParams(): Map<String, String> {
         val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
         return mapOf(
-            "a" to "ivoji", // Sesuai dengan request di project Vue
+            "a" to "ivoji", 
             "app_version" to getAppVersion(),
             "device_id" to deviceId,
             "platform" to "android",
             "os_version" to Build.VERSION.RELEASE
         )
+    }
+
+    fun getCommonParamsJson(): JsonObject {
+        val params = getCommonParams()
+        val json = JsonObject()
+        params.forEach { (k, v) -> json.addProperty(k, v) }
+        return json
     }
 
     // Ganti dari: _requestCameraPermission

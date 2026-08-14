@@ -252,6 +252,16 @@ interface ApiService {
     suspend fun uploadEvent(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
+
+    @POST("api/lackin/flo")
+    suspend fun getLackinFlo(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("api/erba")
+    suspend fun postEventsListBaseInfo(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

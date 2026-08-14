@@ -95,21 +95,21 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                     val data = response.body()?.data
                     if (data != null) {
                         val pi = data.customer?.personalInfo
-                        val lotn = data.customer?.getAddressSafe()
+                        val lotn = data.customer?.address // Use the getter from UserInfoResponse.kt
                         val bac = data.bankAccount
                         
-                        // Format Alamat (Domisili) - Parity with Vue logic
+                        // Format Alamat (Domisili) - Safe parsing
                         var rtRw = ""
-                        if (!lotn?.rtidn.isNullOrEmpty() && !lotn?.rwidn.isNullOrEmpty()) {
-                            rtRw = "${lotn?.rtidn}/${lotn?.rwidn}"
+                        if (lotn != null && !lotn.rtidn.isNullOrEmpty() && !lotn.rwidn.isNullOrEmpty()) {
+                            rtRw = "${lotn.rtidn}/${lotn.rwidn}"
                         }
                         
                         val localAddr = buildString {
                             if (rtRw.isNotEmpty()) append("$rtRw ")
-                            if (!lotn?.lpidn.isNullOrEmpty()) append("${lotn?.lpidn} ")
-                            if (!lotn?.lcidn.isNullOrEmpty()) append("${lotn?.lcidn} ")
-                            if (!lotn?.ldidn.isNullOrEmpty()) append("${lotn?.ldidn} ")
-                            if (!lotn?.viidn.isNullOrEmpty()) append("${lotn?.viidn}")
+                            lotn?.lpidn?.let { if (it.isNotEmpty()) append("$it ") }
+                            lotn?.lcidn?.let { if (it.isNotEmpty()) append("$it ") }
+                            lotn?.ldidn?.let { if (it.isNotEmpty()) append("$it ") }
+                            lotn?.viidn?.let { if (it.isNotEmpty()) append(it) }
                         }.trim()
 
                         state = state.copy(

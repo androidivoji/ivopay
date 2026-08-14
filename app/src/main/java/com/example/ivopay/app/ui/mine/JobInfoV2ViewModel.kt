@@ -10,7 +10,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ivopay.app.data.api.NetworkClient
 import com.example.ivopay.app.data.model.*
-import com.example.ivopay.app.util.CommonUtils
 import com.example.ivopay.app.util.SessionManager
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -90,16 +89,17 @@ class JobInfoV2ViewModel(context: Context) : ViewModel() {
                         val lotn = wi?.lotn
                         
                         // Format Alamat Kantor
-                        val rtRw = if (!lotn?.rtidn.isNullOrEmpty() && !lotn?.rwidn.isNullOrEmpty()) {
-                            "${lotn?.rtidn}/${lotn?.rwidn}"
-                        } else ""
+                        var rtRw = ""
+                        if (lotn != null && !lotn.rtidn.isNullOrEmpty() && !lotn.rwidn.isNullOrEmpty()) {
+                            rtRw = "${lotn.rtidn}/${lotn.rwidn}"
+                        }
                         
                         val officeAddr = buildString {
                             if (rtRw.isNotEmpty()) append("$rtRw ")
-                            if (!lotn?.lpidn.isNullOrEmpty()) append("${lotn?.lpidn} ")
-                            if (!lotn?.lcidn.isNullOrEmpty()) append("${lotn?.lcidn} ")
-                            if (!lotn?.ldidn.isNullOrEmpty()) append("${lotn?.ldidn} ")
-                            if (!lotn?.viidn.isNullOrEmpty()) append("${lotn?.viidn}")
+                            lotn?.lpidn?.let { if (it.isNotEmpty()) append("$it ") }
+                            lotn?.lcidn?.let { if (it.isNotEmpty()) append("$it ") }
+                            lotn?.ldidn?.let { if (it.isNotEmpty()) append("$it ") }
+                            lotn?.viidn?.let { if (it.isNotEmpty()) append(it) } // CompanyAddress uses viidn internally
                         }.trim()
 
                         state = state.copy(
@@ -170,7 +170,7 @@ class JobInfoV2ViewModel(context: Context) : ViewModel() {
         isLoading = true
         viewModelScope.launch {
             try {
-                // Post events list if needed
+                // Post statistics if wof is false
                 if (cmeData?.wof == false) {
                     val eventsArray = JsonArray()
                     statics.forEach { (key, value) ->

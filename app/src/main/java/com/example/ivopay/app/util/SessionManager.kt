@@ -2,6 +2,7 @@ package com.example.ivopay.app.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
@@ -16,7 +17,18 @@ class SessionManager(context: Context) {
             .build()
 
         // Menggantikan fungsi localStorage dengan tingkat keamanan EncryptedSharedPreferences
-        sharedPreferences = EncryptedSharedPreferences.create(
+        // Tambahkan try-catch untuk menangani javax.crypto.AEADBadTagException jika Keystore rusak
+        sharedPreferences = try {
+            createEncryptedPrefs(context, masterKey)
+        } catch (e: Exception) {
+            Log.e("SessionManager", "Error creating EncryptedSharedPreferences, resetting...", e)
+            context.deleteSharedPreferences("secret_shared_prefs")
+            createEncryptedPrefs(context, masterKey)
+        }
+    }
+
+    private fun createEncryptedPrefs(context: Context, masterKey: MasterKey): SharedPreferences {
+        return EncryptedSharedPreferences.create(
             context,
             "secret_shared_prefs",
             masterKey,

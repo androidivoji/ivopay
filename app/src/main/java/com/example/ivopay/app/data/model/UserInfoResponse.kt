@@ -1,6 +1,8 @@
 package com.example.ivopay.app.data.model
 
 import com.google.gson.annotations.SerializedName
+import com.google.gson.JsonElement
+import com.google.gson.Gson
 
 data class UserInfoResponse(
     @SerializedName("code") val code: Int? = null,
@@ -36,15 +38,12 @@ data class StagLackin(
 data class CustomerData(
     @SerializedName("pi") val personalInfo: CustomerPersonalInfo? = null,
     @SerializedName("ide") val identityImages: IdentityImages? = null,
-    @SerializedName("lotn") val address: Any? = null,
+    @SerializedName("lotn") private val _address: JsonElement? = null,
     @SerializedName("wi") val workInfo: WorkInfo? = null
 ) {
-    /**
-     * Helper untuk mengambil data alamat secara aman meskipun server mengirim string kosong.
-     */
-    fun getAddressSafe(): CustomerAddress? {
-        return if (address is CustomerAddress) address else null
-    }
+    val address: CustomerAddress? get() = if (_address != null && _address.isJsonObject) {
+        Gson().fromJson(_address, CustomerAddress::class.java)
+    } else null
 }
 
 data class CustomerPersonalInfo(
@@ -136,8 +135,12 @@ data class WorkInfo(
     @SerializedName("joiun") val businessTypeName: String? = null,
     @SerializedName("wkdn") val workDurationId: Int? = null,
     @SerializedName("wkdnn") val workDurationName: String? = null,
-    @SerializedName("lotn") val lotn: CompanyAddress? = null
-)
+    @SerializedName("lotn") private val _lotn: JsonElement? = null
+) {
+    val lotn: CompanyAddress? get() = if (_lotn != null && _lotn.isJsonObject) {
+        Gson().fromJson(_lotn, CompanyAddress::class.java)
+    } else null
+}
 
 data class ContactItem(
     @SerializedName("fun") val name: String? = null,
