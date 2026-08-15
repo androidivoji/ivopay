@@ -378,7 +378,7 @@ private fun handleOptionSelected(viewModel: PersonalInfoV2ViewModel, type: Strin
         "lite" -> viewModel.updateField(viewModel.state.copy(lite = item.key, liten = item.value))
         "lidn" -> viewModel.updateField(viewModel.state.copy(lidn = item.key, lidnn = item.value))
         "lope" -> viewModel.updateField(viewModel.state.copy(lope = item.key, lopen = item.value))
-        "bank" -> viewModel.bankChange(item.value) // In bankChange, we search by name (it.name == bankName) which is item.key here
+        "bank" -> viewModel.bankChange(item.key) 
         "mas" -> viewModel.updateField(viewModel.state.copy(mas = item.key, masn = item.value))
         "fas" -> {
              if (viewModel.state.mas == "2" && item.value == "Tidak Ada") {

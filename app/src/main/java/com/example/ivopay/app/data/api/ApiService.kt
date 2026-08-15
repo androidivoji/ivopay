@@ -142,6 +142,11 @@ interface ApiService {
         @Body requestBody: JsonObject = JsonObject()
     ): Response<JsonObject>
 
+    @POST("v2/api/aict")
+    suspend fun getBorrowerLoanPersonalList(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
     @POST("v2/api/mgea")
     suspend fun postMgeaBorrower(
         @Body requestBody: JsonObject = JsonObject()

@@ -14,6 +14,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 
 // --- Model State (V2) ---
 data class PersonalInfoV2State(
@@ -83,7 +84,7 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
         fetchInitialUserInfo()
         fetchBankList()
         fetchCommonParams()
-        fetchHomeConfig()
+//        fetchHomeConfig()
     }
 
     private fun fetchInitialUserInfo() {
@@ -95,10 +96,10 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                     val data = response.body()?.data
                     if (data != null) {
                         val pi = data.customer?.personalInfo
-                        val lotn = data.customer?.address // Use the getter from UserInfoResponse.kt
+                        val lotn = data.customer?.address 
                         val bac = data.bankAccount
                         
-                        // Format Alamat (Domisili) - Safe parsing
+                        // Format Alamat (Domisili) - Parity with Vue logic
                         var rtRw = ""
                         if (lotn != null && !lotn.rtidn.isNullOrEmpty() && !lotn.rwidn.isNullOrEmpty()) {
                             rtRw = "${lotn.rtidn}/${lotn.rwidn}"
@@ -217,10 +218,10 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
         state = newState
     }
 
-    fun bankChange(bankName: String) {
-        val bank = commonBankList.find { it.name == bankName }
+    fun bankChange(bankCode: String) {
+        val bank = commonBankList.find { it.name == bankCode }
         bankMaxLength = bank?.bal ?: 20
-        state = state.copy(ban = bankName)
+        state = state.copy(ban = bankCode)
     }
 
     fun uploadEvent(evme: String) {
@@ -266,7 +267,7 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                 }
 
                 // 2. Get Loan List to check for errors as per Vue logic
-                val loanListResponse = NetworkClient.apiService.getBorrowerLoanList(JsonObject().apply { addProperty("spe", "h") })
+                val loanListResponse = NetworkClient.apiService.getBorrowerLoanPersonalList(JsonObject().apply { addProperty("spe", "h") })
                 if (loanListResponse.isSuccessful) {
                     val data = loanListResponse.body()?.get("data")?.asJsonObject
                     val errorMsg = data?.get("c_up_bae_erro")?.asString
@@ -277,51 +278,69 @@ class PersonalInfoV2ViewModel(context: Context) : ViewModel() {
                     }
                 }
 
-                // 3. Prepare body for update
-                val body = JsonObject()
-                body.addProperty("moe", state.moe)
-                body.addProperty("rel", state.rel)
-                body.addProperty("reln", state.reln)
-                body.addProperty("edn", state.edn)
-                body.addProperty("ednn", state.ednn)
-                body.addProperty("lite", state.lite)
-                body.addProperty("liten", state.liten)
-                body.addProperty("lidn", state.lidn)
-                body.addProperty("lidnn", state.lidnn)
-                body.addProperty("lope", state.lope)
-                body.addProperty("lvstr", state.lvstr)
-                body.addProperty("del", state.del)
-                body.addProperty("ban", state.ban)
-                body.addProperty("bant", state.bant)
-                body.addProperty("bante", state.bante)
-                body.addProperty("mas", state.mas)
-                body.addProperty("masn", state.masn)
+                // 3. Prepare Multipart Request (Individual Form-Data Parts)
+                val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
+                
+                builder.addFormDataPart("moe", state.moe)
+                builder.addFormDataPart("rel", state.rel)
+                builder.addFormDataPart("reln", state.reln)
+                builder.addFormDataPart("edn", state.edn)
+                builder.addFormDataPart("ednn", state.ednn)
+                builder.addFormDataPart("lite", state.lite)
+                builder.addFormDataPart("liten", state.liten)
+                builder.addFormDataPart("lidn", state.lidn)
+                builder.addFormDataPart("lidnn", state.lidnn)
+                builder.addFormDataPart("lope", state.lope)
+                builder.addFormDataPart("lvstr", state.lvstr)
+                builder.addFormDataPart("del", state.del)
+                builder.addFormDataPart("ban", state.ban)
+                builder.addFormDataPart("bant", state.bant)
+                builder.addFormDataPart("bante", state.bante)
+                builder.addFormDataPart("mas", state.mas)
+                builder.addFormDataPart("masn", state.masn)
+                // Tambahkan key cadangan agar sesuai dengan pengecekan PHP
+                builder.addFormDataPart("bank", state.ban)      // Untuk $customerBank->bank
+                builder.addFormDataPart("bank_account", state.bant)  // Untuk $customerBank->account
+                builder.addFormDataPart("bank_account_name", state.bante)    // Untuk $customerBank->name
+                builder.addFormDataPart("detail", state.del)    // Untuk $location->detail
+                builder.addFormDataPart("purpose", state.lope)  // Untuk $basicInfo->purpose
 
-                if (state.mas == "2") {
-                    body.addProperty("fas", state.fas)
-                    body.addProperty("fasn", state.fasn)
-                    body.addProperty("spane", state.spane)
-                    body.addProperty("spabire", state.spabire)
-                    body.addProperty("happtyagmet", state.happtyagmet)
-                    body.addProperty("happtyagmetne", state.happtyagmetne)
-                } else {
-                    body.addProperty("spane", "")
-                    body.addProperty("happtyagmet", "")
-                    body.addProperty("happtyagmetne", "")
-                    body.addProperty("spabire", "")
+                // Tambahkan parameter bank sesuai detail objek BankItem
+                val selectedBank = commonBankList.find { it.name == state.ban }
+                selectedBank?.let {
+                    builder.addFormDataPart("banid", it.id?.toString() ?: "")
+                    builder.addFormDataPart("n", it.name ?: "")
+                    builder.addFormDataPart("fn", it.fullName ?: "")
+                    builder.addFormDataPart("bal", it.bal?.toString() ?: "0")
+                    builder.addFormDataPart("ais", it.ais?.toString() ?: "0")
                 }
 
-                // 4. Update User Info
-                val response = NetworkClient.apiService.updateUserInfo(body)
+                if (state.mas == "2") {
+                    builder.addFormDataPart("fas", state.fas)
+                    builder.addFormDataPart("fasn", state.fasn)
+                    builder.addFormDataPart("spane", state.spane)
+                    builder.addFormDataPart("spabire", state.spabire)
+                    builder.addFormDataPart("happtyagmet", state.happtyagmet)
+                    builder.addFormDataPart("happtyagmetne", state.happtyagmetne)
+                } else {
+                    builder.addFormDataPart("spane", "")
+                    builder.addFormDataPart("happtyagmet", "")
+                    builder.addFormDataPart("happtyagmetne", "")
+                    builder.addFormDataPart("spabire", "")
+                }
+
+                // 4. Update User Info (Hit v1/api/c/up using individual parts)
+                val response = NetworkClient.apiService.updateBaseInfo(builder.build())
+                isLoading = false
+
                 if (response.isSuccessful && response.body()?.get("code")?.asInt == 1) {
                     onSuccess()
                 } else {
                     onError(response.body()?.get("msg")?.asString ?: "Gagal simpan")
                 }
             } catch (e: Exception) {
-                onError("Terjadi kesalahan sistem")
-            } finally {
                 isLoading = false
+                onError("Terjadi kesalahan sistem")
             }
         }
     }
