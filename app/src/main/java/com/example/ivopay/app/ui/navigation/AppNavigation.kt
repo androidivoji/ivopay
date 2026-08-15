@@ -34,7 +34,19 @@ import com.example.ivopay.app.ui.login.LoginScreen
 import com.example.ivopay.app.ui.login.LoginViewModel
 import com.example.ivopay.app.ui.main.LenderMainDashboardScreen
 import com.example.ivopay.app.ui.main.MainDashboardScreen
-import com.example.ivopay.app.ui.mine.*
+import com.example.ivopay.app.ui.mine.BaseInfoScreen
+import com.example.ivopay.app.ui.mine.BaseInfoViewModel
+import com.example.ivopay.app.ui.mine.ContactInfoScreen
+import com.example.ivopay.app.ui.mine.ContactInfoViewModel
+import com.example.ivopay.app.ui.mine.JobInfoV2Screen
+import com.example.ivopay.app.ui.mine.JobInfoV2ViewModel
+import com.example.ivopay.app.ui.mine.LenderBasicInfoScreen
+import com.example.ivopay.app.ui.mine.LenderBasicInfoViewModel
+import com.example.ivopay.app.ui.mine.LogoutAndExitScreen
+import com.example.ivopay.app.ui.mine.MyProfileScreen
+import com.example.ivopay.app.ui.mine.MyProfileViewModel
+import com.example.ivopay.app.ui.mine.PersonalInfoScreen
+import com.example.ivopay.app.ui.mine.PersonalInfoV2ViewModel
 import com.example.ivopay.app.ui.splash.SplashScreen
 import com.example.ivopay.app.ui.splash.SplashViewModel
 import com.example.ivopay.app.util.SessionManager
@@ -249,8 +261,8 @@ fun AppNavigation(
         }
 
         composable(Screen.MyProfile) {
-            val profileViewModel: com.example.ivopay.app.ui.mine.MyProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
-                com.example.ivopay.app.ui.mine.MyProfileViewModel(context)
+            val profileViewModel: MyProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                MyProfileViewModel(context)
             }
             MyProfileScreen(
                 viewModel = profileViewModel,
@@ -339,11 +351,11 @@ fun AppNavigation(
             val infoFinished = backStackEntry.arguments?.getString("infoFinished") ?: ""
             val isNeedBack = infoFinished == "1"
 
-            val jobViewModel: com.example.ivopay.app.ui.mine.JobInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
-                com.example.ivopay.app.ui.mine.JobInfoV2ViewModel(context)
+            val jobViewModel: JobInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                JobInfoV2ViewModel(context)
             }
 
-            com.example.ivopay.app.ui.mine.JobInfoV2Screen(
+            JobInfoV2Screen(
                 viewModel = jobViewModel,
                 onBackClick = { navController.popBackStack() },
                 onNextClick = { cme, fcoa, tnpo ->

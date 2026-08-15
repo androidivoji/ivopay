@@ -192,25 +192,24 @@ class JobInfoV2ViewModel(context: Context) : ViewModel() {
                     fileInfo["wkptie"] = it
                 }
 
-                val body = JsonObject()
-                body.addProperty("con", state.con)
-                body.addProperty("syamt", state.syamt.replace("[.,]".toRegex(), ""))
-                body.addProperty("joiun", state.joiun)
-                body.addProperty("joi", state.joi)
-                body.addProperty("join", state.join)
-                body.addProperty("iniun", state.iniun)
-                body.addProperty("ini", state.ini)
-                body.addProperty("inin", state.inin)
-                body.addProperty("jork", state.jork)
-                body.addProperty("jorkn", state.jorkn)
-                body.addProperty("wkdn", state.wkdn)
-                body.addProperty("wkdnn", state.wkdnn)
-                body.addProperty("cdel", state.cdel)
-                body.addProperty("wkptie_yep", state.wkptie_yep)
-
                 // Multipart request
                 val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
-                builder.addFormDataPart("rd", body.toString())
+                
+                // Add individual fields instead of wrapping in "rd"
+                builder.addFormDataPart("con", state.con)
+                builder.addFormDataPart("syamt", state.syamt.replace("[.,]".toRegex(), ""))
+                builder.addFormDataPart("joiun", state.joiun)
+                builder.addFormDataPart("joi", state.joi)
+                builder.addFormDataPart("join", state.join)
+                builder.addFormDataPart("iniun", state.iniun)
+                builder.addFormDataPart("ini", state.ini)
+                builder.addFormDataPart("inin", state.inin)
+                builder.addFormDataPart("jork", state.jork)
+                builder.addFormDataPart("jorkn", state.jorkn)
+                builder.addFormDataPart("wkdn", state.wkdn)
+                builder.addFormDataPart("wkdnn", state.wkdnn)
+                builder.addFormDataPart("cdel", state.cdel)
+                builder.addFormDataPart("wkptie_yep", state.wkptie_yep)
                 
                 state.wkptie_bitmap?.let { bitmap ->
                     val stream = ByteArrayOutputStream()
