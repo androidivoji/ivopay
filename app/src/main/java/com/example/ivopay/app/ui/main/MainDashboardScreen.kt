@@ -199,8 +199,8 @@ fun MainDashboardScreen(
                         MyBillScreen(
                             viewModel = billViewModel,
                             onItemClick = { bill ->
-                                // Navigasi detail sesuai logika router Vue (e.g. BillDetails / InlgBillDetails)
-//                                onNavigateToDetail("BillDetails/${bill.noc}")
+                                // Gunakan format Query Parameter (?bill=) agar sesuai dengan AppNavigation
+                                onNavigateToDetail("BillDetails?bill=${bill.noc}")
                             }
                         )
                     }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -13,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.ivopay.app.ui.auth.SelectRoleScreen
 import com.example.ivopay.app.ui.auth.SelectRoleViewModel
+import com.example.ivopay.app.ui.components.FaceDetectionView
 import com.example.ivopay.app.ui.lender.borrower.BorrowerDetailScreen
 import com.example.ivopay.app.ui.lender.detail.AlreadyPaidBillDetailScreen
 import com.example.ivopay.app.ui.lender.detail.ChooseContractsScreen
@@ -23,6 +25,7 @@ import com.example.ivopay.app.ui.lender.portofolio.waitsign.BorrowerSignContract
 import com.example.ivopay.app.ui.lender.portofolio.waitsign.PlatformSignContractsScreen
 import com.example.ivopay.app.ui.lender.portofolio.waitsign.WaitSignContractsScreen
 import com.example.ivopay.app.ui.loan.ApplyLoanScreen
+import com.example.ivopay.app.ui.loan.ApplyLoanViewModel
 import com.example.ivopay.app.ui.loan.ApplySucceedScreen
 import com.example.ivopay.app.ui.loan.BorrowerSignContractsScreen
 import com.example.ivopay.app.ui.loan.BorrowerSignContractsViewModel
@@ -289,11 +292,11 @@ fun AppNavigation(
         composable(Screen.FaceDetection) {
             // Gunakan remember untuk mengambil BackStackEntry agar aman dari recomposition
             val applyEntry = remember(it) { navController.getBackStackEntry(Screen.ApplyLoan) }
-            val applyViewModel: com.example.ivopay.app.ui.loan.ApplyLoanViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+            val applyViewModel: ApplyLoanViewModel = viewModel(
                 viewModelStoreOwner = applyEntry
             )
 
-            com.example.ivopay.app.ui.components.FaceDetectionView(
+            FaceDetectionView(
                 onImageCaptured = { bitmap ->
                     applyViewModel.handleFaceDetectResult(bitmap)
                     navController.popBackStack()
@@ -338,6 +341,65 @@ fun AppNavigation(
                 com.example.ivopay.app.ui.loan.OtherProductViewModel(context)
             }
             com.example.ivopay.app.ui.loan.OtherProductScreen(viewModel = otherProductViewModel, onBackClick = { navController.popBackStack() })
+        }
+
+        composable(
+            route = "${Screen.BillDetails}?bill={bill}",
+            arguments = listOf(navArgument("bill") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val noc = backStackEntry.arguments?.getString("bill") ?: ""
+            val billViewModel = remember { com.example.ivopay.app.ui.bill.BillDetailsViewModel(context) }
+            com.example.ivopay.app.ui.bill.BillDetailsScreen(
+                noc = noc,
+                viewModel = billViewModel,
+                onBackClick = { navController.popBackStack() },
+                onNavigate = { route -> navController.navigate(route) }
+            )
+        }
+
+        composable(
+            route = "${Screen.Repay}?bill={bill}&pre_pay={pre_pay}&cur_pay={cur_pay}",
+            arguments = listOf(
+                navArgument("bill") { type = NavType.StringType },
+                navArgument("pre_pay") { defaultValue = "0" },
+                navArgument("cur_pay") { defaultValue = "0" }
+            )
+        ) { backStackEntry ->
+            val billJson = backStackEntry.arguments?.getString("bill") ?: ""
+            val prePay = backStackEntry.arguments?.getString("pre_pay") == "1"
+            val curPay = backStackEntry.arguments?.getString("cur_pay") == "1"
+            val repayViewModel = remember { com.example.ivopay.app.ui.repay.RepayViewModel(context) }
+            
+            com.example.ivopay.app.ui.repay.RepayScreen(
+                billJson = billJson,
+                isPrePay = prePay,
+                isCurPay = curPay,
+                viewModel = repayViewModel,
+                onBackClick = { navController.popBackStack() },
+                onNavigateBcaGuide = { }
+            )
+        }
+
+        composable(
+            route = "BorrowerSignContracts?noc={noc}&wiue={wiue}",
+            arguments = listOf(
+                navArgument("noc") { defaultValue = "" },
+                navArgument("wiue") { 
+                    type = NavType.BoolType
+                    defaultValue = false 
+                }
+            )
+        ) { backStackEntry ->
+            val noc = backStackEntry.arguments?.getString("noc") ?: ""
+            val isWiue = backStackEntry.arguments?.getBoolean("wiue") ?: false
+            val signViewModel: com.example.ivopay.app.ui.loan.BorrowerSignContractsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+            
+            com.example.ivopay.app.ui.loan.BorrowerSignContractsScreen(
+                noc = noc,
+                isWiue = isWiue,
+                viewModel = signViewModel,
+                onBackClick = { navController.popBackStack() }
+            )
         }
     }
 }

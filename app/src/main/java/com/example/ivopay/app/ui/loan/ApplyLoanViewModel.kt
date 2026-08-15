@@ -153,7 +153,7 @@ class ApplyLoanViewModel(context: Context) : ViewModel() {
         val actStatus = sessionManager.getActStatus()
         Log.d("APPLY_DEBUG", "Checking act mode: '$actStatus'")
         
-        if (actStatus == "2") { // Vue uses act "1" or true for mock
+        if (actStatus == "2") { // Vue: if (localStorage.getItem('act')) submitApplyWithMock
             Log.d("APPLY_DEBUG", "Act mode ACTIVE, submitting mock data")
             submitApplyWithMock(onSuccess, onError)
         } else {

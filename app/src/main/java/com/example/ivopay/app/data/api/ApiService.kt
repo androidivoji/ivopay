@@ -258,6 +258,16 @@ interface ApiService {
         @Body requestBody: JsonObject
     ): Response<JsonObject>
 
+    @POST("api/3267r9/EKXxyj")
+    suspend fun initAliFace(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("api/Zxl4mU/aeaQet")
+    suspend fun getAliFaceResult(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
     @POST("v1/api/uiso")
     suspend fun getOtherProductList(
         @Body requestBody: JsonObject = JsonObject()
