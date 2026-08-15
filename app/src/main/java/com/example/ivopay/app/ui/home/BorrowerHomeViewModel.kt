@@ -92,6 +92,7 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                         sessionManager.saveRasn(it.rasn)
                         sessionManager.saveLackinA(it.lackinA)
                         sessionManager.saveUico(it.uico)
+                        sessionManager.saveTttp(it.tttp)
                     }
                     true
                 } else false

@@ -33,6 +33,7 @@ import com.example.ivopay.app.util.CommonUtils
 fun ApplyLoanScreen(
     viewModel: ApplyLoanViewModel,
     onBackClick: () -> Unit,
+    onNavigate: (String) -> Unit,
     onSubmitSuccess: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -40,6 +41,36 @@ fun ApplyLoanScreen(
 
     LaunchedEffect(Unit) {
         viewModel.init()
+    }
+
+    // Handle Action Events for Face Detection
+    LaunchedEffect(viewModel.actionEvent) {
+        viewModel.actionEvent?.let { event ->
+            when (event) {
+                ApplyActionEvent.StartFaceLiveDetect -> {
+                    // Trigger Native Face Detection Bridge/SDK
+                    // On Result: viewModel.handleFaceDetectResult(bitmap)
+                    onNavigate("FaceDetection") // Placeholder for SDK call
+                }
+                ApplyActionEvent.StartFaceLiveDetectType2 -> {
+                    onNavigate("FaceDetectionType2") 
+                }
+                ApplyActionEvent.StartAliFaceVerify -> {
+                    onNavigate("AliFaceVerify")
+                }
+                ApplyActionEvent.StartZuluzFaceVerify -> {
+                    onNavigate("ZuluzFaceVerify")
+                }
+            }
+            viewModel.actionEvent = null
+        }
+    }
+
+    LaunchedEffect(viewModel.submitSuccessNoc) {
+        viewModel.submitSuccessNoc?.let { noc ->
+            onSubmitSuccess(noc)
+            viewModel.submitSuccessNoc = null
+        }
     }
 
     Scaffold(
@@ -233,15 +264,7 @@ fun ApplyLoanScreen(
                     SignatureCanvas(
                         onClear = { viewModel.signImage = null },
                         onSubmit = { bitmap ->
-                            viewModel.signImage = bitmap
-                            viewModel.submitApply(
-                                bitmap = bitmap,
-                                onSuccess = { noc ->
-                                    viewModel.showSignPop = false
-                                    onSubmitSuccess(noc)
-                                },
-                                onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
-                            )
+                            viewModel.onSignatureSubmit(bitmap)
                         }
                     )
                 }

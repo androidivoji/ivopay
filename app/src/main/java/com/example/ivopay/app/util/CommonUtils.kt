@@ -31,11 +31,15 @@ object CommonUtils {
     }
 
     // Ganti dari: _generateRandomString()
-    fun generateSessionId(): String {
+    fun generateRandomString(length: Int = 19): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        val randomStr = (1..19)
+        return (1..length)
             .map { chars[java.util.Random().nextInt(chars.length)] }
             .joinToString("")
+    }
+
+    fun generateSessionId(): String {
+        val randomStr = generateRandomString(19)
         val timestamp = System.currentTimeMillis()
         return "$randomStr$timestamp"
     }

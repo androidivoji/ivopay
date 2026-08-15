@@ -110,6 +110,16 @@ class SessionManager(context: Context) {
         sharedPreferences.edit().putInt(KEY_RASN, rasn).apply()
     }
 
+    // Mendapatkan tttp (Face detect type)
+    fun getTttp(): Int {
+        return sharedPreferences.getInt(KEY_TTTP, 1)
+    }
+
+    // Menyimpan tttp
+    fun saveTttp(tttp: Int) {
+        sharedPreferences.edit().putInt(KEY_TTTP, tttp).apply()
+    }
+
     // Menggantikan localStorage.getItem('act')
     fun getActStatus(): String {
         // Jika user memaksa default "1" di getString, ia hanya bekerja jika key tidak ada.
@@ -202,5 +212,6 @@ class SessionManager(context: Context) {
         private const val KEY_RASN = "rasn"
         private const val KEY_LACKIN_A = "lackinA"
         private const val KEY_UICO = "uico"
+        private const val KEY_TTTP = "tttp"
     }
 }
