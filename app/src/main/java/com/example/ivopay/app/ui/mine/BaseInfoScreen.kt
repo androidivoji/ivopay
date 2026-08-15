@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,11 +26,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -82,23 +78,13 @@ fun BaseInfoScreen(
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, dayOfMonth ->
-            val date = String.format(Locale.getDefault(), "%02d/%02d/%d", dayOfMonth, month + 1, year)
-            viewModel.updateField(viewModel.state.copy(bire = date))
+            val formattedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
+            viewModel.updateField(viewModel.state.copy(bire = formattedDate))
         },
-        calendar.get(Calendar.YEAR) - 25,
+        calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
-
-    // Helper to get options from commonParams
-    fun getCommonOptions(key: String): List<OptionItem> {
-        val list = mutableListOf<OptionItem>()
-        viewModel.commonParams?.getAsJsonArray(key)?.forEach { element ->
-            val obj = element.asJsonObject
-            list.add(OptionItem(obj.get("k").asString, obj.get("v").asString))
-        }
-        return list
-    }
 
     if (showCamera) {
         KtpCameraView(
@@ -206,6 +192,19 @@ fun BaseInfoScreen(
                         }
                     )
 
+                    // TAMBAHKAN TEMPAT LAHIR
+                    SelectableField(
+                        label = "Tempat Lahir",
+                        value = viewModel.state.bipl,
+                        onClick = {
+                            addressMode = "b" // Birth place mode
+                            viewModel.loadAddresses(1, "0")
+                            actionSheetTitle = "Pilih Provinsi"
+                            currentSelectionType = "province"
+                            showActionSheet = true
+                        }
+                    )
+
                     SelectableField(
                         label = "Tanggal Lahir",
                         value = viewModel.state.bire,
@@ -248,17 +247,14 @@ fun BaseInfoScreen(
                         Row(verticalAlignment = Alignment.Top, modifier = Modifier.clickable { viewModel.checkAgree = !viewModel.checkAgree }) {
                             Checkbox(
                                 checked = viewModel.checkAgree,
-                                onCheckedChange = { viewModel.checkAgree = it },
-                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFFBD0100))
+                                onCheckedChange = { viewModel.checkAgree = it }
                             )
-                            val annotatedString = buildAnnotatedString {
-                                append("Saya telah membaca, memahami, dan menyetujui ")
-                                withStyle(style = SpanStyle(color = Color(0xFFBD0100), fontWeight = FontWeight.Bold)) {
-                                    append("Syarat dan Ketentuan")
-                                }
-                                append(" untuk verifikasi identitas.")
-                            }
-                            Text(text = annotatedString, fontSize = 12.sp, color = Color(0xFF262626), modifier = Modifier.padding(top = 12.dp))
+                            Text(
+                                text = "Saya menyetujui persyaratan dan ketentuan yang berlaku di IVOJI",
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(top = 12.dp)
+                            )
                         }
                     }
                 }
@@ -280,7 +276,7 @@ fun BaseInfoScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Button(
                             onClick = { 
-                                viewModel.submitInfo(onSuccess = { onNextClick() })
+                                viewModel.submitInfo { onNextClick() }
                             },
                             modifier = Modifier.weight(1f).height(48.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100)),
@@ -294,7 +290,7 @@ fun BaseInfoScreen(
         }
     }
 
-    // Modal Bottom Sheet for all selections
+    // Action Selection Sheet
     if (showActionSheet) {
         ModalBottomSheet(
             onDismissRequest = { showActionSheet = false },
@@ -305,15 +301,14 @@ fun BaseInfoScreen(
                 Text(text = actionSheetTitle, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                val optionsToShow = when (currentSelectionType) {
-                    "gen" -> getCommonOptions("gen")
-                    "rt" -> getCommonOptions("rt")
-                    "rw" -> getCommonOptions("rw")
-                    else -> viewModel.addressList.map { OptionItem(it.code ?: "", it.name ?: "") }
+                val options = when (currentSelectionType) {
+                    "gen" -> listOf(OptionItem("1", "Laki-laki"), OptionItem("2", "Perempuan"))
+                    "rt", "rw" -> (1..25).map { OptionItem(String.format("%03d", it), String.format("%03d", it)) }
+                    else -> viewModel.addressList.map { OptionItem(it.code ?: "", it.name ?: "", it.postalCode ?: "") }
                 }
-                
+
                 LazyColumn(modifier = Modifier.fillMaxHeight(0.6f)) {
-                    items(optionsToShow) { item ->
+                    items(options) { item ->
                         ListItem(
                             headlineContent = { Text(item.value) },
                             modifier = Modifier.clickable {
@@ -376,14 +371,13 @@ fun BaseInfoScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(onClick = { 
                         viewModel.showHaveBillPop = false
-                        // onNavigate("MyBill") 
                     }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100))) { Text("Untuk pembayaran") }
                 }
             }
         }
     }
 
-    // Error Popup (Retry logic)
+    // Error Popup
     if (viewModel.showInfoErrorPop) {
         Dialog(onDismissRequest = { viewModel.showInfoErrorPop = false }) {
             Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -441,11 +435,14 @@ private fun handleAddressSelectionFlow(
             } else {
                 viewModel.updateField(currentState.copy(crwid = item.key, crwidn = item.value))
             }
-            viewModel.loadAddresses(1, "0") // Start cascading address from Province
+            viewModel.loadAddresses(1, "0") 
             onNextStep("province", "Pilih Provinsi")
         }
         "province" -> {
-            if (addressMode == "l") {
+            if (addressMode == "b") {
+                // Simpan data Provinsi untuk Tempat Lahir
+                viewModel.updateField(currentState.copy(bipl = item.value))
+            } else if (addressMode == "l") {
                 viewModel.updateField(currentState.copy(lpid = item.key, lpidn = item.value))
             } else {
                 viewModel.updateField(currentState.copy(cpid = item.key, cpidn = item.value))
@@ -454,7 +451,10 @@ private fun handleAddressSelectionFlow(
             onNextStep("city", "Pilih Kota")
         }
         "city" -> {
-            if (addressMode == "l") {
+            if (addressMode == "b") {
+                // Update Tempat Lahir (Provinsi + Kota)
+                viewModel.updateField(currentState.copy(bipl = "${currentState.bipl} ${item.value}"))
+            } else if (addressMode == "l") {
                 viewModel.updateField(currentState.copy(lcid = item.key, lcidn = item.value))
             } else {
                 viewModel.updateField(currentState.copy(ccid = item.key, ccidn = item.value))
@@ -463,13 +463,23 @@ private fun handleAddressSelectionFlow(
             onNextStep("district", "Pilih Kecamatan")
         }
         "district" -> {
-            if (addressMode == "l") {
-                viewModel.updateField(currentState.copy(ldid = item.key, ldidn = item.value))
+            if (addressMode == "b") {
+                // Selesai untuk Tempat Lahir: Provinsi + Kota + Kecamatan
+                // Ambil PC (Postal Code) untuk parameter POCO
+                viewModel.updateField(currentState.copy(
+                    bipl = "${currentState.bipl} ${item.value}",
+                    poco = item.pc ?: ""
+                ))
+                onClose()
             } else {
-                viewModel.updateField(currentState.copy(cdid = item.key, cdidn = item.value))
+                if (addressMode == "l") {
+                    viewModel.updateField(currentState.copy(ldid = item.key, ldidn = item.value))
+                } else {
+                    viewModel.updateField(currentState.copy(cdid = item.key, cdidn = item.value))
+                }
+                viewModel.loadAddresses(4, item.key)
+                onNextStep("viname", "Pilih Kelurahan/Desa")
             }
-            viewModel.loadAddresses(4, item.key)
-            onNextStep("viname", "Pilih Kelurahan/Desa")
         }
         "viname" -> {
             if (addressMode == "l") {

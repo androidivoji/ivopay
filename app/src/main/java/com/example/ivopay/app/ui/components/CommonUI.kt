@@ -13,7 +13,8 @@ import com.example.ivopay.R
 // Model data untuk item pilihan (dropdown/sheet)
 data class OptionItem(
     val key: String,
-    val value: String
+    val value: String,
+    val pc: String? = null // Kode Pos (Postal Code)
 )
 
 @Composable

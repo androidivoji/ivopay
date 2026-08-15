@@ -45,6 +45,8 @@ data class BaseInfoState(
     val gen: Int = 0,
     val genn: String = "",
     val bire: String = "",
+    val bipl: String = "",
+    val poco: String = "",
     val eil: String = "",
     val lvstr: String = "",
     val cstr: String = "",
@@ -407,7 +409,8 @@ class BaseInfoViewModel(context: Context) : ViewModel() {
                 builder.addFormDataPart("fun", state.funName)
                 builder.addFormDataPart("gen", state.gen.toString())
                 builder.addFormDataPart("bire", state.bire)
-                builder.addFormDataPart("bipl", state.lvstr) //tempat lahir
+                builder.addFormDataPart("bipl", state.bipl) // Gunakan state.bipl asli
+                builder.addFormDataPart("poco", state.poco) // Tambahkan poco dari pc
                 builder.addFormDataPart("eil", state.eil)
                 builder.addFormDataPart("lvstr", state.lvstr)
                 builder.addFormDataPart("cstr", state.cstr)
@@ -429,7 +432,7 @@ class BaseInfoViewModel(context: Context) : ViewModel() {
                 
                 capturedBitmap?.let { bitmap ->
                     val stream = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream)
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream) // Kualitas 95
                     val bytes = stream.toByteArray()
                     builder.addFormDataPart("idfie", "ktp.jpg", bytes.toRequestBody("image/jpeg".toMediaTypeOrNull()))
                 }
