@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.ivopay.app.data.api.NetworkClient
 import com.example.ivopay.app.data.model.*
 import com.example.ivopay.app.util.SessionManager
+import com.example.ivopay.app.util.SystemBridge
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -42,6 +43,7 @@ data class JobInfoV2State(
 
 class JobInfoV2ViewModel(context: Context) : ViewModel() {
     private val sessionManager = SessionManager(context)
+    private val systemBridge = SystemBridge(context)
     private val gson = Gson()
 
     var state by mutableStateOf(JobInfoV2State())
@@ -81,12 +83,15 @@ class JobInfoV2ViewModel(context: Context) : ViewModel() {
         isLoading = true
         viewModelScope.launch {
             try {
-                val response = NetworkClient.apiService.getUserInfo(JsonObject().apply { addProperty("spe", "h") })
+                val requestBody = systemBridge.getCommonParamsJson().apply { addProperty("spe", "h") }
+                val response = NetworkClient.apiService.getUserInfo(requestBody)
                 if (response.isSuccessful) {
                     val data = response.body()?.data
                     if (data != null) {
                         val wi = data.customer?.workInfo
                         val lotn = wi?.lotn
+                        
+                        Log.d("JobInfoV2", "Fetched wkptie: ${wi?.wkptie}")
                         
                         // Format Alamat Kantor
                         var rtRw = ""
@@ -99,7 +104,7 @@ class JobInfoV2ViewModel(context: Context) : ViewModel() {
                             lotn?.lpidn?.let { if (it.isNotEmpty()) append("$it ") }
                             lotn?.lcidn?.let { if (it.isNotEmpty()) append("$it ") }
                             lotn?.ldidn?.let { if (it.isNotEmpty()) append("$it ") }
-                            lotn?.viidn?.let { if (it.isNotEmpty()) append(it) } // CompanyAddress uses viidn internally
+                            lotn?.viidn?.let { if (it.isNotEmpty()) append(it) }
                         }.trim()
 
                         state = state.copy(
@@ -117,9 +122,10 @@ class JobInfoV2ViewModel(context: Context) : ViewModel() {
                             wkdnn = wi?.workDurationName ?: "",
                             cstr = officeAddr,
                             cdel = lotn?.addressDetail ?: "",
-                            wkptie = data.customer?.identityImages?.selfie ?: "", // Placeholder if different field
-                            wkptie_yep = ""
+                            wkptie = wi?.wkptie ?: "",
+                            wkptie_yep = wi?.wkptie_yep?.toString() ?: ""
                         )
+                        isWorkProofMandatory = wi?.wkptie_madatoy ?: false
                     }
                 }
             } catch (e: Exception) {

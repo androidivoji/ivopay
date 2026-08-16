@@ -135,6 +135,9 @@ data class WorkInfo(
     @SerializedName("joiun") val businessTypeName: String? = null,
     @SerializedName("wkdn") val workDurationId: Int? = null,
     @SerializedName("wkdnn") val workDurationName: String? = null,
+    @SerializedName("wkptie") val wkptie: String? = null,
+    @SerializedName("wkptie_madatoy") val wkptie_madatoy: Boolean? = null,
+    @SerializedName("wkptie_yep") val wkptie_yep: Int? = null,
     @SerializedName("lotn") private val _lotn: JsonElement? = null
 ) {
     val lotn: CompanyAddress? get() = if (_lotn != null && _lotn.isJsonObject) {

@@ -1,7 +1,11 @@
 package com.example.ivopay.app.ui.mine
 
+import android.Manifest
 import android.graphics.Bitmap
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.ivopay.R
 import com.example.ivopay.app.data.model.BorrowerCmeData
+import com.example.ivopay.app.ui.components.KtpCameraView
 import com.example.ivopay.app.ui.components.OptionItem
 import com.example.ivopay.app.ui.components.SelectableField
 import com.google.gson.JsonObject
@@ -38,8 +43,7 @@ import com.google.gson.JsonObject
 fun JobInfoV2Screen(
     viewModel: JobInfoV2ViewModel,
     onBackClick: () -> Unit,
-    onNextClick: (BorrowerCmeData?, JsonObject?, JsonObject?) -> Unit,
-    onTakeWorkProofPhoto: (callback: (Bitmap) -> Unit) -> Unit = {}
+    onNextClick: (BorrowerCmeData?, JsonObject?, JsonObject?) -> Unit
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -51,8 +55,21 @@ fun JobInfoV2Screen(
     var currentOptions by remember { mutableStateOf<List<OptionItem>>(emptyList()) }
     
     var showWorkProofTypePop by remember { mutableStateOf(false) }
+    var showCamera by remember { mutableStateOf(false) }
+    var isSelfieMode by remember { mutableStateOf(false) }
     
     val sheetState = rememberModalBottomSheetState()
+
+    // Permission Launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            showCamera = true
+        } else {
+            Toast.makeText(context, "Izin kamera diperlukan untuk mengambil foto bukti kerja", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.init()
@@ -144,66 +161,62 @@ fun JobInfoV2Screen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Informasi Pekerjaan", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(painterResource(id = R.drawable.iv_popup_ic_cancel), contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 22.dp)
-                    .padding(bottom = 100.dp)
-            ) {
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // 1. Nama Perusahaan
-                OutlinedTextField(
-                    value = viewModel.state.con,
-                    onValueChange = { viewModel.updateField(viewModel.state.copy(con = it)) },
-                    label = { Text("Nama Perusahaan") },
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                // 2. Pendapatan Bulanan
-                OutlinedTextField(
-                    value = viewModel.state.syamt,
-                    onValueChange = { viewModel.updateField(viewModel.state.copy(syamt = it)) },
-                    label = { Text("Pendapatan Bulanan") },
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-
-                // 3. Jenis Usaha (Parent of jos)
-                SelectableField(
-                    label = "Jenis Usaha", 
-                    value = viewModel.state.joiun, 
-                    onClick = { 
-                        currentSelectionType = "jos_parent"
-                        actionSheetTitle = "Jenis Usaha"
-                        currentOptions = getNestedOptions("jos")
-                        showActionSheet = true
+    if (showCamera) {
+        KtpCameraView(
+            onImageCaptured = { bitmap ->
+                viewModel.updateField(viewModel.state.copy(wkptie_bitmap = bitmap))
+                showCamera = false
+            },
+            onClose = { showCamera = false },
+            cameraSelector = if (isSelfieMode) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA,
+            isFaceMode = isSelfieMode
+        )
+    } else {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("Informasi Pekerjaan", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(painterResource(id = R.drawable.iv_popup_ic_cancel), contentDescription = "Back")
+                        }
                     }
                 )
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 22.dp)
+                        .padding(bottom = 100.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                // 4. Dynamic Fields (showJobField logic)
-                val showJobField = viewModel.state.joiun.isNotEmpty() || viewModel.state.join.isNotEmpty() || viewModel.state.iniun.isNotEmpty() || viewModel.state.inin.isNotEmpty() || viewModel.state.jorkn.isNotEmpty() || viewModel.state.wkdnn.isNotEmpty()
-                
-                if (showJobField) {
+                    // 1. Nama Perusahaan
+                    OutlinedTextField(
+                        value = viewModel.state.con,
+                        onValueChange = { viewModel.updateField(viewModel.state.copy(con = it)) },
+                        label = { Text("Nama Perusahaan") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+
+                    // 2. Pendapatan Bulanan
+                    OutlinedTextField(
+                        value = viewModel.state.syamt,
+                        onValueChange = { viewModel.updateField(viewModel.state.copy(syamt = it)) },
+                        label = { Text("Pendapatan Bulanan") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+
+                    // 3. Jenis Usaha (Parent of jos)
                     SelectableField(
-                        label = "Jenis Pekerjaan", 
-                        value = viewModel.state.join, 
+                        label = "Jenis Usaha", 
+                        value = viewModel.state.joiun, 
                         onClick = { 
                             currentSelectionType = "jos_parent"
                             actionSheetTitle = "Jenis Usaha"
@@ -211,132 +224,148 @@ fun JobInfoV2Screen(
                             showActionSheet = true
                         }
                     )
-                    SelectableField(
-                        label = "Jenis Industri", 
-                        value = viewModel.state.iniun, 
-                        onClick = { 
-                            currentSelectionType = "ines_parent"
-                            actionSheetTitle = "Jenis Industri"
-                            currentOptions = getNestedOptions("ines")
-                            showActionSheet = true
-                        }
-                    )
-                    SelectableField(
-                        label = "Sektor Ekonomi", 
-                        value = viewModel.state.inin, 
-                        onClick = { 
-                            currentSelectionType = "ines_parent"
-                            actionSheetTitle = "Jenis Industri"
-                            currentOptions = getNestedOptions("ines")
-                            showActionSheet = true
-                        }
-                    )
-                    SelectableField(
-                        label = "Jabatan", 
-                        value = viewModel.state.jorkn, 
-                        onClick = { 
-                            currentSelectionType = "jork"
-                            actionSheetTitle = "Jabatan"
-                            currentOptions = getOptions("jork")
-                            showActionSheet = true
-                        }
-                    )
-                    SelectableField(
-                        label = "Lama Bekerja", 
-                        value = viewModel.state.wkdnn, 
-                        onClick = { 
-                            currentSelectionType = "wkdns"
-                            actionSheetTitle = "Lama Bekerja"
-                            currentOptions = getOptions("wkdns")
-                            showActionSheet = true
-                        }
-                    )
-                }
 
-                SelectableField(
-                    label = "Alamat kantor", 
-                    value = viewModel.state.cstr, 
-                    onClick = { /* Readonly summary */ }
-                )
+                    // 4. Dynamic Fields (showJobField logic)
+                    val showJobField = viewModel.state.joiun.isNotEmpty() || viewModel.state.join.isNotEmpty() || viewModel.state.iniun.isNotEmpty() || viewModel.state.inin.isNotEmpty() || viewModel.state.jorkn.isNotEmpty() || viewModel.state.wkdnn.isNotEmpty()
+                    
+                    if (showJobField) {
+                        SelectableField(
+                            label = "Jenis Pekerjaan", 
+                            value = viewModel.state.join, 
+                            onClick = { 
+                                currentSelectionType = "jos_parent"
+                                actionSheetTitle = "Jenis Usaha"
+                                currentOptions = getNestedOptions("jos")
+                                showActionSheet = true
+                            }
+                        )
+                        SelectableField(
+                            label = "Jenis Industri", 
+                            value = viewModel.state.iniun, 
+                            onClick = { 
+                                currentSelectionType = "ines_parent"
+                                actionSheetTitle = "Jenis Industri"
+                                currentOptions = getNestedOptions("ines")
+                                showActionSheet = true
+                            }
+                        )
+                        SelectableField(
+                            label = "Sektor Ekonomi", 
+                            value = viewModel.state.inin, 
+                            onClick = { 
+                                currentSelectionType = "ines_parent"
+                                actionSheetTitle = "Jenis Industri"
+                                currentOptions = getNestedOptions("ines")
+                                showActionSheet = true
+                            }
+                        )
+                        SelectableField(
+                            label = "Jabatan", 
+                            value = viewModel.state.jorkn, 
+                            onClick = { 
+                                currentSelectionType = "jork"
+                                actionSheetTitle = "Jabatan"
+                                currentOptions = getOptions("jork")
+                                showActionSheet = true
+                            }
+                        )
+                        SelectableField(
+                            label = "Lama Bekerja", 
+                            value = viewModel.state.wkdnn, 
+                            onClick = { 
+                                currentSelectionType = "wkdns"
+                                actionSheetTitle = "Lama Bekerja"
+                                currentOptions = getOptions("wkdns")
+                                showActionSheet = true
+                            }
+                        )
+                    }
 
-                OutlinedTextField(
-                    value = viewModel.state.cdel,
-                    onValueChange = { viewModel.updateField(viewModel.state.copy(cdel = it)) },
-                    label = { Text("Alamat Lengkap Perusahaan") },
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    shape = RoundedCornerShape(8.dp)
-                )
+                    SelectableField(
+                        label = "Alamat kantor", 
+                        value = viewModel.state.cstr, 
+                        onClick = { /* Readonly summary */ }
+                    )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                    OutlinedTextField(
+                        value = viewModel.state.cdel,
+                        onValueChange = { viewModel.updateField(viewModel.state.copy(cdel = it)) },
+                        label = { Text("Alamat Lengkap Perusahaan") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    )
 
-                // 5. Bukti Kerja
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clickable { showWorkProofTypePop = true },
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        if (viewModel.state.wkptie_bitmap != null) {
-                            Image(
-                                bitmap = viewModel.state.wkptie_bitmap!!.asImageBitmap(),
-                                contentDescription = "Work Proof",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else if (viewModel.state.wkptie.isNotEmpty()) {
-                            AsyncImage(
-                                model = viewModel.state.wkptie,
-                                contentDescription = "Work Proof",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop,
-                                error = painterResource(id = R.drawable.iv_data_ic_sign)
-                            )
-                        } else {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(painterResource(id = R.drawable.iv_data_ic_sign), contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.Gray)
-                                Text("Upload Bukti Kerja", fontSize = 14.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // 5. Bukti Kerja
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clickable { showWorkProofTypePop = true },
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            if (viewModel.state.wkptie_bitmap != null) {
+                                Image(
+                                    bitmap = viewModel.state.wkptie_bitmap!!.asImageBitmap(),
+                                    contentDescription = "Work Proof",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else if (viewModel.state.wkptie.isNotEmpty()) {
+                                AsyncImage(
+                                    model = viewModel.state.wkptie,
+                                    contentDescription = "Work Proof",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                    error = painterResource(id = R.drawable.iv_data_ic_sign)
+                                )
+                            } else {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(painterResource(id = R.drawable.iv_data_ic_sign), contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.Gray)
+                                    Text("Upload Bukti Kerja", fontSize = 14.sp, color = Color.Gray)
+                                }
                             }
                         }
                     }
-                }
 
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-                    Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFBD0100))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Unggah bukti kerja untuk mempercepat verifikasi.", fontSize = 12.sp, color = Color.Gray)
-                }
-            }
-
-            // Bottom Action Bar
-            Surface(
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
-                shadowElevation = 8.dp,
-                color = Color.White
-            ) {
-                Row(modifier = Modifier.padding(16.dp)) {
-                    OutlinedButton(
-                        onClick = onBackClick,
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        shape = RoundedCornerShape(24.dp)
-                    ) {
-                        Text("Sebelumnya", color = Color(0xFF262626))
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                        Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFBD0100))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Unggah bukti kerja untuk mempercepat verifikasi.", fontSize = 12.sp, color = Color.Gray)
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Button(
-                        onClick = { 
-                            viewModel.submitInfo(
-                                onSuccess = onNextClick,
-                                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
-                            )
-                        },
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100)),
-                        shape = RoundedCornerShape(24.dp)
-                    ) {
-                        Text("Selanjutnya")
+                }
+
+                // Bottom Action Bar
+                Surface(
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                    shadowElevation = 8.dp,
+                    color = Color.White
+                ) {
+                    Row(modifier = Modifier.padding(16.dp)) {
+                        OutlinedButton(
+                            onClick = onBackClick,
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            shape = RoundedCornerShape(24.dp)
+                        ) {
+                            Text("Sebelumnya", color = Color(0xFF262626))
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Button(
+                            onClick = { 
+                                viewModel.submitInfo(
+                                    onSuccess = onNextClick,
+                                    onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                                )
+                            },
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBD0100)),
+                            shape = RoundedCornerShape(24.dp)
+                        ) {
+                            Text("Selanjutnya")
+                        }
                     }
                 }
             }
@@ -392,10 +421,9 @@ fun JobInfoV2Screen(
                                 .fillMaxWidth()
                                 .clickable {
                                     viewModel.updateField(viewModel.state.copy(wkptie_yep = (index + 1).toString()))
+                                    isSelfieMode = (index == 4) // "Foto selfie beserta lingkungan kerja"
                                     showWorkProofTypePop = false
-                                    onTakeWorkProofPhoto { bitmap ->
-                                        viewModel.updateField(viewModel.state.copy(wkptie_bitmap = bitmap))
-                                    }
+                                    permissionLauncher.launch(Manifest.permission.CAMERA)
                                 }
                                 .padding(vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,

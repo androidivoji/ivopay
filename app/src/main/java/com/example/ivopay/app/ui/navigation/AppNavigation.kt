@@ -260,8 +260,7 @@ fun AppNavigation(
                             else navController.navigate(Screen.Main)
                         } else navController.navigate(Screen.ApplyLoan)
                     } else navController.navigate(Screen.MyProfile)
-                },
-                onTakeWorkProofPhoto = { }
+                }
             )
         }
 
