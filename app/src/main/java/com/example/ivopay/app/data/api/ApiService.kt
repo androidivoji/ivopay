@@ -298,6 +298,52 @@ interface ApiService {
     suspend fun cpUpdate(
         @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
+
+    // Account Logout (Hapus Akun)
+    @POST("v1/api/lp/c")
+    suspend fun checkBeforeAccountLogout(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/lp/s")
+    suspend fun accountLogoutSendCode(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/lp/v")
+    suspend fun accountLogoutVerifyCode(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/lp/d")
+    suspend fun accountLogout(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/lp/f")
+    suspend fun logoutSubmitFace(
+        @Body requestBody: okhttp3.RequestBody
+    ): Response<JsonObject>
+
+    @POST("v1/api/lp/r")
+    suspend fun getFaceLogoutResult(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("api/lp/rt")
+    suspend fun submitLogoutRetain(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("api/lp/rq")
+    suspend fun rtinRcd(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("api/lp/qq")
+    suspend fun rtinQud(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
 }
 
 object NetworkClient {

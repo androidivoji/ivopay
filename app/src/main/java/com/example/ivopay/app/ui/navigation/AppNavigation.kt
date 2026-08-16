@@ -409,5 +409,29 @@ fun AppNavigation(
                 onBackClick = { navController.popBackStack() }
             )
         }
+        composable(Screen.AccountLogout) {
+            val logoutViewModel: com.example.ivopay.app.ui.mine.AccountLogoutViewModel = viewModel {
+                com.example.ivopay.app.ui.mine.AccountLogoutViewModel(context)
+            }
+            com.example.ivopay.app.ui.mine.AccountLogoutScreen(
+                viewModel = logoutViewModel,
+                onBackClick = { navController.popBackStack() },
+                onLogoutSuccess = {
+                    navController.navigate(Screen.SelectRole) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateToProduct = { type, rasn ->
+                    // Navigasi ke produk cicilan sesuai rtin_pudtyp di Vue
+                    when (type) {
+                        5 -> navController.navigate("InlgCash?rasn=$rasn")
+                        6 -> navController.navigate("Ci6Cash?rasn=$rasn")
+                        7 -> navController.navigate("Ci7Cash?rasn=$rasn")
+                        0 -> navController.navigate(Screen.ApplyLoan)
+                        else -> navController.navigate(Screen.Main)
+                    }
+                }
+            )
+        }
     }
 }

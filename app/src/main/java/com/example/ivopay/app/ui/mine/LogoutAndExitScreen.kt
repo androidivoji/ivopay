@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,17 +44,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ivopay.R
+import com.example.ivopay.app.data.api.NetworkClient
+import com.google.gson.JsonObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogoutAndExitScreen(
-    userKtpName: String? = null, // Menggantikan userInfo.customer.pi.inm
     onNavigateBack: () -> Unit = {},
     onNavigateToAccountLogout: () -> Unit = {},
-    onLogoutConfirmed: () -> Unit = {} // Dipanggil untuk menghapus token & kembali ke Splash/Login
+    onLogoutConfirmed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var userKtpName by remember { mutableStateOf<String?>(null) }
+
+    // Fetch user info untuk mengecek pi.inm (KTP)
+    LaunchedEffect(Unit) {
+        try {
+            val response = NetworkClient.apiService.getUserInfo(JsonObject().apply { addProperty("spe", "h") })
+            if (response.isSuccessful) {
+                userKtpName = response.body()?.data?.customer?.personalInfo?.ktpMasked
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -101,7 +116,7 @@ fun LogoutAndExitScreen(
             // 2. Opsi "Hapus akun" (Account Logout / Delete)
             LogoutSettingItem(
                 title = "Hapus akun",
-                iconResId = R.drawable.iv_set_ic_logout, // Sesuaikan dengan drawable icon logout kamu
+                iconResId = R.drawable.iv_set_ic_logout,
                 onClick = {
                     // Logika pengecekan userInfo.customer.pi.inm
                     if (!userKtpName.isNullOrEmpty()) {
