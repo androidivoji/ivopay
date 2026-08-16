@@ -34,6 +34,7 @@ import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.ivopay.R
 import com.example.ivopay.app.ui.components.KtpCameraView
+import androidx.camera.core.CameraSelector
 import com.example.ivopay.app.ui.components.OptionItem
 import com.example.ivopay.app.ui.components.SelectableField
 import java.util.*
@@ -92,7 +93,9 @@ fun BaseInfoScreen(
                 viewModel.uploadKtp(bitmap)
                 showCamera = false
             },
-            onClose = { showCamera = false }
+            onClose = { showCamera = false },
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
+            isFaceMode = false
         )
     } else {
         Scaffold(

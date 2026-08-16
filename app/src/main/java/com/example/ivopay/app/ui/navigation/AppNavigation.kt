@@ -1,11 +1,8 @@
 package com.example.ivopay.app.ui.navigation
 
-import android.content.Context.MODE_PRIVATE
-import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -15,20 +12,13 @@ import androidx.navigation.navArgument
 import com.example.ivopay.app.ui.auth.SelectRoleScreen
 import com.example.ivopay.app.ui.auth.SelectRoleViewModel
 import com.example.ivopay.app.ui.components.FaceDetectionView
-import com.example.ivopay.app.ui.lender.borrower.BorrowerDetailScreen
-import com.example.ivopay.app.ui.lender.detail.AlreadyPaidBillDetailScreen
-import com.example.ivopay.app.ui.lender.detail.ChooseContractsScreen
-import com.example.ivopay.app.ui.lender.detail.ViewContractPageScreen
-import com.example.ivopay.app.ui.lender.mycontracts.MyContractsScreen
-import com.example.ivopay.app.ui.lender.portofolio.toberecharged.ToBeRechargedDetailScreen
-import com.example.ivopay.app.ui.lender.portofolio.waitsign.BorrowerSignContractsScreen as LenderBorrowerSignContractsScreen
-import com.example.ivopay.app.ui.lender.portofolio.waitsign.PlatformSignContractsScreen
-import com.example.ivopay.app.ui.lender.portofolio.waitsign.WaitSignContractsScreen
 import com.example.ivopay.app.ui.loan.ApplyLoanScreen
 import com.example.ivopay.app.ui.loan.ApplyLoanViewModel
 import com.example.ivopay.app.ui.loan.ApplySucceedScreen
 import com.example.ivopay.app.ui.loan.BorrowerSignContractsScreen
 import com.example.ivopay.app.ui.loan.BorrowerSignContractsViewModel
+import com.example.ivopay.app.ui.loan.OtherProductScreen
+import com.example.ivopay.app.ui.loan.OtherProductViewModel
 import com.example.ivopay.app.ui.login.GestureCreateScreen
 import com.example.ivopay.app.ui.login.GestureCreateViewModel
 import com.example.ivopay.app.ui.login.GestureLoginScreen
@@ -37,14 +27,15 @@ import com.example.ivopay.app.ui.login.LoginScreen
 import com.example.ivopay.app.ui.login.LoginViewModel
 import com.example.ivopay.app.ui.main.LenderMainDashboardScreen
 import com.example.ivopay.app.ui.main.MainDashboardScreen
+import com.example.ivopay.app.ui.main.MainTabItem
 import com.example.ivopay.app.ui.mine.BaseInfoScreen
 import com.example.ivopay.app.ui.mine.BaseInfoViewModel
+import com.example.ivopay.app.ui.mine.ChangeBindPhoneScreen
+import com.example.ivopay.app.ui.mine.ChangeBindPhoneViewModel
 import com.example.ivopay.app.ui.mine.ContactInfoScreen
 import com.example.ivopay.app.ui.mine.ContactInfoViewModel
 import com.example.ivopay.app.ui.mine.JobInfoV2Screen
 import com.example.ivopay.app.ui.mine.JobInfoV2ViewModel
-import com.example.ivopay.app.ui.mine.LenderBasicInfoScreen
-import com.example.ivopay.app.ui.mine.LenderBasicInfoViewModel
 import com.example.ivopay.app.ui.mine.LogoutAndExitScreen
 import com.example.ivopay.app.ui.mine.MyProfileScreen
 import com.example.ivopay.app.ui.mine.MyProfileViewModel
@@ -81,6 +72,7 @@ object Screen {
     const val A_Apply = "A_ApplyPage"
     const val OtherProduct = "OtherProductPage"
     const val FaceDetection = "FaceDetection"
+    const val ChangeBindPhone = "ChangeBindPhone"
 }
 
 @Composable
@@ -110,7 +102,7 @@ fun AppNavigation(
 
         // 1. Screen Select Role
         composable(Screen.SelectRole) {
-            val roleViewModel: SelectRoleViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+            val roleViewModel: SelectRoleViewModel = viewModel()
             
             SelectRoleScreen(
                 isLoggedIn = sessionManager.isUserLoggedIn(),
@@ -205,7 +197,7 @@ fun AppNavigation(
             route = "${Screen.GestureCreate}?fromPage={fromPage}",
             arguments = listOf(navArgument("fromPage") { defaultValue = "" })
         ) { backStackEntry ->
-            val gestureCreateViewModel: GestureCreateViewModel = androidx.lifecycle.viewmodel.compose.viewModel { GestureCreateViewModel(context) }
+            val gestureCreateViewModel: GestureCreateViewModel = viewModel { GestureCreateViewModel(context) }
             GestureCreateScreen(
                 viewModel = gestureCreateViewModel,
                 onBackClick = { navController.popBackStack() },
@@ -226,7 +218,7 @@ fun AppNavigation(
         }
 
         composable(Screen.MyProfile) {
-            val profileViewModel: MyProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel { MyProfileViewModel(context) }
+            val profileViewModel: MyProfileViewModel = viewModel { MyProfileViewModel(context) }
             MyProfileScreen(
                 viewModel = profileViewModel,
                 onBackClick = { navController.popBackStack() },
@@ -238,25 +230,25 @@ fun AppNavigation(
         // 6. KYC Info
         composable(route = "${Screen.BaseInfo}?infoFinished={infoFinished}", arguments = listOf(navArgument("infoFinished") { defaultValue = "" })) { backStackEntry ->
             val isNeedBack = backStackEntry.arguments?.getString("infoFinished") == "1"
-            val baseInfoViewModel: BaseInfoViewModel = androidx.lifecycle.viewmodel.compose.viewModel { BaseInfoViewModel(context) }
+            val baseInfoViewModel: BaseInfoViewModel = viewModel { BaseInfoViewModel(context) }
             BaseInfoScreen(viewModel = baseInfoViewModel, onBackClick = { navController.popBackStack() }, onNextClick = { if (isNeedBack) navController.popBackStack() else navController.navigate(Screen.PersonalInfoV2) })
         }
 
         composable(route = "${Screen.PersonalInfoV2}?infoFinished={infoFinished}", arguments = listOf(navArgument("infoFinished") { defaultValue = "" })) { backStackEntry ->
             val isNeedBack = backStackEntry.arguments?.getString("infoFinished") == "1"
-            val personalViewModel: PersonalInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel { PersonalInfoV2ViewModel(context) }
+            val personalViewModel: PersonalInfoV2ViewModel = viewModel { PersonalInfoV2ViewModel(context) }
             PersonalInfoScreen(viewModel = personalViewModel, onBackClick = { navController.popBackStack() }, onNextClick = { if (isNeedBack) navController.popBackStack() else navController.navigate(Screen.ContactInfo) })
         }
 
         composable(route = "${Screen.ContactInfo}?infoFinished={infoFinished}", arguments = listOf(navArgument("infoFinished") { defaultValue = "" })) { backStackEntry ->
             val isNeedBack = backStackEntry.arguments?.getString("infoFinished") == "1"
-            val contactViewModel: ContactInfoViewModel = androidx.lifecycle.viewmodel.compose.viewModel { ContactInfoViewModel(context) }
+            val contactViewModel: ContactInfoViewModel = viewModel { ContactInfoViewModel(context) }
             ContactInfoScreen(viewModel = contactViewModel, onBackClick = { navController.popBackStack() }, onNextClick = { if (isNeedBack) navController.popBackStack() else navController.navigate(Screen.JobInfoV2) })
         }
 
         composable(route = "${Screen.JobInfoV2}?infoFinished={infoFinished}", arguments = listOf(navArgument("infoFinished") { defaultValue = "" })) { backStackEntry ->
             val isNeedBack = backStackEntry.arguments?.getString("infoFinished") == "1"
-            val jobViewModel: JobInfoV2ViewModel = androidx.lifecycle.viewmodel.compose.viewModel { JobInfoV2ViewModel(context) }
+            val jobViewModel: JobInfoV2ViewModel = viewModel { JobInfoV2ViewModel(context) }
             JobInfoV2Screen(
                 viewModel = jobViewModel,
                 onBackClick = { navController.popBackStack() },
@@ -276,8 +268,8 @@ fun AppNavigation(
         // 7. Apply Loan Flow
         composable(Screen.ApplyLoan) {
             // Share ViewModel with FaceDetection via parent entry
-            val applyViewModel: com.example.ivopay.app.ui.loan.ApplyLoanViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
-                com.example.ivopay.app.ui.loan.ApplyLoanViewModel(context)
+            val applyViewModel: ApplyLoanViewModel = viewModel {
+                ApplyLoanViewModel(context)
             }
             ApplyLoanScreen(
                 viewModel = applyViewModel,
@@ -337,10 +329,26 @@ fun AppNavigation(
         }
 
         composable(Screen.OtherProduct) {
-            val otherProductViewModel: com.example.ivopay.app.ui.loan.OtherProductViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
-                com.example.ivopay.app.ui.loan.OtherProductViewModel(context)
+            val otherProductViewModel: OtherProductViewModel = viewModel {
+                OtherProductViewModel(context)
             }
-            com.example.ivopay.app.ui.loan.OtherProductScreen(viewModel = otherProductViewModel, onBackClick = { navController.popBackStack() })
+            OtherProductScreen(viewModel = otherProductViewModel, onBackClick = { navController.popBackStack() })
+        }
+
+        composable(Screen.ChangeBindPhone) {
+            val changePhoneViewModel = viewModel {
+                ChangeBindPhoneViewModel(context)
+            }
+            ChangeBindPhoneScreen(
+                viewModel = changePhoneViewModel,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToBill = { navController.navigate(MainTabItem.Bill.route) },
+                onNavigateHome = {
+                    navController.navigate(Screen.Main) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(
@@ -392,9 +400,9 @@ fun AppNavigation(
         ) { backStackEntry ->
             val noc = backStackEntry.arguments?.getString("noc") ?: ""
             val isWiue = backStackEntry.arguments?.getBoolean("wiue") ?: false
-            val signViewModel: com.example.ivopay.app.ui.loan.BorrowerSignContractsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+            val signViewModel: BorrowerSignContractsViewModel = viewModel()
             
-            com.example.ivopay.app.ui.loan.BorrowerSignContractsScreen(
+            BorrowerSignContractsScreen(
                 noc = noc,
                 isWiue = isWiue,
                 viewModel = signViewModel,

@@ -282,6 +282,22 @@ interface ApiService {
     suspend fun postEventsListBaseInfo(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
+
+    // Change Bind Phone
+    @POST("v1/api/ugen")
+    suspend fun canUpdatePhone(
+        @Body requestBody: JsonObject = JsonObject()
+    ): Response<JsonObject>
+
+    @POST("v1/api/ciso")
+    suspend fun cpSendCode(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/cpca")
+    suspend fun cpUpdate(
+        @Body requestBody: okhttp3.RequestBody
+    ): Response<JsonObject>
 }
 
 object NetworkClient {
