@@ -197,7 +197,7 @@ interface ApiService {
         @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
 
-    @POST("api/pyc")
+    @POST("v1/api/pyc")
     suspend fun getPayCodeWays(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
@@ -348,8 +348,7 @@ interface ApiService {
 
 object NetworkClient {
     private const val BASE_URL_DEVEL = "https://devapi.ivoji.id/"
-    private const val BASE_URL_1 = "https://appv.ivoji.id/index.html/"
-    private const val BASE_URL = "https://backend.ivoji.id/"
+    private const val BASE_URL = "https://srv.ivoji.id/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

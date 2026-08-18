@@ -1,7 +1,11 @@
 package com.example.ivopay.app.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -12,6 +16,15 @@ import androidx.navigation.navArgument
 import com.example.ivopay.app.ui.auth.SelectRoleScreen
 import com.example.ivopay.app.ui.auth.SelectRoleViewModel
 import com.example.ivopay.app.ui.components.FaceDetectionView
+import com.example.ivopay.app.ui.lender.borrower.BorrowerDetailScreen
+import com.example.ivopay.app.ui.lender.detail.AlreadyPaidBillDetailScreen
+import com.example.ivopay.app.ui.lender.detail.ChooseContractsScreen
+import com.example.ivopay.app.ui.lender.detail.ViewContractPageScreen
+import com.example.ivopay.app.ui.lender.mycontracts.MyContractsScreen
+import com.example.ivopay.app.ui.lender.portofolio.toberecharged.ToBeRechargedDetailScreen
+import com.example.ivopay.app.ui.lender.portofolio.waitsign.BorrowerSignContractsScreen as LenderBorrowerSignContractsScreen
+import com.example.ivopay.app.ui.lender.portofolio.waitsign.PlatformSignContractsScreen
+import com.example.ivopay.app.ui.lender.portofolio.waitsign.WaitSignContractsScreen
 import com.example.ivopay.app.ui.loan.ApplyLoanScreen
 import com.example.ivopay.app.ui.loan.ApplyLoanViewModel
 import com.example.ivopay.app.ui.loan.ApplySucceedScreen
@@ -28,19 +41,7 @@ import com.example.ivopay.app.ui.login.LoginViewModel
 import com.example.ivopay.app.ui.main.LenderMainDashboardScreen
 import com.example.ivopay.app.ui.main.MainDashboardScreen
 import com.example.ivopay.app.ui.main.MainTabItem
-import com.example.ivopay.app.ui.mine.BaseInfoScreen
-import com.example.ivopay.app.ui.mine.BaseInfoViewModel
-import com.example.ivopay.app.ui.mine.ChangeBindPhoneScreen
-import com.example.ivopay.app.ui.mine.ChangeBindPhoneViewModel
-import com.example.ivopay.app.ui.mine.ContactInfoScreen
-import com.example.ivopay.app.ui.mine.ContactInfoViewModel
-import com.example.ivopay.app.ui.mine.JobInfoV2Screen
-import com.example.ivopay.app.ui.mine.JobInfoV2ViewModel
-import com.example.ivopay.app.ui.mine.LogoutAndExitScreen
-import com.example.ivopay.app.ui.mine.MyProfileScreen
-import com.example.ivopay.app.ui.mine.MyProfileViewModel
-import com.example.ivopay.app.ui.mine.PersonalInfoScreen
-import com.example.ivopay.app.ui.mine.PersonalInfoV2ViewModel
+import com.example.ivopay.app.ui.mine.*
 import com.example.ivopay.app.ui.splash.SplashScreen
 import com.example.ivopay.app.ui.splash.SplashViewModel
 import com.example.ivopay.app.util.SessionManager
@@ -408,6 +409,145 @@ fun AppNavigation(
                 onBackClick = { navController.popBackStack() }
             )
         }
+
+        // --- Lender Related Routes ---
+        composable(
+            route = "borrower_detail/{ati}",
+            arguments = listOf(navArgument("ati") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val ati = backStackEntry.arguments?.getString("ati") ?: ""
+            BorrowerDetailScreen(
+                ati = ati,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "sign_contracts/{odi}",
+            arguments = listOf(navArgument("odi") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val odi = backStackEntry.arguments?.getString("odi") ?: ""
+            WaitSignContractsScreen(
+                odi = odi,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToBorrowerSign = { mdi ->
+                    navController.navigate("borrower_sign_contracts/$mdi")
+                },
+                onNavigateToPlatformSign = { mdi ->
+                    navController.navigate("platform_sign_contracts/$mdi")
+                }
+            )
+        }
+
+        composable(
+            route = "borrower_sign_contracts/{mdi}",
+            arguments = listOf(navArgument("mdi") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val mdi = backStackEntry.arguments?.getString("mdi") ?: ""
+            LenderBorrowerSignContractsScreen(
+                mdi = mdi,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToPlatformSign = { targetMdi ->
+                    navController.navigate("platform_sign_contracts/$targetMdi") {
+                        popUpTo("borrower_sign_contracts/{mdi}") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = "platform_sign_contracts/{mdi}",
+            arguments = listOf(navArgument("mdi") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val mdi = backStackEntry.arguments?.getString("mdi") ?: ""
+            PlatformSignContractsScreen(
+                mdi = mdi,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "borrow_contracts_list/{odi}",
+            arguments = listOf(navArgument("odi") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val odi = backStackEntry.arguments?.getString("odi") ?: ""
+            ToBeRechargedDetailScreen(
+                odi = odi,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "already_paid_bill_detail/{odi}",
+            arguments = listOf(navArgument("odi") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val odi = backStackEntry.arguments?.getString("odi") ?: ""
+            AlreadyPaidBillDetailScreen(
+                odi = odi,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToChooseContracts = { mdi ->
+                    navController.navigate("choose_contracts?mdi=$mdi")
+                }
+            )
+        }
+
+        composable(
+            route = "choose_contracts?mdi={mdi}&cno={cno}",
+            arguments = listOf(
+                navArgument("mdi") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("cno") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val mdi = backStackEntry.arguments?.getString("mdi")
+            val cno = backStackEntry.arguments?.getString("cno")
+
+            ChooseContractsScreen(
+                mdi = mdi,
+                cno = cno,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToViewContractsPage = { mdiParam, type ->
+                    navController.navigate("view_contracts_page/$mdiParam/$type")
+                },
+                onNavigateToViewContractsPage2 = { cnoParam, type ->
+                    navController.navigate("view_contracts_page2/$cnoParam/$type")
+                }
+            )
+        }
+
+        composable(
+            route = "view_contracts_page/{mdi}/{type}",
+            arguments = listOf(
+                navArgument("mdi") { type = NavType.StringType },
+                navArgument("type") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val mdi = backStackEntry.arguments?.getString("mdi") ?: ""
+            val type = backStackEntry.arguments?.getInt("type") ?: 1
+
+            ViewContractPageScreen(
+                mdi = mdi,
+                type = type,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.MyContracts) {
+            MyContractsScreen(
+                onBackClick = { navController.popBackStack() },
+                onNavigateToChooseContracts = { cno ->
+                    navController.navigate("choose_contracts?cno=$cno")
+                }
+            )
+        }
+
         composable(Screen.AccountLogout) {
             val logoutViewModel: com.example.ivopay.app.ui.mine.AccountLogoutViewModel = viewModel {
                 com.example.ivopay.app.ui.mine.AccountLogoutViewModel(context)
