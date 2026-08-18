@@ -89,8 +89,7 @@ fun LenderMainDashboardScreen(
             // Pengganti <var-bottom-navigation>
             NavigationBar(
                 containerColor = Color.White,
-                tonalElevation = 8.dp,
-                modifier = Modifier.height(60.dp)
+                tonalElevation = 8.dp
             ) {
                 tabItems.forEach { item ->
                     val isActive = currentRoute == item.route
