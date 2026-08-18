@@ -20,7 +20,9 @@ data class CashConfigData(
     @SerializedName("dtma") val dtma: Int = 0,
     @SerializedName("dpeo") val dpeo: Int = 0,
     @SerializedName("yep") val yep: String? = null,
-    @SerializedName("bio") val bio: BankInfo? = null
+    @SerializedName("bio") val bio: BankInfo? = null,
+    @SerializedName("itrp") val itrp: Double? = null,
+    @SerializedName("dam") val dam: Long? = null
 )
 
 data class DayOption(
