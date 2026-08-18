@@ -154,6 +154,7 @@ class BaseInfoViewModel(context: Context) : ViewModel() {
                             gen = pi?.gender ?: 0,
                             genn = pi?.genderName ?: "",
                             bire = pi?.birthDate ?: "",
+                            bipl = lotn?.birthPlace ?: "", // Ambil dari CustomerAddress.bipl
                             eil = pi?.email ?: "",
                             lvstr = localAddr,
                             cstr = companyAddr,
@@ -169,6 +170,7 @@ class BaseInfoViewModel(context: Context) : ViewModel() {
                             ldidn = lotn?.ldidn ?: "",
                             viid = lotn?.viid ?: "",
                             viidn = lotn?.viidn ?: "",
+                            poco = lotn?.postCode ?: "", // Pastikan poco tersimpan
                             cpid = wiLotn?.lpid ?: "",
                             cpidn = wiLotn?.lpidn ?: "",
                             ccid = wiLotn?.lcid ?: "",
