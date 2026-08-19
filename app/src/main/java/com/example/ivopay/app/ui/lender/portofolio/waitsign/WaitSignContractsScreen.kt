@@ -92,7 +92,7 @@ fun WaitSignContractsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            painter = painterResource(id = R.drawable.iv_set_right_arrow), // Ganti icon back Anda
+                            painter = painterResource(id = R.drawable.iv_set_left_arrow), // Ganti icon back Anda
                             contentDescription = "Back"
                         )
                     }
@@ -101,11 +101,13 @@ fun WaitSignContractsScreen(
             )
         },
         bottomBar = {
-            // Sticky Bottom Button
+            // Sticky Bottom Button with dynamic navigation bar padding
             Surface(
                 color = Color.White,
                 shadowElevation = 8.dp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
                     Button(
