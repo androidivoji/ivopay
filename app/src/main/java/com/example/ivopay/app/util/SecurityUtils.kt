@@ -13,7 +13,7 @@ object SecurityUtils {
      * 5. SHA1(srcString).toUpperCase()
      */
     fun generateSign(method: String, url: String, data: MutableMap<String, Any>): String? {
-        val salt = "bA7R7324zJy@loVL"
+        val salt = com.example.ivopay.BuildConfig.SALT_KEY
         
         val cleanUrl = if (url.endsWith("/")) url.substring(0, url.length - 1) else url
         val keys = data.keys.toMutableList().sorted()
@@ -47,7 +47,7 @@ object SecurityUtils {
      */
     fun signBySalty(params: String, channel: String): String? {
         return try {
-            val salt = "bA7R7324zJy@loVL"
+            val salt = com.example.ivopay.BuildConfig.SALT_KEY
             val input = params + salt
             val result = Sha1.getSHA1(input)?.uppercase()
             Log.d("SECURITY_DEBUG", "signBySalty input: $input")
@@ -70,7 +70,7 @@ object SecurityUtils {
      * Meniru logika encodeGesture dari project Vue
      */
     fun encodeGesture(data: String): String {
-        val salt = "bA7R7324zJy@loVL"
+        val salt = com.example.ivopay.BuildConfig.SALT_KEY
         return if (ChannelUtils.isTestEnv) {
             Sha1.getSHA1(data + salt)?.uppercase() ?: ""
         } else {

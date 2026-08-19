@@ -31,7 +31,7 @@ object MyEncryptUtil {
         }
         Log.d("XBZ", "encryptStr\n$formattedJson")
         // Menggunakan salt statis sesuai permintaan user untuk menggantikan JNI
-        val staticSalt = "bA7R7324zJy@loVL"
+        val staticSalt = "DmR1UE7PrEJW@gAN"
         val str = Sha256.getSHA256(staticSalt)
         val vi = str!!.substring(str.length - 16, str.length)
         val key = str.substring(0, 32)
@@ -67,7 +67,7 @@ object MyEncryptUtil {
 //            Log.d("XBZ", "║ Decoded data length: ${data.size} bytes")
 
             val cipher = Cipher.getInstance(CIPHER_ALGORITHM)
-            val staticSalt = "bA7R7324zJy@loVL"
+            val staticSalt = "DmR1UE7PrEJW@gAN"
             val str = Sha256.getSHA256(staticSalt)
             val vi = str!!.substring(str.length - 16, str.length)
             val key = str.substring(0, 32)

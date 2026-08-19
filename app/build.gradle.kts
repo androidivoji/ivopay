@@ -20,20 +20,30 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"https://devapi.ivoji.id/\"")
+            buildConfigField("String", "SALT_KEY", "\"bA7R7324zJy@loVL\"")
+        }
+        // Versi "Production" tapi secepat & semudah mode Debug
+        create("production") {
+            initWith(getByName("debug"))
+            buildConfigField("String", "BASE_URL", "\"https://srv.ivoji.id/\"")
+            buildConfigField("String", "SALT_KEY", "\"DmR1UE7PrEJW@gAN\"")
+        }
         release {
-            isMinifyEnabled = false
+            buildConfigField("String", "BASE_URL", "\"https://srv.ivoji.id/\"")
+            buildConfigField("String", "SALT_KEY", "\"DmR1UE7PrEJW@gAN\"")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
