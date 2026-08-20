@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material3.*
@@ -46,27 +45,68 @@ fun OtherProductScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))) {
-        // 1. Banner & List
         LazyColumn(modifier = Modifier.fillMaxSize()) {
+            // 1. Banner
             item {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    // Banner Image
-                    Image(
-                        painter = painterResource(id = R.drawable.iv_hone_default_slider), // Placeholder
-                        contentDescription = "Banner",
-                        modifier = Modifier.fillMaxWidth().height(260.dp),
-                        contentScale = ContentScale.FillWidth
-                    )
-                    
-                    // Hot Tips Card (Absolute positioned in CSS, here at bottom of Box)
-                    HotTipsCard(
-                        totalBorrowers = viewModel.totalBorrowers,
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp).offset(y = 30.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(45.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.iv_other_banner),
+                    contentDescription = "Banner",
+                    modifier = Modifier.fillMaxWidth().height(200.dp),
+                    contentScale = ContentScale.FillBounds
+                )
             }
 
+            // 2. Hot Tips
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.iv_other_ic_hot),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color(0xFFFE5455)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Hari ini, ")
+                            withStyle(style = SpanStyle(color = Color(0xFFFE5455), fontWeight = FontWeight.W500)) {
+                                append(viewModel.totalBorrowers.toString())
+                            }
+                            append(" nasabah telah berhasil menerima pencairan dana.")
+                        },
+                        fontSize = 12.sp,
+                        color = Color(0xFF262626)
+                    )
+                }
+            }
+
+            // 3. Navigation part (matches Vue template order)
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.iv_set_left_arrow), // Placeholder for iv_nav_ic_back_white
+                        contentDescription = "Back",
+                        tint = Color.Black,
+                        modifier = Modifier.size(22.dp).clickable { onBackClick() }
+                    )
+                    Text(text = "Limit pinjaman Anda", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Box(modifier = Modifier.size(22.dp))
+                }
+            }
+
+            // 4. Product List
             items(viewModel.productList) { product ->
                 ProductItemCard(
                     item = product,
@@ -82,60 +122,8 @@ fun OtherProductScreen(
             item { Spacer(modifier = Modifier.height(20.dp)) }
         }
 
-        // 2. Fixed Nav Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(56.dp)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBackIosNew,
-                contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier.size(22.dp).clickable { onBackClick() }
-            )
-            Text(text = "Limit pinjaman Anda", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium)
-            Box(modifier = Modifier.size(22.dp)) // Spacer
-        }
-
         if (viewModel.isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFFFE5455))
-        }
-    }
-}
-
-@Composable
-fun HotTipsCard(totalBorrowers: Int, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .background(Brush.verticalGradient(listOf(Color(0xFFFEEFEF), Color.White)))
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(painter = painterResource(id = R.drawable.iv_hone_tips_ic_horn), contentDescription = null, modifier = Modifier.size(20.dp)) // Placeholder
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = buildAnnotatedString {
-                        append("Hari ini, ")
-                        withStyle(style = SpanStyle(color = Color(0xFFFE5455), fontWeight = FontWeight.W500)) {
-                            append(totalBorrowers.toString())
-                        }
-                        append(" nasabah telah berhasil menerima pencairan dana.")
-                    },
-                    fontSize = 12.sp,
-                    color = Color(0xFF262626)
-                )
-            }
         }
     }
 }
@@ -148,51 +136,44 @@ fun ProductItemCard(item: OtherProductItem, onApply: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header: Icon + Name + Tag + Borrower Count
+            // Row 1: Icon + Name + Tag + Borrower Count
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(model = item.oic, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(5.dp))
                     Text(text = item.pam ?: "", fontSize = 14.sp, fontWeight = FontWeight.W500)
                     
                     // Tag / Subtext (oan)
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 12.dp)
-                            .background(Color(0xFFFFF4EC), RoundedCornerShape(2.dp))
-                            .padding(horizontal = 4.dp, vertical = 1.dp)
-                    ) {
-                        Text(text = item.oan ?: "", color = Color(0xFFFF7725), fontSize = 11.sp)
-                    }
+                    Text(text = item.oan ?: "", color = Color.Gray, fontSize = 11.sp, modifier = Modifier.padding(start = 8.dp))
                 }
                 
                 Text(
                     text = buildAnnotatedString {
-                        append("Jumlah peminjam hari ini: ")
+                        append("Jumlah peminjam hari ini:")
                         withStyle(style = SpanStyle(color = Color(0xFFFE5455))) {
                             append(item.borrowerCount.toString())
                         }
                     },
                     fontSize = 11.sp,
-                    color = Color.Gray.copy(alpha = 0.6f)
+                    color = Color.Black.copy(alpha = 0.4f)
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFF0F0F0))
 
-            // Body: Limit + Interest + Button
+            // Row 2: Limit + Interest + Button
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    Text(text = "Limit Maks (Rp)", fontSize = 12.sp, color = Color.Gray.copy(alpha = 0.6f))
+                    Text(text = "Limit Maks (Rp)", fontSize = 12.sp, color = Color.Gray)
                     Text(text = CommonUtils.formatRupiah(item.amo.toDouble()), fontSize = 20.sp, fontWeight = FontWeight.W600)
                 }
                 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "Bunga Harian", fontSize = 12.sp, color = Color.Gray.copy(alpha = 0.6f))
+                    Text(text = "Bunga Harian", fontSize = 12.sp, color = Color.Gray)
                     Text(text = "${item.ita}%", fontSize = 20.sp, fontWeight = FontWeight.W600)
                 }
 
@@ -216,9 +197,9 @@ fun ProductItemCard(item: OtherProductItem, onApply: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Footer: Period + Rating
+            // Row 3: Period + Rating
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "Loan period: ${item.ipe}-${item.ape}days", fontSize = 12.sp, color = Color.Gray.copy(alpha = 0.6f))
+                Text(text = "Loan period: ${item.ipe}-${item.ape}days", fontSize = 12.sp, color = Color.Gray)
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = item.gad.toString(), fontSize = 12.sp, modifier = Modifier.padding(end = 5.dp))

@@ -269,7 +269,7 @@ interface ApiService {
         @Body requestBody: JsonObject
     ): Response<JsonObject>
 
-    @POST("v1/api/uiso")
+    @POST("v2/api/uiso")
     suspend fun getOtherProductList(
         @Body requestBody: JsonObject = JsonObject()
     ): Response<com.example.ivopay.app.data.model.OtherProductResponse>

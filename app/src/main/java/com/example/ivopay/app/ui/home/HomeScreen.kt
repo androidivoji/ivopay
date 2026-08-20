@@ -74,7 +74,7 @@ fun HomeScreen(
 
             // 2. Banner
             val bannerRes = if (homeConfig?.cme?.ocEui == true && sessionManager.isUserLoggedIn()) {
-                R.drawable.iv_hone_default_slider // Seharusnya iv_home_banner_social_security
+                R.drawable.iv_home_banner_social_security
             } else {
                 R.drawable.iv_hone_default_slider
             }
