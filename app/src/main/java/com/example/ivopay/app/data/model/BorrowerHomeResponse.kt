@@ -61,6 +61,7 @@ data class BorrowerCmeData(
     @SerializedName("nmin") val nmin: BorrowerNminData? = null,
     @SerializedName("lackin_A") val lackinA: Boolean = false,
     @SerializedName("aig_ep") val aigEp: Boolean = false,
+    @SerializedName("oc_eui") val ocEui: Boolean = false,
     @SerializedName("scey") val scey: Boolean = false,
     @SerializedName("allCre_em") val allCreEm: Boolean = false,
     @SerializedName("tttp") val tttp: Int = 0
