@@ -1,5 +1,6 @@
 package com.example.ivopay.app.data.api
 
+import com.example.ivopay.BuildConfig
 import com.example.ivopay.app.data.model.BankListResponse
 import com.example.ivopay.app.data.model.BorrowerContractsResponse
 import com.example.ivopay.app.data.model.BorrowerListResponse
@@ -363,7 +364,7 @@ object NetworkClient {
 
     val apiService: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(com.example.ivopay.BuildConfig.BASE_URL)
+            .baseUrl(BuildConfig.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

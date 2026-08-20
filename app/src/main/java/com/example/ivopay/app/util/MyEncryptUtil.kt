@@ -3,6 +3,7 @@ package com.example.ivopay.app.util
 import android.util.Base64
 import android.util.Log
 import com.blankj.utilcode.util.EncodeUtils
+import com.example.ivopay.BuildConfig
 import org.json.JSONObject
 import java.lang.StringBuilder
 import java.nio.charset.StandardCharsets
@@ -31,7 +32,7 @@ object MyEncryptUtil {
         }
         Log.d("XBZ", "encryptStr\n$formattedJson")
         // Menggunakan salt statis sesuai permintaan user untuk menggantikan JNI
-        val staticSalt = "DmR1UE7PrEJW@gAN"
+        val staticSalt = BuildConfig.SALT_KEY
         val str = Sha256.getSHA256(staticSalt)
         val vi = str!!.substring(str.length - 16, str.length)
         val key = str.substring(0, 32)
@@ -67,7 +68,7 @@ object MyEncryptUtil {
 //            Log.d("XBZ", "║ Decoded data length: ${data.size} bytes")
 
             val cipher = Cipher.getInstance(CIPHER_ALGORITHM)
-            val staticSalt = "DmR1UE7PrEJW@gAN"
+            val staticSalt = BuildConfig.SALT_KEY
             val str = Sha256.getSHA256(staticSalt)
             val vi = str!!.substring(str.length - 16, str.length)
             val key = str.substring(0, 32)

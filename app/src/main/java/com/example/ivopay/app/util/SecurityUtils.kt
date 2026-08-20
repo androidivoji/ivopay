@@ -1,6 +1,7 @@
 package com.example.ivopay.app.util
 
 import android.util.Log
+import com.example.ivopay.BuildConfig
 
 object SecurityUtils {
 
@@ -13,19 +14,19 @@ object SecurityUtils {
      * 5. SHA1(srcString).toUpperCase()
      */
     fun generateSign(method: String, url: String, data: MutableMap<String, Any>): String? {
-        val salt = com.example.ivopay.BuildConfig.SALT_KEY
-        
+        val salt = BuildConfig.SALT_KEY
+
         val cleanUrl = if (url.endsWith("/")) url.substring(0, url.length - 1) else url
         val keys = data.keys.toMutableList().sorted()
-        
+
         val sb = StringBuilder()
         sb.append(method.uppercase())
         sb.append(cleanUrl)
-        
+
         for (key in keys) {
             val value = data[key]
             if (key == "sign") continue
-            
+
             if (value == null || value.toString().isEmpty()) {
                 data.remove(key)
             } else {
@@ -34,10 +35,10 @@ object SecurityUtils {
                 sb.append(key).append(trimmedValue)
             }
         }
-        
+
         sb.append(salt)
         val verifyStr = sb.toString()
-        
+
         return Sha1.getSHA1(verifyStr)?.uppercase()
     }
 
@@ -47,7 +48,7 @@ object SecurityUtils {
      */
     fun signBySalty(params: String, channel: String): String? {
         return try {
-            val salt = com.example.ivopay.BuildConfig.SALT_KEY
+            val salt = BuildConfig.SALT_KEY
             val input = params + salt
             val result = Sha1.getSHA1(input)?.uppercase()
             Log.d("SECURITY_DEBUG", "signBySalty input: $input")
@@ -70,7 +71,7 @@ object SecurityUtils {
      * Meniru logika encodeGesture dari project Vue
      */
     fun encodeGesture(data: String): String {
-        val salt = com.example.ivopay.BuildConfig.SALT_KEY
+        val salt = BuildConfig.SALT_KEY
         return if (ChannelUtils.isTestEnv) {
             Sha1.getSHA1(data + salt)?.uppercase() ?: ""
         } else {
