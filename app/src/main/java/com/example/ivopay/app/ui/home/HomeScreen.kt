@@ -200,7 +200,7 @@ fun HomeScreen(
                      onNavigate = onNavigateToDetail
                  )
              } else {
-                 ApplicationCard(viewModel = viewModel, onNavigate = onNavigateToDetail)
+                 ApplicationCard(viewModel = viewModel, onNavigate = onNavigateToDetail) //tampilan amount slider
              }
         }
 
