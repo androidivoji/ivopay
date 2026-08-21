@@ -74,6 +74,7 @@ object Screen {
     const val OtherProduct = "OtherProductPage"
     const val FaceDetection = "FaceDetection"
     const val ChangeBindPhone = "ChangeBindPhone"
+    const val PrivacyPolicy = "PrivacyPolicy"
 }
 
 @Composable
@@ -408,6 +409,10 @@ fun AppNavigation(
                 viewModel = signViewModel,
                 onBackClick = { navController.popBackStack() }
             )
+        }
+
+        composable(Screen.PrivacyPolicy) {
+            PrivacyPolicyScreen(onBackClick = { navController.popBackStack() })
         }
 
         // --- Lender Related Routes ---
