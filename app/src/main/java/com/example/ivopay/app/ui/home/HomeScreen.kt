@@ -1,10 +1,13 @@
 package com.example.ivopay.app.ui.home
 
 import android.util.Log
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -49,6 +52,13 @@ fun HomeScreen(
     val isWof = homeConfig?.cme?.wof ?: false
     val isWiue = homeConfig?.cme?.wiue ?: false
 
+    val dummyConfig = LoanProductConfig(
+        psw = 1,              // Wajib 1 agar kartu muncul
+        atma = 5000000,       // Limit Maksimal (misal 5jt)
+        bpio = 12,            // Tenor/Periode (misal 12 bulan)
+        koc = false           // Tombol tidak terkunci
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -74,26 +84,78 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 2. Banner
-            val bannerRes = if (homeConfig?.cme?.ocEui == true && sessionManager.isUserLoggedIn()) {
+            // 2. Banner (Swipeable if otherProducts exists)
+            val defaultBanner = if (homeConfig?.cme?.ocEui == true && sessionManager.isUserLoggedIn()) {
                 R.drawable.iv_home_banner_social_security
             } else {
                 R.drawable.iv_hone_default_slider
             }
             
-            Log.d("XBZ", "Tampilan Banner: $bannerRes")
+            val banners = remember(viewModel.otherProducts, defaultBanner) {
+                mutableListOf(defaultBanner).apply {
+                    if (viewModel.otherProducts.isNotEmpty()) {
+                        add(R.drawable.iv_other_banner)
+                    }
+                }
+            }
 
-            Image(
-                painter = painterResource(id = bannerRes),
-                contentDescription = "Banner",
+            val pagerState = rememberPagerState(pageCount = { banners.size })
+
+            // Autoplay logic (3 seconds)
+            LaunchedEffect(banners.size) {
+                if (banners.size > 1) {
+                    while (true) {
+                        delay(3000)
+                        val nextPage = (pagerState.currentPage + 1) % banners.size
+                        pagerState.animateScrollToPage(nextPage)
+                    }
+                }
+            }
+
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
-                    .clickable { 
-                         if (homeConfig?.cme?.ocEui == true) onNavigateToDetail("JMOPage")
-                    },
-                contentScale = ContentScale.FillWidth
-            )
+                    .height(160.dp)
+            ) { page ->
+                val currentBanner = banners[page]
+                Image(
+                    painter = painterResource(id = currentBanner),
+                    contentDescription = "Banner $page",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable { 
+                            if (currentBanner == R.drawable.iv_other_banner) {
+                                // Specific action for other product banner if needed
+                                onNavigateToDetail("OtherProductPage")
+                            } else if (homeConfig?.cme?.ocEui == true) {
+                                onNavigateToDetail("JMOPage")
+                            }
+                        },
+                    contentScale = ContentScale.FillBounds
+                )
+            }
+
+            // Pager Indicator (Dots)
+            if (banners.size > 1) {
+                Row(
+                    Modifier
+                        .height(16.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    repeat(banners.size) { iteration ->
+                        val color = if (pagerState.currentPage == iteration) Color(0xFFFE5455) else Color.LightGray
+                        Box(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .background(color, RoundedCornerShape(8.dp))
+                                .size(8.dp)
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -201,6 +263,15 @@ fun HomeScreen(
                 } else {
                     Log.d("XBZ", "Tampilan Kartu: ApplicationCard Slider (wof_e)")
                     ApplicationCard(viewModel = viewModel, onNavigate = onNavigateToDetail)
+//                    ProductCard(
+//                        title = "Produk cicilan",
+//                        icon = Icons.Default.DateRange,
+//                        config = dummyConfig,
+//                        isWof = isWof,
+//                        isWiue = isWiue,
+//                        onNavigate = onNavigateToDetail,
+//                        onApply = { viewModel.onApplyClick(onNavigateToDetail) }
+//                    )
                 }
             }
 

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -180,7 +181,7 @@ fun MainDashboardScreen(
             ) {
                 // 1. TAB HOME SCREEN
                 composable(MainTabItem.Home.route) {
-                    val homeViewModel: BorrowerHomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                    val homeViewModel: BorrowerHomeViewModel = viewModel {
                         BorrowerHomeViewModel(context)
                     }
                     
@@ -194,7 +195,7 @@ fun MainDashboardScreen(
 
                 if (isLogin) {
                     composable(MainTabItem.Bill.route) {
-                        val billViewModel: MyBillViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                        val billViewModel: MyBillViewModel = viewModel()
                         
                         MyBillScreen(
                             viewModel = billViewModel,
@@ -207,7 +208,7 @@ fun MainDashboardScreen(
                 }
                 // 3. Tab Mine / Profil
                 composable(MainTabItem.Mine.route) {
-                    val mineViewModel: MineViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+                    val mineViewModel: MineViewModel = viewModel {
                         MineViewModel(context)
                     }
 
