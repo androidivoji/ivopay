@@ -254,7 +254,7 @@ interface ApiService {
         @Body requestBody: JsonObject
     ): Response<JsonObject>
 
-    @POST("v1/api/pa/e")
+    @POST("v2/api/pa/e")
     suspend fun uploadEvent(
         @Body requestBody: JsonObject
     ): Response<JsonObject>

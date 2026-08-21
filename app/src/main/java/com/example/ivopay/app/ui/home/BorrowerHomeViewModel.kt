@@ -2,9 +2,7 @@ package com.example.ivopay.app.ui.home
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ivopay.app.data.api.NetworkClient
@@ -41,6 +39,10 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
     // Data dari /api/aict
     var currentBill by mutableStateOf<LoanOrder?>(null)
 
+    // Data Produk Lain (dari OtherProductScreen)
+    var otherProducts by mutableStateOf<List<OtherProductItem>>(emptyList())
+    var totalBorrowers by mutableIntStateOf(0)
+
     // UI flags
     var showConfirmBillPop by mutableStateOf(false)
     var showPermissionTipPop by mutableStateOf(false)
@@ -67,6 +69,9 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                 
                 // 4. Get Loan List (Daftar Pinjaman Aktif)
                 fetchLoanListWithFallback()
+
+                // 5. Get Other Products (Untuk ditampilkan di bawah RecommendCard)
+                fetchOtherProducts()
             }
         }
     }
@@ -318,6 +323,21 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
             }
         } catch (e: Exception) {
             Log.e("HomeViewModel", "lackinCC error: ${e.message}")
+        }
+    }
+
+    private suspend fun fetchOtherProducts() {
+        try {
+            val response = NetworkClient.apiService.getOtherProductList()
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body?.code == 1 && body.data != null) {
+                    otherProducts = body.data
+                    totalBorrowers = (1500..3000).random()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "fetchOtherProducts error: ${e.message}")
         }
     }
 
