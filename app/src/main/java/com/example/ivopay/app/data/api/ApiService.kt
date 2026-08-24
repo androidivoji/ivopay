@@ -20,6 +20,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface ApiService {
@@ -345,6 +346,9 @@ interface ApiService {
     suspend fun rtinQud(
         @Body requestBody: JsonObject = JsonObject()
     ): Response<JsonObject>
+
+    @GET("v1/tm")
+    suspend fun getUserAgreement(): Response<ResponseBody>
 }
 
 object NetworkClient {
