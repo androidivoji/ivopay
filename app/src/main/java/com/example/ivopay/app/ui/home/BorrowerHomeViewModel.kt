@@ -351,9 +351,16 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
             return
         }
 
+        val rasn = sessionManager.getRasn().toString()
+
         when (productType) {
             "fcoa" -> onNavigate("CashLoan")
             "tnpo" -> onNavigate("TadpoleCash")
+            "ci6" -> onNavigate("Ci6Cash?rasn=$rasn")
+            "ci6_w" -> onNavigate("Ci6WCash?rasn=$rasn")
+            "ci7" -> onNavigate("Ci7Cash?rasn=$rasn")
+            "ci8" -> onNavigate("Ci8Cash?rasn=$rasn")
+            "inlg" -> onNavigate("InlgCash?rasn=$rasn")
             else -> onNavigate(Screen.ApplyLoan)
         }
     }

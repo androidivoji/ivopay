@@ -1,11 +1,7 @@
 package com.example.ivopay.app.ui.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -45,6 +41,7 @@ import com.example.ivopay.app.ui.mine.*
 import com.example.ivopay.app.ui.splash.SplashScreen
 import com.example.ivopay.app.ui.splash.SplashViewModel
 import com.example.ivopay.app.util.SessionManager
+import java.net.URLEncoder
 
 object Screen {
     const val Splash = "splash_screen"
@@ -76,6 +73,7 @@ object Screen {
     const val ChangeBindPhone = "ChangeBindPhone"
     const val PrivacyPolicy = "PrivacyPolicy"
     const val UseAgreement = "UseAgreement"
+    const val AboutUs = "AboutUs"
 }
 
 @Composable
@@ -414,6 +412,31 @@ fun AppNavigation(
 
         composable(Screen.PrivacyPolicy) {
             PrivacyPolicyScreen(onBackClick = { navController.popBackStack() })
+        }
+
+        composable(Screen.AboutUs) {
+            val aboutUsViewModel = remember { AboutUsViewModel(context) }
+            AboutUsScreen(
+                viewModel = aboutUsViewModel,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToCsOnline = { link ->
+                    // Encode URL agar karakter khusus seperti '&' tidak merusak parameter navigasi
+                    val encodedLink = URLEncoder.encode(link, "UTF-8")
+                    navController.navigate("CsOnlinePage?link=$encodedLink")
+                }
+            )
+        }
+
+        composable(
+            route = "CsOnlinePage?link={link}",
+            arguments = listOf(navArgument("link") { defaultValue = "" })
+        ) { backStackEntry ->
+            val link = backStackEntry.arguments?.getString("link") ?: ""
+            com.example.ivopay.app.ui.components.WebViewScreen(
+                title = "Layanan Pelanggan Online",
+                url = link,
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.UseAgreement) {

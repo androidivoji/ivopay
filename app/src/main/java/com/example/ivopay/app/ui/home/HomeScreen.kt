@@ -206,14 +206,11 @@ fun HomeScreen(
                 if (config.psw == 1 || config.podi != null) {
                     Log.d("XBZ", "Tampilan Kartu: Produk cicilan (inlg)")
                     ExtraLoanTip("Produk cicilan", R.drawable.iv_borrower_ic_work)
-                    ProductCard(
-                        title = "Produk cicilan",
-                        icon = Icons.Default.DateRange,
-                        config = config,
-                        isWof = isWof,
-                        isWiue = isWiue,
-                        onNavigate = onNavigateToDetail,
-                        onApply = { viewModel.onApplyClick(onNavigateToDetail) }
+                    ExtraLoanCard(
+                        comData = config,
+                        curBill = config.podi,
+                        onApply = { viewModel.onApplyClick(onNavigateToDetail, "inlg") },
+                        onNavigate = onNavigateToDetail
                     )
                 }
             }
@@ -287,14 +284,11 @@ fun HomeScreen(
                 homeConfig?.ci6Fe?.let { config ->
                     if (config.psw == 1 || config.podi != null) {
                         Log.d("XBZ", "Tampilan Kartu: Produk Cicilan Guest (ci6_fe)")
-                        ProductCard(
-                            title = "Produk Cicilan",
-                            icon = Icons.Default.DateRange,
-                            config = config,
-                            isWof = isWof,
-                            isWiue = isWiue,
-                            onNavigate = onNavigateToDetail,
-                            onApply = { viewModel.onApplyClick(onNavigateToDetail) }
+                        ExtraLoanCard(
+                            comData = config,
+                            curBill = config.podi,
+                            onApply = { viewModel.onApplyClick(onNavigateToDetail, "ci6_fe") },
+                            onNavigate = onNavigateToDetail
                         )
                     }
                 }
@@ -327,14 +321,11 @@ fun HomeScreen(
                 if (config.psw == 1 || config.podi != null) {
                     Log.d("XBZ", "Tampilan Kartu: Produk cicilan ($tag)")
                     ExtraLoanTip("Produk cicilan", R.drawable.iv_borrower_ic_work)
-                    ProductCard(
-                        title = "Produk cicilan",
-                        icon = Icons.Default.DateRange,
-                        config = config,
-                        isWof = isWof,
-                        isWiue = isWiue,
-                        onNavigate = onNavigateToDetail,
-                        onApply = { viewModel.onApplyClick(onNavigateToDetail) }
+                    ExtraLoanCard(
+                        comData = config,
+                        curBill = config.podi,
+                        onApply = { viewModel.onApplyClick(onNavigateToDetail, tag) },
+                        onNavigate = onNavigateToDetail
                     )
                 }
             }
