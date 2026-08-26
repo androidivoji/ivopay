@@ -20,44 +20,65 @@ fun NormalStatusCard(
     onApply: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = "Nilai Pinjaman (Rp)", fontSize = 14.sp, color = Color.Gray)
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Label placeholder if image not found
             Text(
-                text = CommonUtils.formatRupiah(nodp?.tma?.toDouble() ?: 5000000.0),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF262626)
+                text = "CASH LOAN", 
+                color = Color.White, 
+                modifier = Modifier
+                    .background(Color(0xFFFE5455), RoundedCornerShape(bottomEnd = 12.dp))
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                    .offset(x = (-16).dp, y = (-16).dp)
             )
-            Text(text = "Pelunasan total: ${CommonUtils.formatRupiah(nodp?.datm?.toDouble() ?: 5200000.0)}", fontSize = 12.sp, color = Color.Gray)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Text(text = "Nilai Pinjaman(Rp)", fontSize = 14.sp, color = Color.Gray)
+                Text(
+                    text = CommonUtils.formatRupiah(nodp?.tma?.toDouble() ?: 5000000.0),
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF262626)
+                )
+                Text(
+                    text = "Pelunasantotal: ${CommonUtils.formatRupiah(nodp?.datm?.toDouble() ?: 5200000.0)}", 
+                    fontSize = 12.sp, 
+                    color = Color(0xFFBFBFBF)
+                )
 
-            Row(
-                modifier = Modifier.fillMaxWidth().background(Color(0xFFFBFBFB), RoundedCornerShape(4.dp)).padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "${nodp?.peo ?: 91} hari", fontWeight = FontWeight.Bold)
-                    Text(text = "Waktu peminjaman", fontSize = 12.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(Color(0xFFFBFBFB), RoundedCornerShape(4.dp)).padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                        Text(text = "${nodp?.peo ?: 91} hari", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF262626))
+                        Text(text = "Waktupeminjaman", fontSize = 12.sp, color = Color.Gray)
+                    }
+                    
+                    Box(modifier = Modifier.height(30.dp).width(1.dp).background(Color(0xFFEEEEEE)))
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                        Text(text = nodp?.dud ?: "--", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF262626))
+                        Text(text = "Tanggal pembayaran", fontSize = 12.sp, color = Color.Gray)
+                    }
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = nodp?.dud ?: "--", fontWeight = FontWeight.Bold)
-                    Text(text = "Tanggal pembayaran", fontSize = 12.sp, color = Color.Gray)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onApply,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
+                ) {
+                    Text("Ajukan pinjaman")
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = onApply,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455))
-            ) {
-                Text("Ajukan Pinjaman")
             }
         }
     }

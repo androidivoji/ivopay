@@ -74,6 +74,7 @@ object Screen {
     const val PrivacyPolicy = "PrivacyPolicy"
     const val UseAgreement = "UseAgreement"
     const val AboutUs = "AboutUs"
+    const val CashLoan = "CashLoan"
 }
 
 @Composable
@@ -423,6 +424,20 @@ fun AppNavigation(
                     // Encode URL agar karakter khusus seperti '&' tidak merusak parameter navigasi
                     val encodedLink = URLEncoder.encode(link, "UTF-8")
                     navController.navigate("CsOnlinePage?link=$encodedLink")
+                }
+            )
+        }
+
+        composable(Screen.CashLoan) {
+            val cashLoanViewModel: com.example.ivopay.app.ui.loan.CashLoanViewModel = viewModel { com.example.ivopay.app.ui.loan.CashLoanViewModel(context) }
+            com.example.ivopay.app.ui.loan.CashLoanScreen(
+                viewModel = cashLoanViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToFace = { navController.navigate(Screen.FaceDetection) },
+                onSuccess = { noc ->
+                    navController.navigate("ApplySucceedPage?noc=$noc&showPop=1") {
+                        popUpTo(Screen.Main) { inclusive = false }
+                    }
                 }
             )
         }

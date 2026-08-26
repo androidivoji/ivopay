@@ -38,6 +38,7 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
     
     // Data dari /api/aict
     var currentBill by mutableStateOf<LoanOrder?>(null)
+    var ci6EBill by mutableStateOf<LoanOrder?>(null)
 
     // Data Produk Lain (dari OtherProductScreen)
     var otherProducts by mutableStateOf<List<OtherProductItem>>(emptyList())
@@ -53,6 +54,8 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
     var actionEvent by mutableStateOf<HomeActionEvent?>(null)
 
     val isLogin: Boolean get() = sessionManager.isUserLoggedIn()
+
+    var showEcurEntry by mutableStateOf(false)
 
     fun init() {
         viewModelScope.launch {
@@ -72,7 +75,24 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
 
                 // 5. Get Other Products (Untuk ditampilkan di bawah RecommendCard)
                 fetchOtherProducts()
+
+                // 6. Fetch CEUR Config for RecommendProductCard visibility
+                fetchCeurConfig()
             }
+        }
+    }
+
+    private suspend fun fetchCeurConfig() {
+        try {
+            val response = NetworkClient.apiService.getCommonConfig(JsonObject())
+            if (response.isSuccessful) {
+                val data = response.body()?.data
+                if (data != null && data.has("psw")) {
+                    showEcurEntry = data.get("psw").asInt == 1
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -177,12 +197,20 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                 val bodyString = response.body()?.toString()
                 val responseObj = gson.fromJson(bodyString, LoanListResponse::class.java)
                 if (responseObj?.code == 1) {
-                    val orders = responseObj.data?.orders
-                    val activeBill = orders?.find { getCurrentBill(it) }
-                    if (activeBill != null) {
-                        currentBill = activeBill
-                        true
-                    } else false
+                    val orders = responseObj.data?.orders ?: emptyList()
+                    
+                    var foundPrimary = false
+                    for (order in orders) {
+                        if (getCurrentBill(order)) {
+                            if (order.yep == "ci6_e") {
+                                ci6EBill = order
+                            } else {
+                                currentBill = order
+                                foundPrimary = true
+                            }
+                        }
+                    }
+                    foundPrimary
                 } else false
             } else false
         } catch (e: Exception) {
@@ -255,8 +283,8 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                                 } else if (!stag.s5) {
                                     onNavigate(Screen.JobInfoV2)
                                 } else {
-                                    // Semua info lengkap, lanjut ke apply
-                                    onApplyClick(onNavigate)
+                                    // Semua info lengkap, kembalikan target ApplyLoan agar onApplyClick tahu bisa lanjut
+                                    onNavigate(Screen.ApplyLoan)
                                 }
                             } else if (cme?.lackinA == true) {
                                 // Alur Lackin A
@@ -274,6 +302,9 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                                             } else {
                                                 lackinCC(onNavigate)
                                             }
+                                        } else {
+                                            // Semua Lackin info lengkap
+                                            onNavigate(Screen.ApplyLoan)
                                         }
                                     }
                                 }
@@ -318,7 +349,7 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                     val config = data.get("konfigurasi")?.toString() ?: ""
                     onNavigate("${Screen.A_Apply}?lackin_flow_typ=$typ&konfigurasi=$config")
                 } else {
-                    onApplyClick(onNavigate)
+                    onNavigate(Screen.ApplyLoan)
                 }
             }
         } catch (e: Exception) {
@@ -341,18 +372,33 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
         }
     }
 
+    /**
+     * Fungsi utama saat tombol "Ajukan" diklik.
+     * Melakukan pengecekan info terlebih dahulu.
+     */
     fun onApplyClick(onNavigate: (String) -> Unit, productType: String = "wof_e") {
-        if (currentBill != null) {
-            return
-        }
-
+        if (currentBill != null) return
+        
         if (cashData?.koc == true) {
             showUnqualifiedPop3 = true
             return
         }
 
-        val rasn = sessionManager.getRasn().toString()
+        // Jalankan pengecekan staging (BaseInfo -> Personal -> Contact -> Job)
+        checkInfo { target ->
+            // Jika target navigasi dari checkInfo adalah "ApplyLoan" (artinya semua step selesai),
+            // maka arahkan ke produk yang spesifik sesuai productType.
+            if (target == Screen.ApplyLoan) {
+                performFinalNavigation(onNavigate, productType)
+            } else {
+                // Jika masih ada step yang kurang (misal ke BaseInfo), arahkan ke sana.
+                onNavigate(target)
+            }
+        }
+    }
 
+    private fun performFinalNavigation(onNavigate: (String) -> Unit, productType: String) {
+        val rasn = sessionManager.getRasn().toString()
         when (productType) {
             "fcoa" -> onNavigate("CashLoan")
             "tnpo" -> onNavigate("TadpoleCash")
@@ -361,7 +407,49 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
             "ci7" -> onNavigate("Ci7Cash?rasn=$rasn")
             "ci8" -> onNavigate("Ci8Cash?rasn=$rasn")
             "inlg" -> onNavigate("InlgCash?rasn=$rasn")
+            "rta2" -> onNavigate("CLoan16")
+            "ciub" -> onNavigate("CLoan15")
+            "wof_e" -> onNavigate(Screen.ApplyLoan)
             else -> onNavigate(Screen.ApplyLoan)
         }
+    }
+
+    fun onJumpBillDetails(
+        onNavigate: (String) -> Unit,
+        bill: LoanOrder,
+        config: LoanProductConfig?,
+        type: String
+    ) {
+        if (bill.asu == 203) { // PASSED_WAIT_CONFIRM
+            val nct = config?.nct
+            if (nct?.cdi == true) {
+                val upgrade = nct.nctUpgdData
+                if (upgrade?.nctTyp == 7) {
+                    val configJson = upgrade.konfigurasi?.toString() ?: ""
+                    onNavigate("A_Ci7Cash?bill=$configJson")
+                } else if (upgrade?.nctTyp == 11) {
+                    val configJson = upgrade.konfigurasi?.toString() ?: ""
+                    onNavigate("RCBWCLoan?bill=$configJson&noc=${nct.noc}&asu=${bill.asu}")
+                } else {
+                    if (type == "tnpo") {
+                        onNavigate("TadpBWC?bill=${gson.toJson(bill)}")
+                    } else if (type == "fcoa") {
+                        onNavigate("BillDetailsWaitConfirm?bill=${gson.toJson(bill)}")
+                    }
+                }
+            } else {
+                onNavigate("BillDetails?bill=${bill.noc}")
+            }
+        } else {
+            onNavigate("BillDetails?bill=${bill.noc}")
+        }
+    }
+
+    fun toSignContracts(onNavigate: (String) -> Unit, bill: LoanOrder) {
+        if (bill.asu == 800301) { // wait_borrow_check_kfc (estimated code)
+            // showWaitKFCPop handled in Screen
+            return
+        }
+        onNavigate("BorrowerSignContracts?noc=${bill.noc}")
     }
 }

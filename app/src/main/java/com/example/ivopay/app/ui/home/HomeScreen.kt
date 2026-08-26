@@ -189,14 +189,11 @@ fun HomeScreen(
                 if (config.psw == 1 || config.podi != null) {
                     Log.d("XBZ", "Tampilan Kartu: Pinjaman limit tinggi (ci10)")
                     ExtraLoanTip("Pinjaman limit tinggi", R.drawable.iv_borrower_ic_score)
-                    ProductCard(
-                        title = "Pinjaman limit tinggi",
-                        icon = Icons.Default.Star,
-                        config = config,
-                        isWof = isWof,
-                        isWiue = isWiue,
-                        onNavigate = onNavigateToDetail,
-                        onApply = { viewModel.onApplyClick(onNavigateToDetail) }
+                    Ci10LoanCard(
+                        comData = config,
+                        curBill = config.podi,
+                        onApply = { viewModel.onApplyClick(onNavigateToDetail, "ci10") },
+                        onNavigate = onNavigateToDetail
                     )
                 }
             }
@@ -205,8 +202,8 @@ fun HomeScreen(
             homeConfig?.inlg?.let { config ->
                 if (config.psw == 1 || config.podi != null) {
                     Log.d("XBZ", "Tampilan Kartu: Produk cicilan (inlg)")
-                    ExtraLoanTip("Produk cicilan", R.drawable.iv_borrower_ic_work)
-                    ExtraLoanCard(
+                    ExtraLoanTip("Produk cicilan", R.drawable.iv_borrower_ic_record)
+                    InlgLoanCard(
                         comData = config,
                         curBill = config.podi,
                         onApply = { viewModel.onApplyClick(onNavigateToDetail, "inlg") },
@@ -217,7 +214,7 @@ fun HomeScreen(
 
             // 6. fcoa, tnpo, wof_e (Cash Loan Cards)
             if (homeConfig?.fcoa?.psw == 1 || homeConfig?.fcoa?.podi != null) {
-                Log.d("XBZ", "Tampilan Kartu: CashLoanCard (fcoa)")
+                Log.d("XBZ", "Tampilan Kartu: CashLoanCard fcoa")
                 CashLoanCard(
                     viewModel = viewModel,
                     config = homeConfig.fcoa,
@@ -231,7 +228,6 @@ fun HomeScreen(
             }
             
             if (homeConfig?.tnpo?.psw == 1 || homeConfig?.tnpo?.podi != null) {
-                Log.d("XBZ", "Tampilan Kartu: CashLoanCard (tnpo)")
                 CashLoanCard(
                     viewModel = viewModel,
                     config = homeConfig.tnpo,
@@ -246,29 +242,30 @@ fun HomeScreen(
 
             // wof_e logic matching Vue
             if (homeConfig?.wofE?.psw == 1 || viewModel.currentBill != null) {
-                if (viewModel.currentBill != null) {
-                    Log.d("XBZ", "Tampilan Kartu: BillCard (wof_e)")
-                    BillCard(
-                        bill = viewModel.currentBill!!,
-                        config = homeConfig?.wofE?.let { LoanProductConfig(psw = it.psw) },
-                        hasPgsh = sessionManager.getHasPgsh(),
-                        isWof = isWof,
-                        isWiue = isWiue,
-                        productType = "wof_e",
+                Log.d("XBZ", "Tampilan Kartu: CashLoanCard wof_e")
+                CashLoanCard(
+                    viewModel = viewModel,
+                    config = homeConfig?.wofE?.let { LoanProductConfig(psw = it.psw) },
+                    curBillOverride = viewModel.currentBill,
+                    cashData = viewModel.cashData,
+                    showAmount = viewModel.showAmount,
+                    isWof = isWof,
+                    isWiue = isWiue,
+                    productType = "wof_e",
+                    onNavigate = onNavigateToDetail
+                )
+            }
+
+            // ci6_e Section
+            homeConfig?.ci6E?.let { config ->
+                if (config.psw == 1 || viewModel.ci6EBill != null) {
+                    Log.d("XBZ", "Tampilan Kartu: CI6ELoanCard")
+                    CI6ELoanCard(
+                        comData = config,
+                        curBill = viewModel.ci6EBill,
+                        onApply = { viewModel.onApplyClick(onNavigateToDetail, "ci6_e") },
                         onNavigate = onNavigateToDetail
                     )
-                } else {
-                    Log.d("XBZ", "Tampilan Kartu: ApplicationCard Slider (wof_e)")
-                    ApplicationCard(viewModel = viewModel, onNavigate = onNavigateToDetail)
-//                    ProductCard(
-//                        title = "Produk cicilan",
-//                        icon = Icons.Default.DateRange,
-//                        config = dummyConfig,
-//                        isWof = isWof,
-//                        isWiue = isWiue,
-//                        onNavigate = onNavigateToDetail,
-//                        onApply = { viewModel.onApplyClick(onNavigateToDetail) }
-//                    )
                 }
             }
 
@@ -283,8 +280,7 @@ fun HomeScreen(
                 // ci6_fe (Installment Guest)
                 homeConfig?.ci6Fe?.let { config ->
                     if (config.psw == 1 || config.podi != null) {
-                        Log.d("XBZ", "Tampilan Kartu: Produk Cicilan Guest (ci6_fe)")
-                        ExtraLoanCard(
+                        InlgLoanCard(
                             comData = config,
                             curBill = config.podi,
                             onApply = { viewModel.onApplyClick(onNavigateToDetail, "ci6_fe") },
@@ -297,16 +293,12 @@ fun HomeScreen(
             // 8. Revolving Loan (c9)
             homeConfig?.c9?.let { config ->
                 if (config.psw == 1 || config.podi != null) {
-                    Log.d("XBZ", "Tampilan Kartu: Produk pinjaman tunai (c9)")
-                    ProductCard(
-                        title = "Produk pinjaman tunai",
-                        icon = Icons.Default.Star,
-                        config = config,
-                        isWof = isWof,
-                        isWiue = isWiue,
-                        onNavigate = onNavigateToDetail,
-                        onApply = { viewModel.onApplyClick(onNavigateToDetail) },
-                        targetRoute = "RevolvingLoan"
+                    Log.d("XBZ", "Tampilan Kartu: RevolvingLoanCard")
+                    RevolvingLoanCard(
+                        comData = config,
+                        curBill = config.podi,
+                        onApply = { viewModel.onApplyClick(onNavigateToDetail, "c9") },
+                        onNavigate = onNavigateToDetail
                     )
                 }
             }
@@ -319,9 +311,9 @@ fun HomeScreen(
                 homeConfig?.ci8?.let { it to "ci8" }
             ).forEach { (config, tag) ->
                 if (config.psw == 1 || config.podi != null) {
-                    Log.d("XBZ", "Tampilan Kartu: Produk cicilan ($tag)")
-                    ExtraLoanTip("Produk cicilan", R.drawable.iv_borrower_ic_work)
-                    ExtraLoanCard(
+                    Log.d("XBZ", "Tampilan Kartu: InlgLoanCard")
+                    ExtraLoanTip("Produk cicilan", R.drawable.iv_borrower_ic_record)
+                    InlgLoanCard(
                         comData = config,
                         curBill = config.podi,
                         onApply = { viewModel.onApplyClick(onNavigateToDetail, tag) },
@@ -332,16 +324,14 @@ fun HomeScreen(
 
             // 10. Extra Loan 15/16 (ciub, rta2)
             if (homeConfig?.ciub?.psw == 1 || homeConfig?.rta2?.psw == 1) {
-                Log.d("XBZ", "Tampilan Section: Lebih banyak produk (Extra Loan)")
+                Log.d("XBZ", "Tampilan Kartu: ExtraLoanCard")
                 ExtraLoanTip("Lebih banyak produk", R.drawable.iv_invest_logo, "Anda dapat mengajukan permohonan produk lain jika membayar tepat waktu.")
                 
                 homeConfig.rta2?.let { if (it.psw == 1 || it.podi != null) {
-                    Log.d("XBZ", "Tampilan Kartu: rta2")
-                    ProductCard(title = "rta2", icon = Icons.Default.Info, config = it, isWof = isWof, isWiue = isWiue, onNavigate = onNavigateToDetail, targetRoute = "CLoan16")
+                    ExtraLoanCard(comData = it, curBill = it.podi, onApply = { viewModel.onApplyClick(onNavigateToDetail, "rta2") }, onNavigate = onNavigateToDetail)
                 }}
                 homeConfig.ciub?.let { if (it.psw == 1 || it.podi != null) {
-                    Log.d("XBZ", "Tampilan Kartu: ciub")
-                    ProductCard(title = "ciub", icon = Icons.Default.Info, config = it, isWof = isWof, isWiue = isWiue, onNavigate = onNavigateToDetail, targetRoute = "CLoan15")
+                    ExtraLoanCard(comData = it, curBill = it.podi, onApply = { viewModel.onApplyClick(onNavigateToDetail, "ciub") }, onNavigate = onNavigateToDetail)
                 }}
             }
 
@@ -362,11 +352,19 @@ fun HomeScreen(
                 }
             }
 
+            if (viewModel.showEcurEntry) {
+                Log.d("XBZ", "Tampilan Kartu: RecommendProductCard")
+                RecommendProductCard(onNavigate = onNavigateToDetail)
+            }
+
             HomeBotInfo()
         }
 
         // Blurry Photo Tip (Fixed at bottom)
-        if (viewModel.homeConfig?.cme?.nmin?.idfie == true) {
+        val nmin = viewModel.homeConfig?.cme?.nmin
+        val hasPhotoError = nmin?.idfie == true || nmin?.idbie == true || nmin?.idhie == true || nmin?.wkptie == true
+        
+        if (hasPhotoError) {
             Log.d("XBZ", "Tampilan Tip: Foto KTP Buram")
             Box(
                 modifier = Modifier

@@ -1,6 +1,7 @@
 package com.example.ivopay.app.data.api
 
 import com.example.ivopay.BuildConfig
+import com.example.ivopay.app.data.model.AmountCashConfigResponse
 import com.example.ivopay.app.data.model.BankListResponse
 import com.example.ivopay.app.data.model.BorrowerContractsResponse
 import com.example.ivopay.app.data.model.BorrowerListResponse
@@ -223,6 +224,11 @@ interface ApiService {
     suspend fun getAmountCashConfig(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
+
+    @POST("v1/api/cfcs")
+    suspend fun getAmountCashLoanConfig(
+        @Body requestBody: JsonObject
+    ): Response<AmountCashConfigResponse>
 
     @POST("v1/api/yatc")
     suspend fun applyLoan(
