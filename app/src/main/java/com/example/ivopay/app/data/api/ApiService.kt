@@ -11,6 +11,8 @@ import com.example.ivopay.app.data.model.LoginResponse
 import com.example.ivopay.app.data.model.LoginWayResponse
 import com.example.ivopay.app.data.model.MgeaResponse
 import com.example.ivopay.app.data.model.RoleResponse
+import com.example.ivopay.app.data.model.TadpoleBillPreviewResponse
+import com.example.ivopay.app.data.model.TadpoleCashConfigResponse
 import com.example.ivopay.app.data.model.UserInfoResponse
 import com.example.ivopay.app.data.network.CryptoInterceptor
 import com.google.gson.JsonObject
@@ -165,7 +167,7 @@ interface ApiService {
         @Body requestBody: JsonObject = JsonObject()
     ): Response<UserInfoResponse>
 
-    @POST("v2/api/acnt")
+    @POST("api/acnt")
     suspend fun getTadpoleHomeData(
         @Body requestBody: JsonObject = JsonObject()
     ): Response<JsonObject>
@@ -225,10 +227,35 @@ interface ApiService {
         @Body requestBody: JsonObject
     ): Response<JsonObject>
 
+    @POST("v1/api/tagi")
+    suspend fun getTadpoleCashConfig(
+        @Body requestBody: JsonObject
+    ): Response<TadpoleCashConfigResponse>
+
+    @POST("v2/api/tagi/ewb")
+    suspend fun getTadpoleBillPreview(
+        @Body requestBody: JsonObject
+    ): Response<TadpoleBillPreviewResponse>
+
     @POST("v1/api/cfcs")
     suspend fun getAmountCashLoanConfig(
         @Body requestBody: JsonObject
     ): Response<AmountCashConfigResponse>
+
+    @POST("v1/api/paot")
+    suspend fun applyTadpoleLoan(
+        @Body requestBody: okhttp3.RequestBody
+    ): Response<JsonObject>
+
+    @POST("v1/api/meco")
+    suspend fun getTadpoleBwc(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/cdlo")
+    suspend fun confirmTadpoleBill(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
 
     @POST("v1/api/yatc")
     suspend fun applyLoan(

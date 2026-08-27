@@ -75,6 +75,7 @@ object Screen {
     const val UseAgreement = "UseAgreement"
     const val AboutUs = "AboutUs"
     const val CashLoan = "CashLoan"
+    const val TadpoleCash = "TadpoleCash"
 }
 
 @Composable
@@ -282,16 +283,49 @@ fun AppNavigation(
             )
         }
 
-        composable(Screen.FaceDetection) {
-            // Gunakan remember untuk mengambil BackStackEntry agar aman dari recomposition
-            val applyEntry = remember(it) { navController.getBackStackEntry(Screen.ApplyLoan) }
-            val applyViewModel: ApplyLoanViewModel = viewModel(
-                viewModelStoreOwner = applyEntry
-            )
+        composable(
+            route = "${Screen.FaceDetection}?from={from}",
+            arguments = listOf(navArgument("from") { defaultValue = Screen.ApplyLoan })
+        ) { backStackEntry ->
+            val fromPage = backStackEntry.arguments?.getString("from") ?: Screen.ApplyLoan
+            
+            // Get viewModels outside the callback
+            val tadpoleEntry = remember(backStackEntry) { try { navController.getBackStackEntry(Screen.TadpoleCash) } catch (e: Exception) { null } }
+            val tadpoleViewModel: com.example.ivopay.app.ui.loan.TadpoleCashViewModel? = tadpoleEntry?.let { viewModel(viewModelStoreOwner = it) }
+            
+            val cashEntry = remember(backStackEntry) { try { navController.getBackStackEntry(Screen.CashLoan) } catch (e: Exception) { null } }
+            val cashViewModel: com.example.ivopay.app.ui.loan.CashLoanViewModel? = cashEntry?.let { viewModel(viewModelStoreOwner = it) }
+            
+            val applyEntry = remember(backStackEntry) { try { navController.getBackStackEntry(Screen.ApplyLoan) } catch (e: Exception) { null } }
+            val applyViewModel: ApplyLoanViewModel? = applyEntry?.let { viewModel(viewModelStoreOwner = it) }
 
             FaceDetectionView(
                 onImageCaptured = { bitmap ->
-                    applyViewModel.handleFaceDetectResult(bitmap)
+                    when (fromPage) {
+                        Screen.TadpoleCash -> {
+                            tadpoleViewModel?.handleFaceDetectResult(bitmap) { noc ->
+                                navController.navigate("ApplySucceedPage?noc=$noc&showPop=1") {
+                                    popUpTo(Screen.Main) { inclusive = false }
+                                }
+                            }
+                        }
+                        Screen.CashLoan -> {
+                            // Convert bitmap to base64 manually or use a helper
+                            val outputStream = java.io.ByteArrayOutputStream()
+                            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, outputStream)
+                            val faceBase64 = android.util.Base64.encodeToString(outputStream.toByteArray(), android.util.Base64.DEFAULT)
+                            
+                            cashViewModel?.submitApply(faceBase64) { needConfirm ->
+                                val confirmParam = if (needConfirm) "1" else "0"
+                                navController.navigate("ApplySucceedPage?need_confirm=$confirmParam&showPop=1") {
+                                    popUpTo(Screen.Main) { inclusive = false }
+                                }
+                            }
+                        }
+                        else -> {
+                            applyViewModel?.handleFaceDetectResult(bitmap)
+                        }
+                    }
                     navController.popBackStack()
                 },
                 onClose = { navController.popBackStack() }
@@ -432,6 +466,20 @@ fun AppNavigation(
             val cashLoanViewModel: com.example.ivopay.app.ui.loan.CashLoanViewModel = viewModel { com.example.ivopay.app.ui.loan.CashLoanViewModel(context) }
             com.example.ivopay.app.ui.loan.CashLoanScreen(
                 viewModel = cashLoanViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToFace = { navController.navigate(Screen.FaceDetection) },
+                onSuccess = { noc ->
+                    navController.navigate("ApplySucceedPage?noc=$noc&showPop=1") {
+                        popUpTo(Screen.Main) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.TadpoleCash) {
+            val tadpoleViewModel: com.example.ivopay.app.ui.loan.TadpoleCashViewModel = viewModel { com.example.ivopay.app.ui.loan.TadpoleCashViewModel(context) }
+            com.example.ivopay.app.ui.loan.TadpoleCashScreen(
+                viewModel = tadpoleViewModel,
                 onBack = { navController.popBackStack() },
                 onNavigateToFace = { navController.navigate(Screen.FaceDetection) },
                 onSuccess = { noc ->

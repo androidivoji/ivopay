@@ -90,8 +90,12 @@ class CashLoanViewModel(context: Context) : ViewModel() {
     }
 
     fun onApplyClick(onNext: () -> Unit) {
-        // Logika P13 Event
-        showSignPop = true
+        if (cashData?.nvmp == true) {
+            // Should show PhoneCode dialog, but for now just show sign
+            showSignPop = true
+        } else {
+            showSignPop = true
+        }
     }
 
     fun submitApply(faceImageBase64: String?, onSuccess: (Boolean) -> Unit) {

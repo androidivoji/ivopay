@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.ivopay.R
 import com.example.ivopay.app.ui.components.SignatureCanvas
+import com.example.ivopay.app.ui.navigation.Screen
 import com.example.ivopay.app.util.CommonUtils
 import java.io.ByteArrayOutputStream
 
@@ -33,7 +34,7 @@ import java.io.ByteArrayOutputStream
 fun CashLoanScreen(
     viewModel: CashLoanViewModel,
     onBack: () -> Unit,
-    onNavigateToFace: () -> Unit,
+    onNavigateToFace: (String) -> Unit,
     onSuccess: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -235,7 +236,7 @@ fun CashLoanScreen(
                         Text("Sebelumnya", color = Color(0xFF262626))
                     }
                     Button(
-                        onClick = { viewModel.onApplyClick(onNavigateToFace) },
+                        onClick = { viewModel.onApplyClick { onNavigateToFace(Screen.CashLoan) } },
                         modifier = Modifier.weight(1f).height(48.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455)),
                         shape = RoundedCornerShape(24.dp)
@@ -273,7 +274,7 @@ fun CashLoanScreen(
                             val base64 = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
                             viewModel.signImageBase64 = base64
                             viewModel.showSignPop = false
-                            onNavigateToFace()
+                            onNavigateToFace(Screen.CashLoan)
                         }
                     )
                 }
