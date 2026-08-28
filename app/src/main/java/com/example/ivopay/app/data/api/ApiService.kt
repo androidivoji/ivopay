@@ -167,7 +167,7 @@ interface ApiService {
         @Body requestBody: JsonObject = JsonObject()
     ): Response<UserInfoResponse>
 
-    @POST("api/acnt")
+    @POST("v1/api/acnt")
     suspend fun getTadpoleHomeData(
         @Body requestBody: JsonObject = JsonObject()
     ): Response<JsonObject>

@@ -110,11 +110,21 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
                 val responseObj = gson.fromJson(bodyString, BorrowerHomeResponse::class.java)
                 
                 if (responseObj?.code == 1) {
+                    Log.d("XBZ", "fetchHomeData success, uico: ${responseObj.data?.cme?.uico}")
                     homeConfig = responseObj.data
                     // Simpan status pgsh, rasn, lackinA, uico
                     responseObj.data?.cme?.let {
                         sessionManager.savePgshStatus(it.pgsh)
-                        sessionManager.saveRasn(it.rasn)
+                        
+                        // Handle rasn yang bisa berupa Boolean atau Int
+                        val rasnInt = when (val r = it.rasn) {
+                            is Boolean -> if (r) 1 else 0
+                            is Number -> r.toInt()
+                            is String -> r.toIntOrNull() ?: 0
+                            else -> 0
+                        }
+                        sessionManager.saveRasn(rasnInt)
+                        
                         sessionManager.saveLackinA(it.lackinA)
                         sessionManager.saveUico(it.uico)
                         sessionManager.saveTttp(it.tttp)
@@ -398,9 +408,11 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
     }
 
     private fun performFinalNavigation(onNavigate: (String) -> Unit, productType: String) {
+        Log.d("XBZ", "productType: $productType")
         val rasn = sessionManager.getRasn().toString()
         when (productType) {
             "fcoa" -> onNavigate("CashLoan")
+//            "fcoa" -> onNavigate(Screen.TadpoleCash)
             "tnpo" -> onNavigate(Screen.TadpoleCash)
             "ci6" -> onNavigate("Ci6Cash?rasn=$rasn")
             "ci6_w" -> onNavigate("Ci6WCash?rasn=$rasn")
@@ -410,6 +422,7 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
             "rta2" -> onNavigate("CLoan16")
             "ciub" -> onNavigate("CLoan15")
             "wof_e" -> onNavigate(Screen.ApplyLoan)
+//            "wof_e" -> onNavigate(Screen.TadpoleCash)
             else -> onNavigate(Screen.ApplyLoan)
         }
     }

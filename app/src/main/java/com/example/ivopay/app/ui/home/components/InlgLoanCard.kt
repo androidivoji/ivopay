@@ -44,7 +44,7 @@ fun InlgLoanCard(
             ) {
                 Column {
                     // Revolving / More Limit Tip
-                    if (comData.resvAtma > 0) {
+                    if ((comData?.resvAtma ?: 0L) > 0) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -71,7 +71,7 @@ fun InlgLoanCard(
                             Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(horizontal = 4.dp)) {
                                 Text(text = "Jumlah:", fontSize = 11.sp, color = Color.Gray)
                                 Text(
-                                    text = CommonUtils.formatRupiah(comData.resvAtma.toDouble()),
+                                    text = CommonUtils.formatRupiah((comData?.resvAtma ?: 0L).toDouble()),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFFE5455)
@@ -95,7 +95,7 @@ fun InlgLoanCard(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = CommonUtils.formatRupiah(comData.atma.toDouble()),
+                                    text = CommonUtils.formatRupiah((comData?.atma ?: 0L).toDouble()),
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF262626)
@@ -107,7 +107,7 @@ fun InlgLoanCard(
 
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${comData.bpio} bulan",
+                                    text = "${comData?.bpio ?: 0} bulan",
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF262626)
@@ -118,15 +118,15 @@ fun InlgLoanCard(
 
                         Button(
                             onClick = {
-                                if (comData.koc) showUnqualifiedPop = true else onApply()
+                                if (comData?.koc == true) showUnqualifiedPop = true else onApply()
                             },
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(4.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (comData.koc) Color(0xFFD9D9D9) else Color(0xFFFE5455)
+                                containerColor = if (comData?.koc == true) Color(0xFFD9D9D9) else Color(0xFFFE5455)
                             )
                         ) {
-                            if (comData.koc) {
+                            if (comData?.koc == true) {
                                 Icon(
                                     imageVector = Icons.Default.Lock,
                                     contentDescription = null,

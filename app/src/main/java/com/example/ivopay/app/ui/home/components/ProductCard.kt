@@ -75,7 +75,7 @@ fun ProductCard(
             ) {
                 Column {
                     // Special Header if resvAtma > 0
-                    if (config.resvAtma > 0) {
+                    if ((config.resvAtma ?: 0L) > 0) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -91,7 +91,7 @@ fun ProductCard(
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(text = "Jumlah:", fontSize = 10.sp, color = Color.Gray)
-                                Text(text = CommonUtils.formatRupiah(config.resvAtma.toDouble()), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(text = CommonUtils.formatRupiah((config.resvAtma ?: 0L).toDouble()), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                             Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(12.dp))
                         }
@@ -116,7 +116,8 @@ fun ProductCard(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                                    val amount = if (config.resvAtma > 0) config.resvAtma else config.atma
+                                    val resv = config?.resvAtma ?: 0L
+                                    val amount = if (resv > 0) resv else (config?.atma ?: 0L)
                                     Text(text = CommonUtils.formatRupiah(amount.toDouble()), fontWeight = FontWeight.Bold, fontSize = 20.sp)
                                     Text(text = "Jumlah maksimum(Rp)", fontSize = 12.sp, color = Color.Gray)
                                 }
@@ -124,7 +125,7 @@ fun ProductCard(
                                 Box(modifier = Modifier.height(30.dp).width(1.dp).background(Color(0xFFEEEEEE)))
 
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                                    val durationValue = overrideDuration ?: if (durationUnit == "bulan") config.bpio else config.peo
+                                    val durationValue = overrideDuration ?: if (durationUnit == "bulan") (config?.bpio ?: 0) else (config?.peo ?: 0)
                                     Text(text = "$durationValue $durationUnit", fontWeight = FontWeight.Bold, fontSize = 20.sp)
                                     val label = if (durationUnit == "bulan") "Periode terpanjang" else "Jangka Pinjaman"
                                     Text(text = label, fontSize = 12.sp, color = Color.Gray)
@@ -140,9 +141,9 @@ fun ProductCard(
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFE5455)),
-                            enabled = config.koc == false
+                            enabled = config?.koc == false
                         ) {
-                            if (config.koc) {
+                            if (config?.koc == true) {
                                 Icon(imageVector = Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                             }

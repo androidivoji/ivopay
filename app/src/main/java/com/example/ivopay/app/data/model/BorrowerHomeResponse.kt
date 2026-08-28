@@ -43,7 +43,7 @@ data class LoanProductConfig(
     @SerializedName("rea") val rea: String? = null,
     @SerializedName("podi") val podi: LoanOrder? = null,
     @SerializedName("nct") val nct: NctData? = null,
-    @SerializedName("resv_atma") val resvAtma: Long = 0,
+    @SerializedName("resv_atma") val resvAtma: Long? = null,
     @SerializedName("bilopt") val bilopt: Any? = null,
     @SerializedName("resv_atma_ois") val resvAtmaOis: List<Any>? = null,
     @SerializedName("koc_by_no_resv_atma") val kocByNoResvAtma: Boolean = false
@@ -51,7 +51,7 @@ data class LoanProductConfig(
 
 data class BorrowerCmeData(
     @SerializedName("wof") val wof: Boolean = false,
-    @SerializedName("rasn") val rasn: Int = 0,
+    @SerializedName("rasn") val rasn: Any? = null, // Can be Boolean or Int
     @SerializedName("usv") val usv: Boolean = false,
     @SerializedName("uico") val uico: Boolean = false,
     @SerializedName("pgsh") val pgsh: Boolean = false,

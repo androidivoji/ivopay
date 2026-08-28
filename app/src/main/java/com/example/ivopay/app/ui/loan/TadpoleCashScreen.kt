@@ -82,11 +82,11 @@ fun TadpoleCashScreen(
                             color = Color(0xFF262626)
                         )
                         
-                        val maxIdx = viewModel.maxAmountIndex.toFloat().coerceAtLeast(0f)
+                        val maxIdx = viewModel.maxAmountIndex.toFloat().coerceAtLeast(0.01f)
                         Slider(
                             value = viewModel.amountIdx.toFloat().coerceIn(0f, maxIdx),
                             onValueChange = { 
-                                viewModel.amountIdx = it.toInt()
+                                viewModel.amountIdx = kotlin.math.round(it).toInt()
                                 viewModel.fetchTadpoleBillPre()
                             },
                             onValueChangeFinished = {
@@ -97,7 +97,7 @@ fun TadpoleCashScreen(
                                     Toast.makeText(context, "Ajukan dan lunasi tepat waktu lebih dari 3x untuk tingkatkan limit pinjamanmu.", Toast.LENGTH_SHORT).show()
                                 }
                             },
-                            valueRange = 0f..maxIdx.coerceAtLeast(0.01f),
+                            valueRange = 0f..maxIdx,
                             steps = (viewModel.maxAmountIndex - 1).coerceAtLeast(0),
                             enabled = viewModel.maxAmountIndex > 0,
                             colors = SliderDefaults.colors(
@@ -225,7 +225,7 @@ fun TadpoleCashScreen(
                 }
 
                 // 3. Installment Preview (EWB)
-                if (viewModel.cashData?.uoe == 1 && viewModel.ewb.isNotEmpty()) {
+                if (viewModel.ewb.isNotEmpty()) {
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -233,36 +233,36 @@ fun TadpoleCashScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             viewModel.ewb.forEachIndexed { idx, item ->
-                                Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Column(modifier = Modifier.padding(bottom = 12.dp, top = if (idx > 0) 12.dp else 0.dp)) {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Box(modifier = Modifier.width(2.dp).height(12.dp).background(Color(0xFFBD0100)))
-                                            Spacer(modifier = Modifier.width(5.dp))
-                                            Text(text = "Tagiahan ${idx + 1}", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                            Box(modifier = Modifier.width(3.dp).height(14.dp).background(Color(0xFFBD0100)))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(text = "Tagihan ${idx + 1}", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF262626))
                                         }
                                         if (item.byep == 1) {
                                             Text(text = "Gratis", color = Color(0xFFBD0100), fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                         }
                                     }
                                     
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
                                     
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text(text = "Repayment Amount", color = Color.Gray, fontSize = 14.sp)
-                                        Text(text = CommonUtils.formatRupiah(item.otma.toDouble()), color = Color(0xFF262626))
+                                        Text(text = CommonUtils.formatRupiah(item.otma.toDouble()), color = Color(0xFF262626), fontWeight = FontWeight.Medium)
                                     }
                                     
-                                    Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text(text = "Peraturan pembayaran hutang", color = Color.Gray, fontSize = 14.sp)
-                                        Text(text = "${item.dtap}%(poko dan bunga)", fontSize = 13.sp)
+                                        Text(text = "${item.dtap}% (pokok dan bunga)", fontSize = 13.sp, color = Color(0xFF262626))
                                     }
                                     
-                                    Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text(text = "Repayment Time", color = Color.Gray, fontSize = 14.sp)
                                         Text(text = item.rdn ?: "--", color = Color(0xFF262626))
                                     }
                                 }
-                                if (idx < viewModel.ewb.size - 1) HorizontalDivider(color = Color(0xFFF5F5F5))
+                                if (idx < viewModel.ewb.size - 1) HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 0.5.dp)
                             }
                         }
                     }
