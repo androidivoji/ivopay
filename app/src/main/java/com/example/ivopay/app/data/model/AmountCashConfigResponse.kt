@@ -26,7 +26,7 @@ data class AmountCashConfigData(
 data class AmountTimeOption(
     @SerializedName("peo") val peo: Int = 0,
     @SerializedName("aow") val aow: Boolean = false,
-    @SerializedName("peo_gfd") val peoGfd: String? = null,
+    @SerializedName("peo_gfd") val peoGfd: Int? = null,
     @SerializedName("dop") val dop: List<AmountLoanOption>? = null,
     @SerializedName("yep") val yep: String? = null
 )
@@ -37,6 +37,7 @@ data class AmountLoanOption(
     @SerializedName("itpr") val itpr: String? = null,
     @SerializedName("pdia") val pdia: Long = 0,
     @SerializedName("ife") val ife: Long = 0,
+    @SerializedName("ife_gfd") val ifeGfd: Long? = null,
     @SerializedName("sam") val sam: Long = 0,
     @SerializedName("dam") val dam: Long = 0,
     @SerializedName("dua") val dua: Long = 0,

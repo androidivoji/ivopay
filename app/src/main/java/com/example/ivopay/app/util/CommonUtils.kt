@@ -20,6 +20,16 @@ object CommonUtils {
         }
     }
 
+    fun formatMoneyOnly(amount: Double?): String {
+        if (amount == null) return "0"
+        return try {
+            val formatter = NumberFormat.getInstance(Locale("in", "ID"))
+            formatter.format(amount)
+        } catch (e: Exception) {
+            "0"
+        }
+    }
+
     // Ganti dari: _digitFormat(value) / _restrictToNumbers
     fun restrictToNumbers(input: String): String {
         return input.replace("\\D".toRegex(), "")

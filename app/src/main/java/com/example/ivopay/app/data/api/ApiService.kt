@@ -237,7 +237,7 @@ interface ApiService {
         @Body requestBody: JsonObject
     ): Response<TadpoleBillPreviewResponse>
 
-    @POST("v1/api/cfcs")
+    @POST("v2/api/cfcs")
     suspend fun getAmountCashLoanConfig(
         @Body requestBody: JsonObject
     ): Response<AmountCashConfigResponse>

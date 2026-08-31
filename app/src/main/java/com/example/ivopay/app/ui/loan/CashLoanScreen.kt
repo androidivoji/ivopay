@@ -158,7 +158,11 @@ fun CashLoanScreen(
                                                     )
                                                     Spacer(modifier = Modifier.width(4.dp))
                                                 }
-                                                val dayText = if (!timeOption.peoGfd.isNullOrEmpty() && timeOption.peoGfd != "0") timeOption.peoGfd!! else "${timeOption.peo} hari"
+                                                val dayText = if (timeOption.peoGfd != null && timeOption.peoGfd != 0) {
+                                                    "${timeOption.peoGfd} hari"
+                                                } else {
+                                                    "${timeOption.peo} hari"
+                                                }
                                                 Text(
                                                     text = dayText,
                                                     fontSize = 13.sp,

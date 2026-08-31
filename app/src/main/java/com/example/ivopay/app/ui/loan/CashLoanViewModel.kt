@@ -46,12 +46,18 @@ class CashLoanViewModel(context: Context) : ViewModel() {
         val curDay = curDayOption
         val curLoan = curLoanOption ?: return emptyList()
 
+        val loanDate = if (curDay?.peoGfd != null && curDay.peoGfd != 0) {
+            "${curDay.peoGfd} hari"
+        } else {
+            "${curDay?.peo ?: "--"} hari"
+        }
+
         val list = mutableListOf(
             "Nama" to (bio?.bkan ?: "--"),
             "Bank Penerima" to (bio?.bkm ?: "--"),
             "Nomor Rekening" to (bio?.baut ?: "--"),
             "Nilai Pinjaman" to CommonUtils.formatRupiah(selAmount.toDouble()),
-            "Tanggal Pinjaman" to ("${curDay?.peo ?: "--"} hari"),
+            "Tanggal Pinjaman" to loanDate,
             "Biaya Layanan" to CommonUtils.formatRupiah(curLoan.ife.toDouble()),
             "Repayment Amount" to CommonUtils.formatRupiah(curLoan.dua.toDouble())
         )
