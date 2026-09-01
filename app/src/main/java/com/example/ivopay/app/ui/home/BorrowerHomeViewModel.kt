@@ -411,7 +411,7 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
         Log.d("XBZ", "productType: $productType")
         val rasn = sessionManager.getRasn().toString()
         when (productType) {
-            "fcoa" -> onNavigate("CashLoan")
+            "fcoa" -> onNavigate(Screen.CashLoan) //asli
 //            "fcoa" -> onNavigate(Screen.TadpoleCash)
             "tnpo" -> onNavigate(Screen.TadpoleCash)
             "ci6" -> onNavigate("Ci6Cash?rasn=$rasn")
@@ -421,7 +421,8 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
             "inlg" -> onNavigate("InlgCash?rasn=$rasn")
             "rta2" -> onNavigate("CLoan16")
             "ciub" -> onNavigate("CLoan15")
-            "wof_e" -> onNavigate(Screen.ApplyLoan)
+//            "wof_e" -> onNavigate(Screen.CashLoan)
+            "wof_e" -> onNavigate(Screen.ApplyLoan) //asli
 //            "wof_e" -> onNavigate(Screen.TadpoleCash)
             else -> onNavigate(Screen.ApplyLoan)
         }
