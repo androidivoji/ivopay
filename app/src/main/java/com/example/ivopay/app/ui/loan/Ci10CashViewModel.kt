@@ -1,7 +1,6 @@
 package com.example.ivopay.app.ui.loan
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,7 +13,7 @@ import com.google.gson.JsonObject
 import kotlinx.coroutines.launch
 import okhttp3.MultipartBody
 
-class TadpoleCashViewModel(context: Context) : ViewModel() {
+class Ci10CashViewModel(context: Context) : ViewModel() {
     private val sessionManager = SessionManager(context)
     private val gson = Gson()
 
@@ -61,6 +60,7 @@ class TadpoleCashViewModel(context: Context) : ViewModel() {
     var verCode by mutableStateOf("")
     var verCountDown by mutableIntStateOf(0)
     private var countDownJob: kotlinx.coroutines.Job? = null
+    var rasn by mutableStateOf("")
 
     fun startCountDown() {
         verCountDown = 60
@@ -137,7 +137,8 @@ class TadpoleCashViewModel(context: Context) : ViewModel() {
     val maxAmount: Long
         get() = curDayOption?.dop?.lastOrNull()?.tma ?: 0L
 
-    fun init() {
+    fun init(rasn: String) {
+        this.rasn = rasn
         fetchCashConfig()
     }
 
@@ -146,16 +147,14 @@ class TadpoleCashViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             try {
                 val params = JsonObject().apply { addProperty("spe", "h") }
-                val response = NetworkClient.apiService.getTadpoleCashConfig(params)
+                val response = NetworkClient.apiService.getCi10CashConfig(params)
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.code == 1) {
                         cashData = body.data
-                        // Pastikan index awal tidak melebihi batas aow
-                        val maxAowIdx = maxAmountIndex
-                        amountIdx = (body.data?.dtma ?: 0).coerceAtMost(maxAowIdx)
+                        amountIdx = body.data?.dtma ?: 0
                         dayIdx = body.data?.dpeo ?: 0
-                        fetchTadpoleBillPre()
+                        fetchInlgBillPre()
                     }
                 }
             } catch (e: Exception) {
@@ -166,7 +165,7 @@ class TadpoleCashViewModel(context: Context) : ViewModel() {
         }
     }
 
-    fun fetchTadpoleBillPre() {
+    fun fetchInlgBillPre() {
         val curDay = curDayOption ?: return
         viewModelScope.launch {
             try {
@@ -174,8 +173,9 @@ class TadpoleCashViewModel(context: Context) : ViewModel() {
                     addProperty("spe", "h")
                     addProperty("tma", selAmount)
                     addProperty("bpio", curDay.bpio)
+                    // Add other params if needed like fbd, ddd, itpr
                 }
-                val response = NetworkClient.apiService.getTadpoleBillPreview(params)
+                val response = NetworkClient.apiService.getCi10BillPreview(params)
                 if (response.isSuccessful && response.body()?.code == 1) {
                     ewb = response.body()?.data?.ewb ?: emptyList()
                 }
@@ -187,26 +187,27 @@ class TadpoleCashViewModel(context: Context) : ViewModel() {
 
     fun getLoanData(): List<Pair<String, String>> {
         val bio = cashData?.bio
+        val curDay = curDayOption
         val curLoan = curLoanOption ?: return emptyList()
 
-        val list = mutableListOf(
+        return listOf(
             "Nama" to (bio?.bkan ?: "--"),
             "Bank Penerima" to (bio?.bkm ?: "--"),
             "Nomor Rekening" to (bio?.baut ?: "--"),
             "Nilai Pinjaman" to CommonUtils.formatRupiah(selAmount.toDouble()),
-            "Biaya Layanan" to CommonUtils.formatRupiah(curLoan.ife.toDouble())
+            "Jangka Pinjaman" to "${curDay?.bpio ?: 0} bulan",
+            "Biaya Layanan" to CommonUtils.formatRupiah(curLoan.ife.toDouble()),
+            "Jumlah diterima" to CommonUtils.formatRupiah(curLoan.dam.toDouble()),
+            "Repayment Amount" to CommonUtils.formatRupiah(curLoan.dua.toDouble())
         )
-
-        if (cashData?.uoe != 1) {
-            list.add("Repayment Amount" to CommonUtils.formatRupiah(curLoan.dua.toDouble()))
-        }
-
-        return list
     }
 
     fun onApplyClick() {
-        // Logika P13 Event
-        showSignPop = true
+        if (cashData?.nvmp == true) {
+            // Logic handled in Screen for PhoneCode
+        } else {
+            showSignPop = true
+        }
     }
 
     fun handleFaceDetectResult(bitmap: android.graphics.Bitmap, onSuccess: (String) -> Unit) {
@@ -214,12 +215,12 @@ class TadpoleCashViewModel(context: Context) : ViewModel() {
         bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, outputStream)
         val faceBase64 = android.util.Base64.encodeToString(outputStream.toByteArray(), android.util.Base64.DEFAULT)
         
-        submitApply(faceBase64) { needConfirm ->
-            onSuccess(if (needConfirm) "1" else "0")
+        submitApply(faceBase64) { mob ->
+            onSuccess(mob)
         }
     }
 
-    fun submitApply(faceImageBase64: String?, onComplete: (Boolean) -> Unit) {
+    fun submitApply(faceImageBase64: String?, onComplete: (String) -> Unit) {
         isLoading = true
         viewModelScope.launch {
             try {
@@ -230,16 +231,15 @@ class TadpoleCashViewModel(context: Context) : ViewModel() {
                     builder.addFormDataPart("aig", faceImageBase64)
                 }
                 builder.addFormDataPart("tma", selAmount.toString())
-                builder.addFormDataPart("peo", (curDayOption?.peo ?: 0).toString())
-                builder.addFormDataPart("wof", sessionManager.getRasn().toString())
+                builder.addFormDataPart("bpio", (curDayOption?.bpio ?: 0).toString())
+                builder.addFormDataPart("rasn", rasn)
 
-                val response = NetworkClient.apiService.applyTadpoleLoan(builder.build())
+                val response = NetworkClient.apiService.applyCi10Loan(builder.build())
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.get("code")?.asInt == 1) {
-                        val nct = body.getAsJsonObject("data")?.getAsJsonObject("nct")
-                        val needConfirm = nct?.get("cdi")?.asBoolean == true
-                        onComplete(needConfirm)
+                        val mob = body.getAsJsonObject("data")?.getAsJsonObject("ci10")?.get("mob")?.asString ?: ""
+                        onComplete(mob)
                     }
                 }
             } catch (e: Exception) {

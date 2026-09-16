@@ -237,6 +237,21 @@ interface ApiService {
         @Body requestBody: JsonObject
     ): Response<TadpoleBillPreviewResponse>
 
+    @POST("v2/api/ci10")
+    suspend fun getCi10CashConfig(
+        @Body requestBody: JsonObject
+    ): Response<TadpoleCashConfigResponse>
+
+    @POST("v2/api/ci10/ewb")
+    suspend fun getCi10BillPreview(
+        @Body requestBody: JsonObject
+    ): Response<TadpoleBillPreviewResponse>
+
+    @POST("api/ci10/paot")
+    suspend fun applyCi10Loan(
+        @Body requestBody: okhttp3.RequestBody
+    ): Response<JsonObject>
+
     @POST("v2/api/cfcs")
     suspend fun getAmountCashLoanConfig(
         @Body requestBody: JsonObject
@@ -254,6 +269,11 @@ interface ApiService {
 
     @POST("v1/api/cdlo")
     suspend fun confirmTadpoleBill(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
+    @POST("v1/api/dfere800/apl")
+    suspend fun applyExtension(
         @Body requestBody: JsonObject
     ): Response<JsonObject>
 

@@ -7,10 +7,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ivopay.app.data.api.NetworkClient
-import com.example.ivopay.app.data.model.CashConfigData
-import com.example.ivopay.app.data.model.CashConfigResponse
-import com.example.ivopay.app.data.model.DayOption
-import com.example.ivopay.app.data.model.LoanOption
+import com.example.ivopay.app.data.model.*
 import com.example.ivopay.app.util.SessionManager
 import android.util.Base64
 import com.example.ivopay.app.util.CommonUtils
@@ -29,12 +26,6 @@ sealed class ApplyActionEvent {
     object StartAliFaceVerify : ApplyActionEvent()
     object StartZuluzFaceVerify : ApplyActionEvent()
 }
-
-data class RiplayPoint(
-    val title: String,
-    val content: String,
-    var checked: Boolean = false
-)
 
 class ApplyLoanViewModel(private val context: Context) : ViewModel() {
     private val sessionManager = SessionManager(context)

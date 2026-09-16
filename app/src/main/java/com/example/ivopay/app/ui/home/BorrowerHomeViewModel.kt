@@ -143,6 +143,7 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
         val cme = data?.cme
         val fcoa = data?.fcoa
         val tnpo = data?.tnpo
+        Log.d("XBZ", "fetchBorrowerProductLogic: ${cme?.wof}")
 
         if (cme?.wof == false) {
             if (fcoa?.psw == 1) {

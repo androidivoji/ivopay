@@ -8,6 +8,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,17 +51,18 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TadpoleCashScreen(
-    viewModel: TadpoleCashViewModel,
+fun Ci10CashScreen(
+    viewModel: Ci10CashViewModel,
+    rasn: String,
     onBack: () -> Unit,
     onNavigateToFace: (String) -> Unit,
-    onSuccess: (String) -> Unit
+    onSuccess: (String, String) -> Unit
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        viewModel.init()
+    LaunchedEffect(rasn) {
+        viewModel.init(rasn)
     }
 
     Scaffold(
@@ -72,14 +77,14 @@ fun TadpoleCashScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
-        containerColor = Color(0xFFF8F8F8)
+        containerColor = Color(0xFFF8F8FA)
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .padding(bottom = 120.dp)
+                    .padding(bottom = 100.dp)
             ) {
                 // 1. Amount Selector Card
                 Card(
@@ -90,7 +95,7 @@ fun TadpoleCashScreen(
                     Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "Nilai Pinjaman(Rp)", fontSize = 14.sp, color = Color.Gray)
                         Text(
-                            text = CommonUtils.formatRupiah(viewModel.selAmount.toDouble()),
+                            text = CommonUtils.formatMoneyOnly(viewModel.selAmount.toDouble()),
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF262626)
@@ -101,13 +106,13 @@ fun TadpoleCashScreen(
                             value = viewModel.amountIdx.toFloat().coerceIn(0f, maxIdx),
                             onValueChange = { 
                                 viewModel.amountIdx = kotlin.math.round(it).toInt()
-                                viewModel.fetchTadpoleBillPre()
+                                viewModel.fetchInlgBillPre()
                             },
                             onValueChangeFinished = {
                                 val options = viewModel.curDayOption?.dop ?: emptyList()
                                 if (viewModel.amountIdx < options.size && !options[viewModel.amountIdx].aow) {
                                     viewModel.amountIdx = viewModel.maxAllowedAmountIndex
-                                    viewModel.fetchTadpoleBillPre()
+                                    viewModel.fetchInlgBillPre()
                                     Toast.makeText(context, "Ajukan dan lunasi tepat waktu lebih dari 3x untuk tingkatkan limit pinjamanmu.", Toast.LENGTH_SHORT).show()
                                 }
                             },
@@ -122,63 +127,75 @@ fun TadpoleCashScreen(
                         )
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(text = CommonUtils.formatRupiah(viewModel.minAmount.toDouble()), fontSize = 12.sp, color = Color.Gray)
-                            Text(text = CommonUtils.formatRupiah(viewModel.maxAmount.toDouble()), fontSize = 12.sp, color = Color.Gray)
+                            Text(text = "${CommonUtils.formatMoneyOnly(viewModel.minAmount.toDouble() / 1000000)} JT", fontSize = 13.sp, color = Color.Gray)
+                            Text(text = "${CommonUtils.formatMoneyOnly(viewModel.maxAmount.toDouble() / 1000000)} JT", fontSize = 13.sp, color = Color.Gray)
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Text(text = "Jangka Pinjaman", modifier = Modifier.fillMaxWidth(), fontSize = 15.sp, fontWeight = FontWeight.Medium)
                         
-                        // Days List Selection (Vertical items with check icon)
+                        // Months Grid (Manual Row for 3 columns)
                         val tpos = viewModel.cashData?.tpos ?: emptyList()
-                        tpos.forEachIndexed { idx, item ->
-                            val isSelected = idx == viewModel.dayIdx
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 12.dp)
-                                    .background(
-                                        if (isSelected) Color(0xFFFE5455).copy(alpha = 0.05f) else Color.White,
-                                        RoundedCornerShape(4.dp)
-                                    )
-                                    .border(
-                                        1.dp,
-                                        if (isSelected) Color(0xFFFE5455) else Color(0xFFE8E8E8),
-                                        RoundedCornerShape(4.dp)
-                                    )
-                                    .clickable { 
-                                        if (item.aow) {
-                                            viewModel.dayIdx = idx
-                                            viewModel.fetchTadpoleBillPre()
+                        tpos.chunked(3).forEach { rowItems ->
+                            Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                rowItems.forEach { item ->
+                                    val idx = tpos.indexOf(item)
+                                    val isSelected = idx == viewModel.dayIdx
+                                    val isAow = item.aow
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(44.dp)
+                                            .background(
+                                                color = if (!isAow) Color(0xFFF2F2F2) else if (isSelected) Color(0x0FFE5455) else Color.White,
+                                                shape = RoundedCornerShape(4.dp)
+                                            )
+                                            .border(
+                                                width = 1.dp,
+                                                color = if (isSelected && isAow) Color(0xFFFE5455) else Color(0xFFEEEEEE),
+                                                shape = RoundedCornerShape(4.dp)
+                                            )
+                                            .clickable(enabled = isAow) { 
+                                                viewModel.dayIdx = idx
+                                                viewModel.fetchInlgBillPre()
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            if (!isAow) {
+                                                Icon(
+                                                    painter = painterResource(id = R.drawable.iv_home_loan_lock),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp).padding(end = 4.dp),
+                                                    tint = Color.Gray
+                                                )
+                                            }
+                                            Text(
+                                                text = "${item.bpio} bulan",
+                                                fontSize = 13.sp,
+                                                color = if (!isAow) Color.Gray else if (isSelected) Color(0xFFFE5455) else Color(0xFF262626)
+                                            )
+                                        }
+                                        if (isSelected && isAow) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.iv_choose_sel), // using sel icon
+                                                contentDescription = null,
+                                                modifier = Modifier.size(12.dp).align(Alignment.BottomEnd),
+                                                tint = Color.Unspecified
+                                            )
                                         }
                                     }
-                                    .padding(12.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    val dayText = if (!item.swo.isNullOrEmpty()) item.swo else "${item.peo}"
-                                    Text(
-                                        text = "$dayText hari",
-                                        color = if (isSelected) Color(0xFFFE5455) else Color(0xFF262626),
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                    Icon(
-                                        painter = painterResource(id = if (isSelected) R.drawable.iv_choose_sel else R.drawable.iv_choose_nor),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp),
-                                        tint = Color.Unspecified
-                                    )
                                 }
+                                // Fill empty slots
+                                repeat(3 - rowItems.size) { Spacer(modifier = Modifier.weight(1f)) }
                             }
                         }
                     }
                 }
 
-                // Phone Code Section (Conditional)
+                // Phone Code Section
                 if (viewModel.cashData?.nvmp == true) {
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -224,7 +241,7 @@ fun TadpoleCashScreen(
 
                 // 2. Loan Data List Card
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
@@ -264,11 +281,6 @@ fun TadpoleCashScreen(
                                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text(text = "Repayment Amount", color = Color.Gray, fontSize = 14.sp)
                                         Text(text = CommonUtils.formatRupiah(item.otma.toDouble()), color = Color(0xFF262626), fontWeight = FontWeight.Medium)
-                                    }
-                                    
-                                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text(text = "Peraturan pembayaran hutang", color = Color.Gray, fontSize = 14.sp)
-                                        Text(text = "${item.dtap}% (pokok dan bunga)", fontSize = 13.sp, color = Color(0xFF262626))
                                     }
                                     
                                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -377,7 +389,7 @@ fun TadpoleCashScreen(
                             val base64 = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
                             viewModel.signImageBase64 = base64
                             viewModel.showSignPop = false
-                            onNavigateToFace(Screen.TadpoleCash)
+                            onNavigateToFace(Screen.CashLoan) // Using generic face detection
                         }
                     )
                 }
@@ -438,19 +450,19 @@ fun TadpoleCashScreen(
                         }
 
                         itemsIndexed(viewModel.riplayPoints) { index, point ->
-                            TadpoleRiplayPointItem(
+                            Ci10RiplayPointItem(
                                 point = point,
                                 onCheckedChange = { checked ->
                                     viewModel.toggleRiplayPoint(index, checked)
                                 },
-                                loanDetails = getTadpoleRiplayLoanDetails(viewModel),
+                                loanDetails = getCi10RiplayLoanDetails(viewModel),
                                 ewbList = viewModel.ewb
                             )
                             HorizontalDivider(color = Color(0xFFF0F0F0))
                         }
 
                         item {
-                            TadpoleRiplayFooter()
+                            Ci10RiplayFooter()
                         }
                     }
 
@@ -482,7 +494,7 @@ fun TadpoleCashScreen(
 }
 
 @Composable
-fun TadpoleRiplayPointItem(
+fun Ci10RiplayPointItem(
     point: RiplayPoint,
     onCheckedChange: (Boolean) -> Unit,
     loanDetails: Map<String, String>,
@@ -503,15 +515,15 @@ fun TadpoleRiplayPointItem(
             Text(point.title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF333333))
             
             if (point.title.contains("3. Fitur Utama")) {
-                TadpoleFiturUtamaSection(loanDetails, ewbList)
+                Ci10FiturUtamaSection(loanDetails, ewbList)
             } else if (point.title.contains("6. Persyaratan")) {
-                TadpolePersyaratanSection()
+                Ci10PersyaratanSection()
             } else if (point.title.contains("7. Biaya")) {
-                TadpoleBiayaSection(loanDetails)
+                Ci10BiayaSection(loanDetails)
             } else if (point.title.contains("8. Informasi Tambahan")) {
-                TadpoleInformasiTambahanSection()
+                Ci10InformasiTambahanSection()
             } else if (point.title.contains("9. Penafian")) {
-                TadpoleDisclaimerSection()
+                Ci10DisclaimerSection()
             } else {
                 Text(point.content, fontSize = 13.sp, color = Color(0xFF666666), lineHeight = 20.sp)
             }
@@ -520,7 +532,7 @@ fun TadpoleRiplayPointItem(
 }
 
 @Composable
-fun TadpoleFiturUtamaSection(
+fun Ci10FiturUtamaSection(
     details: Map<String, String>,
     ewbList: List<com.example.ivopay.app.data.model.TadpoleBillItem> = emptyList()
 ) {
@@ -545,12 +557,7 @@ fun TadpoleFiturUtamaSection(
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = "Rincian Angsuran",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = Color(0xFF262626)
-                    )
+                    Text(text = "Rincian Angsuran", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF262626))
                     Spacer(modifier = Modifier.height(12.dp))
                     ewbList.forEachIndexed { idx, item ->
                         Card(
@@ -583,11 +590,6 @@ fun TadpoleFiturUtamaSection(
                                 }
                                 
                                 Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(text = "Peraturan pembayaran hutang", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                                    Text(text = "${item.dtap}% (pokok dan bunga)", fontSize = 12.sp, color = Color(0xFF262626), textAlign = TextAlign.End)
-                                }
-                                
-                                Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(text = "Repayment Time", color = Color.Gray, fontSize = 12.sp)
                                     Text(text = item.rdn ?: "--", color = Color(0xFF262626), fontSize = 12.sp)
                                 }
@@ -601,7 +603,7 @@ fun TadpoleFiturUtamaSection(
 }
 
 @Composable
-fun TadpolePersyaratanSection() {
+fun Ci10PersyaratanSection() {
     Column(modifier = Modifier.padding(top = 4.dp)) {
         Text("Persyaratan Pengajuan Pendanaan:", fontSize = 13.sp, color = Color(0xFF333333), textDecoration = TextDecoration.Underline)
         Text("Calon penerima dana wajib berusia diatas 18 tahun, memiliki KTP terbaru, mempunyai penghasilan, serta memiliki rekening bank pribadi yang sesuai dengan data identitas.", fontSize = 12.sp, color = Color(0xFF666666), modifier = Modifier.padding(vertical = 4.dp))
@@ -622,7 +624,7 @@ fun TadpolePersyaratanSection() {
 }
 
 @Composable
-fun TadpoleBiayaSection(details: Map<String, String>) {
+fun Ci10BiayaSection(details: Map<String, String>) {
     Column(modifier = Modifier.padding(top = 4.dp)) {
         Text("• Total Bunga : ${details["Total Bunga"] ?: "Rp. 0"}", fontSize = 13.sp, color = Color(0xFF666666))
         Text("• Tanda Tangan Digital : ${details["Biaya Tanda Tangan"] ?: "Rp. 0"} (dipotong diawal)", fontSize = 13.sp, color = Color(0xFF666666))
@@ -631,7 +633,7 @@ fun TadpoleBiayaSection(details: Map<String, String>) {
 }
 
 @Composable
-fun TadpoleInformasiTambahanSection() {
+fun Ci10InformasiTambahanSection() {
     val items = listOf(
         "a. IVOJI merupakan Penyelenggara LPBBTI yang berizin dan diawasi oleh OJK.",
         "b. Pengguna wajib membaca dan memahami syarat dan ketentuan pendanaan sebelum mengajukan pendanaan.",
@@ -653,12 +655,12 @@ fun TadpoleInformasiTambahanSection() {
 }
 
 @Composable
-fun TadpoleDisclaimerSection() {
+fun Ci10DisclaimerSection() {
     val items = listOf(
-        "a. Anda telah membaca, menerima penjelasan, dan memahami produk pendanaan sesuai RIPLAY.",
+        "a. Anda telah membaca, menerima penjelasan, and memahami produk pendanaan sesuai RIPLAY.",
         "b. Ringkasan ini hanya digunakan sebagai referensi dan bukan merupakan perjanjian mengikat.",
         "c. Informasi ini berlaku sejak tanggal cetak dokumen sampai dengan selesainya kewajiban.",
-        "d. Anda harus membaca dengan teliti sebelum menyetujui dan berhak bertanya kepada pegawai."
+        "d. Anda harus membaca dengan teliti sebelum menyetujui and berhak bertanya kepada pegawai."
     )
     Column(modifier = Modifier.padding(top = 4.dp)) {
         items.forEach {
@@ -668,7 +670,7 @@ fun TadpoleDisclaimerSection() {
 }
 
 @Composable
-fun TadpoleRiplayFooter() {
+fun Ci10RiplayFooter() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -700,7 +702,7 @@ fun TadpoleRiplayFooter() {
     }
 }
 
-private fun getTadpoleRiplayLoanDetails(viewModel: TadpoleCashViewModel): Map<String, String> {
+private fun getCi10RiplayLoanDetails(viewModel: Ci10CashViewModel): Map<String, String> {
     val loanOp = viewModel.curLoanOption
     val dayOp = viewModel.curDayOption
     return linkedMapOf(
@@ -708,7 +710,7 @@ private fun getTadpoleRiplayLoanDetails(viewModel: TadpoleCashViewModel): Map<St
         "Biaya yang dipotong saat pencairan" to CommonUtils.formatRupiah(loanOp?.sam?.toDouble()),
         "Suku Bunga*" to "0.3 % /Hari",
         "Total Biaya Bunga" to CommonUtils.formatRupiah(loanOp?.ife?.toDouble()),
-        "Jangka Waktu Pendanaan/Tenor" to "${dayOp?.peo ?: 14} Hari",
+        "Jangka Waktu Pendanaan/Tenor" to "${dayOp?.bpio ?: 0} bulan",
         "Pendanaan yang Diterima" to CommonUtils.formatRupiah(loanOp?.dam?.toDouble()),
         "Biaya Tanda Tangan" to CommonUtils.formatRupiah(loanOp?.sam?.toDouble()),
         "Jumlah Pengembalian" to CommonUtils.formatRupiah(loanOp?.dua?.toDouble()),

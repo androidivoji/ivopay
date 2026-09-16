@@ -46,7 +46,13 @@ data class LoanProductConfig(
     @SerializedName("resv_atma") val resvAtma: Long? = null,
     @SerializedName("bilopt") val bilopt: Any? = null,
     @SerializedName("resv_atma_ois") val resvAtmaOis: List<Any>? = null,
-    @SerializedName("koc_by_no_resv_atma") val kocByNoResvAtma: Boolean = false
+    @SerializedName("koc_by_no_resv_atma") val kocByNoResvAtma: Boolean = false,
+    @SerializedName("qocm") val qocm: QocmData? = null
+)
+
+data class QocmData(
+    @SerializedName("nqs") val nqs: Boolean = false,
+    @SerializedName("nbj") val nbj: Boolean = false
 )
 
 data class BorrowerCmeData(
@@ -110,12 +116,16 @@ data class LoanOrder(
     @SerializedName("dud") val dud: String? = null,
     @SerializedName("arm") val arm: Long = 0,
     @SerializedName("sam") val sam: Long = 0,
+    @SerializedName("ife") val ife: Long = 0,
+    @SerializedName("ltf") val ltf: Long = 0,
     @SerializedName("peo_gfd") val peoGfd: String? = null,
     @SerializedName("bae") val bae: Boolean = false,
     @SerializedName("bae_ttm") val baeTtm: String? = null,
     @SerializedName("bpio_txt") val bpioTxt: String? = null,
     @SerializedName("dbi") val dbi: BankInfoData? = null,
     @SerializedName("buklh") val buklh: BuklhContainer? = null,
+    @SerializedName("ewb") val ewb: List<InstallmentPlan>? = null,
+    @SerializedName("asu_800") val asu800: List<ExtensionOption>? = null,
     @SerializedName("asu_801") val asu801: Asu801Data? = null,
     @SerializedName("asu_901") val asu901: Asu901Data? = null,
     @SerializedName("full_payment_code") val fullPaymentCode: List<PayMethod>? = null,
@@ -154,6 +164,13 @@ data class InstallmentPlan(
     @SerializedName("rdn") val rdn: String? = null,
     @SerializedName("otma") val otma: Long = 0,
     @SerializedName("brps") val brps: Int = 0
+)
+
+data class ExtensionOption(
+    @SerializedName("dfere_peo") val dferePeo: Int = 0,
+    @SerializedName("dfere_tma") val dfereTma: Long = 0,
+    @SerializedName("dfere_dud") val dfereDud: String? = null,
+    var isChecked: Boolean = false
 )
 
 data class Asu801Data(

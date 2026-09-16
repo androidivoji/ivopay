@@ -280,6 +280,7 @@ fun HomeScreen(
                 // ci6_fe (Installment Guest)
                 homeConfig?.ci6Fe?.let { config ->
                     if (config.psw == 1 || config.podi != null) {
+                        Log.d("XBZ", "Tampilan Kartu: InlgLoanCard")
                         InlgLoanCard(
                             comData = config,
                             curBill = config.podi,

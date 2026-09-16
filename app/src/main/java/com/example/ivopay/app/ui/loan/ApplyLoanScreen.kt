@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.ivopay.R
+import com.example.ivopay.app.data.model.RiplayPoint
 import com.example.ivopay.app.ui.components.SignatureCanvas
 import com.example.ivopay.app.util.CommonUtils
 import java.text.SimpleDateFormat

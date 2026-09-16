@@ -26,8 +26,12 @@ import com.example.ivopay.app.ui.loan.ApplyLoanViewModel
 import com.example.ivopay.app.ui.loan.ApplySucceedScreen
 import com.example.ivopay.app.ui.loan.BorrowerSignContractsScreen
 import com.example.ivopay.app.ui.loan.BorrowerSignContractsViewModel
+import com.example.ivopay.app.ui.loan.CashLoanScreen
+import com.example.ivopay.app.ui.loan.CashLoanViewModel
 import com.example.ivopay.app.ui.loan.OtherProductScreen
 import com.example.ivopay.app.ui.loan.OtherProductViewModel
+import com.example.ivopay.app.ui.loan.TadpoleCashScreen
+import com.example.ivopay.app.ui.loan.TadpoleCashViewModel
 import com.example.ivopay.app.ui.login.GestureCreateScreen
 import com.example.ivopay.app.ui.login.GestureCreateViewModel
 import com.example.ivopay.app.ui.login.GestureLoginScreen
@@ -291,13 +295,16 @@ fun AppNavigation(
             
             // Get viewModels outside the callback
             val tadpoleEntry = remember(backStackEntry) { try { navController.getBackStackEntry(Screen.TadpoleCash) } catch (e: Exception) { null } }
-            val tadpoleViewModel: com.example.ivopay.app.ui.loan.TadpoleCashViewModel? = tadpoleEntry?.let { viewModel(viewModelStoreOwner = it) }
+            val tadpoleViewModel: TadpoleCashViewModel? = tadpoleEntry?.let { viewModel(viewModelStoreOwner = it) }
             
             val cashEntry = remember(backStackEntry) { try { navController.getBackStackEntry(Screen.CashLoan) } catch (e: Exception) { null } }
-            val cashViewModel: com.example.ivopay.app.ui.loan.CashLoanViewModel? = cashEntry?.let { viewModel(viewModelStoreOwner = it) }
+            val cashViewModel: CashLoanViewModel? = cashEntry?.let { viewModel(viewModelStoreOwner = it) }
             
             val applyEntry = remember(backStackEntry) { try { navController.getBackStackEntry(Screen.ApplyLoan) } catch (e: Exception) { null } }
             val applyViewModel: ApplyLoanViewModel? = applyEntry?.let { viewModel(viewModelStoreOwner = it) }
+
+            val ci10Entry = remember(backStackEntry) { try { navController.getBackStackEntry("Ci10Cash?rasn={rasn}") } catch (e: Exception) { null } }
+            val ci10ViewModel: com.example.ivopay.app.ui.loan.Ci10CashViewModel? = ci10Entry?.let { viewModel(viewModelStoreOwner = it) }
 
             FaceDetectionView(
                 onImageCaptured = { bitmap ->
@@ -318,6 +325,13 @@ fun AppNavigation(
                             cashViewModel?.submitApply(faceBase64) { needConfirm ->
                                 val confirmParam = if (needConfirm) "1" else "0"
                                 navController.navigate("ApplySucceedPage?need_confirm=$confirmParam&showPop=1") {
+                                    popUpTo(Screen.Main) { inclusive = false }
+                                }
+                            }
+                        }
+                        "Ci10Cash" -> {
+                            ci10ViewModel?.handleFaceDetectResult(bitmap) { mob ->
+                                navController.navigate("ApplySucceedPage?cash_type=ci10&mob=$mob&showPop=1") {
                                     popUpTo(Screen.Main) { inclusive = false }
                                 }
                             }
@@ -463,8 +477,8 @@ fun AppNavigation(
         }
 
         composable(Screen.CashLoan) {
-            val cashLoanViewModel: com.example.ivopay.app.ui.loan.CashLoanViewModel = viewModel { com.example.ivopay.app.ui.loan.CashLoanViewModel(context) }
-            com.example.ivopay.app.ui.loan.CashLoanScreen(
+            val cashLoanViewModel: CashLoanViewModel = viewModel { CashLoanViewModel(context) }
+            CashLoanScreen(
                 viewModel = cashLoanViewModel,
                 onBack = { navController.popBackStack() },
                 onNavigateToFace = { navController.navigate(Screen.FaceDetection) },
@@ -477,13 +491,34 @@ fun AppNavigation(
         }
 
         composable(Screen.TadpoleCash) {
-            val tadpoleViewModel: com.example.ivopay.app.ui.loan.TadpoleCashViewModel = viewModel { com.example.ivopay.app.ui.loan.TadpoleCashViewModel(context) }
-            com.example.ivopay.app.ui.loan.TadpoleCashScreen(
+            val tadpoleViewModel: TadpoleCashViewModel = viewModel { TadpoleCashViewModel(context) }
+            TadpoleCashScreen(
                 viewModel = tadpoleViewModel,
                 onBack = { navController.popBackStack() },
-                onNavigateToFace = { navController.navigate(Screen.FaceDetection) },
+                onNavigateToFace = { from -> navController.navigate("${Screen.FaceDetection}?from=$from") },
                 onSuccess = { noc ->
                     navController.navigate("ApplySucceedPage?noc=$noc&showPop=1") {
+                        popUpTo(Screen.Main) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = "Ci10Cash?rasn={rasn}",
+            arguments = listOf(navArgument("rasn") { defaultValue = "" })
+        ) { backStackEntry ->
+            val rasn = backStackEntry.arguments?.getString("rasn") ?: ""
+            val ci10ViewModel: com.example.ivopay.app.ui.loan.Ci10CashViewModel = viewModel { 
+                com.example.ivopay.app.ui.loan.Ci10CashViewModel(context) 
+            }
+            com.example.ivopay.app.ui.loan.Ci10CashScreen(
+                viewModel = ci10ViewModel,
+                rasn = rasn,
+                onBack = { navController.popBackStack() },
+                onNavigateToFace = { from -> navController.navigate("${Screen.FaceDetection}?from=$from") },
+                onSuccess = { mob, cashType ->
+                    navController.navigate("ApplySucceedPage?cash_type=$cashType&mob=$mob&showPop=1") {
                         popUpTo(Screen.Main) { inclusive = false }
                     }
                 }
@@ -649,10 +684,10 @@ fun AppNavigation(
         }
 
         composable(Screen.AccountLogout) {
-            val logoutViewModel: com.example.ivopay.app.ui.mine.AccountLogoutViewModel = viewModel {
-                com.example.ivopay.app.ui.mine.AccountLogoutViewModel(context)
+            val logoutViewModel: AccountLogoutViewModel = viewModel {
+                AccountLogoutViewModel(context)
             }
-            com.example.ivopay.app.ui.mine.AccountLogoutScreen(
+            AccountLogoutScreen(
                 viewModel = logoutViewModel,
                 onBackClick = { navController.popBackStack() },
                 onLogoutSuccess = {
