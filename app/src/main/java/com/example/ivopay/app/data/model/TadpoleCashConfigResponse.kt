@@ -29,7 +29,10 @@ data class TadpoleTimeOption(
     @SerializedName("aow") val aow: Boolean = false,
     @SerializedName("dop") val dop: List<TadpoleLoanOption>? = null,
     @SerializedName("yep") val yep: String? = null,
-    @SerializedName("bpio") val bpio: Int = 0
+    @SerializedName("bpio") val bpio: Int = 0,
+    @SerializedName("itpr") val itpr: String? = null,
+    @SerializedName("fbd") val fbd: Int = 0,
+    @SerializedName("ddd") val ddd: Int = 0
 )
 
 data class TadpoleLoanOption(
@@ -41,7 +44,9 @@ data class TadpoleLoanOption(
     @SerializedName("sam") val sam: Long = 0,
     @SerializedName("dam") val dam: Long = 0,
     @SerializedName("dua") val dua: Long = 0,
-    @SerializedName("peo") val peo: Int = 0
+    @SerializedName("peo") val peo: Int = 0,
+    @SerializedName("fbd") val fbd: Int = 0,
+    @SerializedName("ddd") val ddd: Int = 0
 )
 
 data class TadpoleBankInfo(

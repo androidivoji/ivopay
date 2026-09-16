@@ -192,7 +192,8 @@ fun Ci10LoanCard(
                     }
                 }
             }
-        } else if (comData?.psw == 1) {
+        } else if (comData?.psw == 1) { //asli
+//        } else if (comData != null) {
             // --- apply card ---
             Card(
                 modifier = Modifier.fillMaxWidth(),

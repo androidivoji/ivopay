@@ -419,6 +419,7 @@ class BorrowerHomeViewModel(context: Context) : ViewModel() {
             "ci6_w" -> onNavigate("Ci6WCash?rasn=$rasn")
             "ci7" -> onNavigate("Ci7Cash?rasn=$rasn")
             "ci8" -> onNavigate("Ci8Cash?rasn=$rasn")
+            "ci10" -> onNavigate("Ci10Cash?rasn=$rasn")
             "inlg" -> onNavigate("InlgCash?rasn=$rasn")
             "rta2" -> onNavigate("CLoan16")
             "ciub" -> onNavigate("CLoan15")

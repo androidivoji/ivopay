@@ -173,7 +173,9 @@ class Ci10CashViewModel(context: Context) : ViewModel() {
                     addProperty("spe", "h")
                     addProperty("tma", selAmount)
                     addProperty("bpio", curDay.bpio)
-                    // Add other params if needed like fbd, ddd, itpr
+                    addProperty("itpr", curDay.bpio)
+                    addProperty("fbd", curDay.fbd)
+                    addProperty("ddd", curDay.ddd)
                 }
                 val response = NetworkClient.apiService.getCi10BillPreview(params)
                 if (response.isSuccessful && response.body()?.code == 1) {
