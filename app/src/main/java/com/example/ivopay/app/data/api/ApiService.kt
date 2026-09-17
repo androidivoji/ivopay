@@ -252,6 +252,11 @@ interface ApiService {
         @Body requestBody: okhttp3.RequestBody
     ): Response<JsonObject>
 
+    @POST("v2/api/oiqt")
+    suspend fun submitQuestionnaireAnswer(
+        @Body requestBody: JsonObject
+    ): Response<JsonObject>
+
     @POST("v2/api/cfcs")
     suspend fun getAmountCashLoanConfig(
         @Body requestBody: JsonObject

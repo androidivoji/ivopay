@@ -80,6 +80,7 @@ object Screen {
     const val AboutUs = "AboutUs"
     const val CashLoan = "CashLoan"
     const val TadpoleCash = "TadpoleCash"
+    const val Questionnaire = "QuestionnairePage"
 }
 
 @Composable
@@ -522,6 +523,23 @@ fun AppNavigation(
                         popUpTo(Screen.Main) { inclusive = false }
                     }
                 }
+            )
+        }
+
+        composable(
+            route = "${Screen.Questionnaire}?rasn={rasn}",
+            arguments = listOf(navArgument("rasn") { defaultValue = "" })
+        ) { backStackEntry ->
+            val rasn = backStackEntry.arguments?.getString("rasn") ?: ""
+            val qstViewModel: com.example.ivopay.app.ui.loan.QuestionnaireViewModel = viewModel {
+                com.example.ivopay.app.ui.loan.QuestionnaireViewModel(context)
+            }
+            com.example.ivopay.app.ui.loan.QuestionnaireScreen(
+                viewModel = qstViewModel,
+                rasn = rasn,
+                onBack = { navController.popBackStack() },
+                onNavigateToJmo = { r -> navController.navigate("JMOPage?rasn=$r") },
+                onNavigateToCi10 = { r -> navController.navigate("Ci10Cash?rasn=$r") }
             )
         }
 
