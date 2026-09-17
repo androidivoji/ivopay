@@ -167,15 +167,16 @@ class Ci10CashViewModel(context: Context) : ViewModel() {
 
     fun fetchInlgBillPre() {
         val curDay = curDayOption ?: return
+        val curLoan = curLoanOption
         viewModelScope.launch {
             try {
                 val params = JsonObject().apply {
                     addProperty("spe", "h")
-                    addProperty("tma", selAmount)
-                    addProperty("bpio", curDay.bpio)
-                    addProperty("itpr", curDay.bpio)
-                    addProperty("fbd", curDay.fbd)
-                    addProperty("ddd", curDay.ddd)
+                    addProperty("tma", selAmount.toString())
+                    addProperty("bpio", curDay.bpio.toString())
+                    addProperty("itpr", curLoan?.itpr ?: curDay.itpr ?: "0")
+                    addProperty("fbd", (curLoan?.fbd ?: curDay.fbd).toString())
+                    addProperty("ddd", (curLoan?.ddd ?: curDay.ddd).toString())
                 }
                 val response = NetworkClient.apiService.getCi10BillPreview(params)
                 if (response.isSuccessful && response.body()?.code == 1) {

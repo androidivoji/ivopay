@@ -389,7 +389,7 @@ fun Ci10CashScreen(
                             val base64 = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
                             viewModel.signImageBase64 = base64
                             viewModel.showSignPop = false
-                            onNavigateToFace(Screen.CashLoan) // Using generic face detection
+                            onNavigateToFace("Ci10Cash") 
                         }
                     )
                 }
