@@ -371,7 +371,7 @@ private fun handleApplyAction(
         when {
             qocm?.nqs == true -> onNavigate("QuestionnairePage?rasn=$rasn")
             qocm?.nbj == true -> onNavigate("JMOPage?rasn=$rasn")
-            else -> onApply()
+            else -> onApply() //asli
         }
     }
 }

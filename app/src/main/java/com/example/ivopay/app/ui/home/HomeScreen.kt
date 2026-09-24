@@ -186,7 +186,7 @@ fun HomeScreen(
 
             // 4. ci10 Section
             homeConfig?.ci10?.let { config ->
-                if (config.psw == 1 || config.podi != null) {
+                if (config.psw == 1 || config.podi != null) { //asli
                     Log.d("XBZ", "Tampilan Kartu: Pinjaman limit tinggi (ci10)")
                     ExtraLoanTip("Pinjaman limit tinggi", R.drawable.iv_borrower_ic_score)
                     Ci10LoanCard(

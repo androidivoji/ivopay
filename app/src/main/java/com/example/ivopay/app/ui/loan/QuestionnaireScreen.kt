@@ -60,7 +60,7 @@ fun QuestionnaireScreen(
             ) {
                 // 1. Banner
                 Image(
-                    painter = painterResource(id = R.drawable.iv_apply_img), // Placeholder for banner
+                    painter = painterResource(id = R.drawable.iv_offline_loan_qstnr_banner), // Placeholder for banner
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
